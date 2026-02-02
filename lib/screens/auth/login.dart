@@ -102,7 +102,7 @@ class _LoginState extends State<Login> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      //handle reset pass
+                      Navigator.of(context).pushNamed('/forgot_password');
                     },
                     style: ButtonStyle(
                       padding: WidgetStateProperty.all<EdgeInsets>(

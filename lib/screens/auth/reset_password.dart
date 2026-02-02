@@ -1,0 +1,203 @@
+import 'package:flutter/material.dart';
+import 'package:mindmate/themes/app_theme.dart';
+import 'package:mindmate/services/mock_auth_service.dart';
+import 'package:mindmate/widgets/password_form_field.dart';
+
+class ResetPasswordScreen extends StatefulWidget {
+  const ResetPasswordScreen({super.key});
+
+  @override
+  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+}
+
+class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _handleResetPassword() async {
+    if (_formKey.currentState!.validate()) {
+      if (_passwordController.text != _confirmPasswordController.text) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Passwords do not match'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+        return;
+      }
+
+      setState(() => _isLoading = true);
+
+      try {
+        final result = await MockAuthService.resetPassword(
+          'user@example.com',
+          _passwordController.text,
+        );
+
+        if (mounted) {
+          if (result['success']) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Password reset successfully'),
+                backgroundColor: AppTheme.successColor,
+              ),
+            );
+            // Navigate back to login after 1 second
+            Future.delayed(const Duration(seconds: 1), () {
+              Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil('/login', (route) => false);
+            });
+          } else {
+            setState(() => _isLoading = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(result['message']),
+                backgroundColor: AppTheme.errorColor,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.backgroundWhite,
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 40),
+              GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Icon(
+                  Icons.arrow_back,
+                  color: AppTheme.textPrimary,
+                  size: 24,
+                ),
+              ),
+              SizedBox(height: 32),
+
+              Text("Set new password", style: AppTheme.heading2),
+
+              SizedBox(height: 17),
+
+              Text(
+                "Ensure it differs from previous ones for security",
+                style: AppTheme.caption,
+              ),
+              SizedBox(height: 35),
+
+              Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // New Password Field
+                    Text("Set Password", style: AppTheme.label),
+                    SizedBox(height: 8),
+                    PasswordFormField(controller: _passwordController),
+                    SizedBox(height: 20),
+
+                    // Confirm Password Field
+                    Text("Confirm Password", style: AppTheme.label),
+                    SizedBox(height: 8),
+                    PasswordFormField(
+                      controller: _confirmPasswordController,
+                      validator: (value) {
+                        if (value != _passwordController.text) {
+                          return 'Passwords do not match';
+                        }
+                        return null;
+                      },
+                      hintText: 'Re-enter your password',
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 35),
+
+              // Reset Password Button
+              SizedBox(
+                width: double.infinity,
+                height: 45,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _handleResetPassword,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    elevation: 0,
+                    disabledBackgroundColor: Colors.grey.shade400,
+                  ),
+                  child: _isLoading
+                      ? SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          'Reset Password',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                ),
+              ),
+              SizedBox(height: 20),
+
+              // Back to Login link
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/login', (route) => false),
+                  child: Text(
+                    'Back to Login',
+                    style: TextStyle(
+                      color: AppTheme.secondaryColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
