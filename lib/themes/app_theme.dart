@@ -6,9 +6,10 @@ class AppTheme {
   static const Color secondaryColor = Color(0xFF5EA5C0);
 
   // Background Colors
-  // static const Color backgroundColor = Color(0xFFF1F6F9);
   static const Color backgroundWhite = Colors.white;
   static const Color cardColor = Colors.white;
+
+  
 
   // Text Colors
   static const Color textPrimary = Color(0xFF14274E);
@@ -92,6 +93,13 @@ class AppTheme {
     color: textTertiary,
     letterSpacing: 0,
   );
+    static const TextStyle elevatedButtonText = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    color: textWhite,
+    letterSpacing: 0,
+  );
+
 
   // Border Radius
   static const double radiusSmall = 8.0;
@@ -107,81 +115,4 @@ class AppTheme {
   static const double spacingXXL = 24.0;
   static const double spacingXXXL = 32.0;
 
-  // Theme Data
-  static ThemeData get lightTheme {
-    return ThemeData(
-      primarySwatch: Colors.blue,
-      primaryColor: primaryColor,
-      scaffoldBackgroundColor: backgroundWhite,
-      cardColor: cardColor,
-      visualDensity: VisualDensity.adaptivePlatformDensity,
-      fontFamily: 'Inter',
-
-      // App Bar Theme
-      appBarTheme: const AppBarTheme(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: false,
-        titleTextStyle: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-      ),
-
-      // Elevated Button Theme
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 118, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusMedium),
-          ),
-        ),
-      ),
-
-      // Text Button Theme
-      // textButtonTheme: TextButtonThemeData(
-      //   style: TextButton.styleFrom(
-      //     foregroundColor: textButton,
-      //     padding: const EdgeInsets.symmetric(
-      //       horizontal: spacingL,
-      //       vertical: spacingS,
-      //     ),
-      //     shape: RoundedRectangleBorder(
-      //       borderRadius: BorderRadius.circular(radiusMedium),
-      //     ),
-      //   ),
-      // ),
-
-      // Input Decoration Theme
-      // inputDecorationTheme: InputDecorationTheme(
-      //   filled: true,
-      //   fillColor: grey50,
-      //   border: OutlineInputBorder(
-      //     borderRadius: BorderRadius.circular(radiusMedium),
-      //     borderSide: const BorderSide(color: grey200),
-      //   ),
-      //   enabledBorder: OutlineInputBorder(
-      //     borderRadius: BorderRadius.circular(radiusMedium),
-      //     borderSide: const BorderSide(color: grey200),
-      //   ),
-      //   focusedBorder: OutlineInputBorder(
-      //     borderRadius: BorderRadius.circular(radiusMedium),
-      //     borderSide: const BorderSide(color: primaryColor, width: 2),
-      //   ),
-      //   errorBorder: OutlineInputBorder(
-      //     borderRadius: BorderRadius.circular(radiusMedium),
-      //     borderSide: const BorderSide(color: errorColor),
-      //   ),
-      //   contentPadding: const EdgeInsets.symmetric(
-      //     horizontal: spacingL,
-      //     vertical: spacingM,
-      //   ),
-      // ),
-    );
-  }
 }
