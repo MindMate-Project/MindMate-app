@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mindmate/cubits/auth_cubit.dart';
+import 'package:mindmate/cubits/auth_state.dart';
 import 'package:mindmate/themes/app_theme.dart';
 import '../../utils/validation.utils.dart';
 import '../../widgets/password_form_field.dart';
@@ -25,7 +28,10 @@ class _LoginState extends State<Login> {
 
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
-      Navigator.of(context).pushReplacementNamed('/home');
+      context.read<AuthCubit>().login(
+        _emailController.text,
+        _passwordController.text,
+      );
     }
   }
 
@@ -123,27 +129,42 @@ class _LoginState extends State<Login> {
                 SizedBox(height: 24),
 
                 // Login button
-                SizedBox(
-                  width: double.infinity,
-                  height: 45,
-                  child: ElevatedButton(
-                    onPressed: _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                BlocConsumer<AuthCubit, AuthState>(
+                  listener: (context, state) {
+                    if (state is AuthSuccess) {
+                      Navigator.of(context).pushReplacementNamed('/home');
+                    } else if (state is AuthFailure) {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(state.error)));
+                    }
+                  },
+                  builder: (context, state) {
+                    return SizedBox(
+                      width: double.infinity,
+                      height: 45,
+                      child: ElevatedButton(
+                        onPressed: state is AuthLoading ? null : _handleLogin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: state is AuthLoading
+                            ? CircularProgressIndicator(color: Colors.white)
+                            : Text(
+                                'Log in',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      'Log in',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
 
                 SizedBox(height: 45),
@@ -187,7 +208,7 @@ class _LoginState extends State<Login> {
                       spacing: 10,
                       children: [
                         Image.asset(
-                          '../assets/images/google_icon.png',
+                          'assets/images/google_icon.png',
                           width: 18,
                           height: 18,
                         ),

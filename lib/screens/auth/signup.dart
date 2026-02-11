@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mindmate/cubits/auth_cubit.dart';
+import 'package:mindmate/cubits/auth_state.dart';
+import 'package:mindmate/models/user_model.dart';
 import 'package:mindmate/themes/app_theme.dart';
 import '../../widgets/password_form_field.dart';
-import '../../widgets/date_picker_field.dart';
 import '../../widgets/custom_text_form_field.dart';
 import '../../utils/validation.utils.dart';
 
@@ -19,9 +22,9 @@ class _SignupState extends State<Signup> {
   final _confirmPasswordController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
-  DateTime? _selectedDate;
-
-  // bool _obscurePassword = true;
+  final _phoneController = TextEditingController();
+  final _relationController = TextEditingController();
+  String? _selectedRole;
 
   @override
   void dispose() {
@@ -30,13 +33,24 @@ class _SignupState extends State<Signup> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _confirmPasswordController.dispose();
+    _phoneController.dispose();
+    _relationController.dispose();
 
     super.dispose();
   }
 
   void _handleSignup() {
     if (_formKey.currentState!.validate()) {
-      Navigator.of(context).pushReplacementNamed('/home');
+      final user = User(
+        name: '${_firstNameController.text} ${_lastNameController.text}',
+        email: _emailController.text,
+        role: _selectedRole ?? 'patient',
+        relation: _selectedRole == 'caregiver'
+            ? _relationController.text
+            : null,
+        phone: _selectedRole == 'caregiver' ? _phoneController.text : null,
+      );
+      context.read<AuthCubit>().register(user, _passwordController.text);
     }
   }
 
@@ -91,7 +105,7 @@ class _SignupState extends State<Signup> {
                           CustomTextFormField(
                             controller: _firstNameController,
                             keyboardType: TextInputType.name,
-                            hintText: 'Enter your firstname',
+                            hintText: 'Enter your first name',
                             validator: (value) =>
                                 ValidationUtils.validateName(value),
                           ),
@@ -108,7 +122,7 @@ class _SignupState extends State<Signup> {
                           CustomTextFormField(
                             controller: _lastNameController,
                             keyboardType: TextInputType.name,
-                            hintText: 'Enter your lastname',
+                            hintText: 'Enter your last name',
                             validator: (value) =>
                                 ValidationUtils.validateName(value),
                           ),
@@ -135,21 +149,21 @@ class _SignupState extends State<Signup> {
                 ),
 
                 // Birth date field
-                Column(
-                  spacing: 8.0,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Birth Date", style: AppTheme.label),
-                    DatePickerField(
-                      selectedDate: _selectedDate,
-                      onDateSelected: (date) {
-                        setState(() {
-                          _selectedDate = date;
-                        });
-                      },
-                    ),
-                  ],
-                ),
+                // Column(
+                //   spacing: 8.0,
+                //   crossAxisAlignment: CrossAxisAlignment.start,
+                //   children: [
+                //     Text("Birth Date", style: AppTheme.label),
+                //     DatePickerField(
+                //       selectedDate: _selectedDate,
+                //       onDateSelected: (date) {
+                //         setState(() {
+                //           _selectedDate = date;
+                //         });
+                //       },
+                //     ),
+                //   ],
+                // ),
 
                 // Password field
                 Column(
@@ -180,30 +194,142 @@ class _SignupState extends State<Signup> {
                   ],
                 ),
 
+                // Role selection
+                Column(
+                  spacing: 8.0,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Role", style: AppTheme.label),
+                    DropdownButtonFormField<String>(
+                      value: _selectedRole,
+                      hint: Text('Select your role'),
+                      items: ['patient', 'caregiver'].map((role) {
+                        return DropdownMenuItem<String>(
+                          value: role,
+                          child: Text(
+                            role[0].toUpperCase() + role.substring(1),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedRole = value;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please select a role';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: AppTheme.primaryColor,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Conditional fields for caregiver
+                if (_selectedRole == 'caregiver') ...[
+                  // Phone field
+                  Column(
+                    spacing: 8.0,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Phone", style: AppTheme.label),
+                      CustomTextFormField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        hintText: 'Enter your phone number',
+                        validator: (value) {
+                          if (_selectedRole == 'caregiver' &&
+                              (value == null || value.isEmpty)) {
+                            return 'Phone number is required for caregivers';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
+
+                  // Relation field
+                  Column(
+                    spacing: 8.0,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Relation", style: AppTheme.label),
+                      CustomTextFormField(
+                        controller: _relationController,
+                        keyboardType: TextInputType.text,
+                        hintText: 'Enter your relation to the patient',
+                        validator: (value) {
+                          if (_selectedRole == 'caregiver' &&
+                              (value == null || value.isEmpty)) {
+                            return 'Relation is required for caregivers';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+
                 SizedBox(height: 10),
 
                 // Signup button
-                SizedBox(
-                  width: double.infinity,
-                  height: 45,
-                  child: ElevatedButton(
-                    onPressed: _handleSignup,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                BlocConsumer<AuthCubit, AuthState>(
+                  listener: (context, state) {
+                    if (state is AuthSuccess) {
+                      Navigator.of(context).pushReplacementNamed('/home');
+                    } else if (state is AuthFailure) {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(state.error)));
+                    }
+                  },
+                  builder: (context, state) {
+                    return SizedBox(
+                      width: double.infinity,
+                      height: 45,
+                      child: ElevatedButton(
+                        onPressed: state is AuthLoading ? null : _handleSignup,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: state is AuthLoading
+                            ? CircularProgressIndicator(color: Colors.white)
+                            : Text(
+                                'Sign up',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      'Sign up',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
 
                 SizedBox(height: 24),

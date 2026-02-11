@@ -1,3 +1,18 @@
+buildscript {
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.5.0")
+    }
+}
+
+plugins {
+    id("com.android.application") apply false
+    id("com.android.library") apply false
+    kotlin("android") apply false
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id("dev.flutter.flutter-gradle-plugin") apply false
+}
+
+
 allprojects {
     repositories {
         google()
