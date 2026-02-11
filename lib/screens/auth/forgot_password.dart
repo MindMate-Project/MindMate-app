@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/themes/app_theme.dart';
 import 'package:mindmate/services/mock_auth_service.dart';
 import 'package:mindmate/widgets/custom_text_form_field.dart';
@@ -119,7 +120,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       hintText: 'Enter your email',
                       validator: (value) =>
                           ValidationUtils.validateEmail(value),
-                      enabled: !_isLoading,
                     ),
                   ],
                 ),

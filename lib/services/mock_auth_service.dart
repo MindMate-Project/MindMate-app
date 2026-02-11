@@ -8,6 +8,7 @@ class MockAuthService {
     'user@example.com': 'OldPassword123!',
     'test@gmail.com': 'TestPass456!',
     'omnia@email.com': 'OmniaPass789!',
+    'omnia1@gmail.com': 'Omnia+123',
   };
 
   // Generate a random 6-digit code

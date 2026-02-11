@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/themes/app_theme.dart';
 import 'package:mindmate/services/mock_auth_service.dart';
 import 'package:mindmate/widgets/password_form_field.dart';
@@ -51,11 +52,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 backgroundColor: AppTheme.successColor,
               ),
             );
-            // Navigate back to login after 1 second
+
             Future.delayed(const Duration(seconds: 1), () {
-              Navigator.of(
-                context,
-              ).pushNamedAndRemoveUntil('/login', (route) => false);
+              // Navigator.of(
+              //   context,
+              // ).pushNamedAndRemoveUntil('/updatedpass', (route) => false);
+              Navigator.of(context).pushNamed('/updatedpass');
             });
           } else {
             setState(() => _isLoading = false);

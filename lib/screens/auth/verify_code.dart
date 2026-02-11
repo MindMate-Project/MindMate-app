@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/themes/app_theme.dart';
 import 'package:mindmate/services/mock_auth_service.dart';
 import 'package:pinput/pinput.dart';
@@ -230,7 +231,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     elevation: 0,
-                    disabledBackgroundColor: Colors.grey.shade400,
+                    // disabledBackgroundColor: Colors.grey.shade400,
                   ),
                   child: _isLoading
                       ? SizedBox(
