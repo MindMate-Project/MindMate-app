@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/themes/app_theme.dart';
-import 'package:mindmate/services/mock_auth_service.dart';
+import 'package:mindmate/services/auth_service.dart';
 import 'package:mindmate/widgets/custom_text_form_field.dart';
 import '../../utils/validation.utils.dart';
 
@@ -16,7 +15,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   bool _isLoading = false;
-  String? _statusMessage;
 
   @override
   void dispose() {
@@ -26,34 +24,30 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   void _handleSendCode() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-        _statusMessage = null;
-      });
+      setState(() => _isLoading = true);
 
       try {
-        final result = await MockAuthService.sendVerificationCode(
+        final authService = AuthService();
+        final result = await authService.forgotPassword(
           _emailController.text.trim(),
         );
 
         if (mounted) {
-          if (result['success']) {
+          if (result['success'] == true) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(result['message']),
+                content: Text(result['message'] ?? 'Code sent to your email'),
                 backgroundColor: AppTheme.successColor,
               ),
             );
-            // Navigate to verify code screen with email
             Navigator.of(context).pushNamed(
               '/verify-code',
               arguments: _emailController.text.trim(),
             );
           } else {
-            setState(() => _statusMessage = result['message']);
-            ScaffoldMessenger.of(context).showSnackBar(
+              ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(result['message']),
+                content: Text(result['message']?.toString() ?? 'Failed to send code'),
                 backgroundColor: AppTheme.errorColor,
               ),
             );
@@ -62,10 +56,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         }
       } catch (e) {
         if (mounted) {
-          setState(() {
-            _isLoading = false;
-            _statusMessage = 'An error occurred. Please try again.';
-          });
+          setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: ${e.toString()}'),
@@ -84,7 +75,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       body: SafeArea(
         minimum: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 54),
         child: SingleChildScrollView(
-          // padding: EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

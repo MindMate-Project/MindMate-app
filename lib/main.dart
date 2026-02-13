@@ -40,9 +40,11 @@ void main() {
             );
           }
           if (settings.name == '/reset-password') {
+            final email = settings.arguments is String
+                ? settings.arguments as String
+                : (settings.arguments as Map<String, String>?)?['email'];
             return MaterialPageRoute(
-              builder: (context) => const ResetPasswordScreen(),
-              settings: settings, // Pass settings to preserve arguments
+              builder: (context) => ResetPasswordScreen(email: email),
             );
           }
           return null;

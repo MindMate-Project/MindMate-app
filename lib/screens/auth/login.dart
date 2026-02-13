@@ -42,7 +42,6 @@ class _LoginState extends State<Login> {
       body: SafeArea(
         minimum: EdgeInsets.fromLTRB(24, 26, 24, 39),
         child: SingleChildScrollView(
-          // padding: EdgeInsets.symmetric(horizontal: 24.0),
           child: Form(
             key: _formKey,
             child: Column(

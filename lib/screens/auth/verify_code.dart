@@ -1,9 +1,6 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/themes/app_theme.dart';
-import 'package:mindmate/services/mock_auth_service.dart';
+import 'package:mindmate/services/auth_service.dart';
 import 'package:pinput/pinput.dart';
 
 class VerifyCodeScreen extends StatefulWidget {
@@ -48,7 +45,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   void _handleVerifyCode() async {
     if (_codeController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Please enter the verification code'),
           backgroundColor: AppTheme.errorColor,
         ),
@@ -58,7 +55,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
 
     if (_codeController.text.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Code must be 6 digits'),
           backgroundColor: AppTheme.errorColor,
         ),
@@ -67,34 +64,24 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
     }
 
     setState(() => _isLoading = true);
-
     try {
-      final result = await MockAuthService.verifyCode(
-        widget.email,
-        _codeController.text,
-      );
+      final authService = AuthService();
+      final result = await authService.verifyResetPassword(_codeController.text.trim());
+      if (!mounted) return;
+      setState(() => _isLoading = false);
 
-      if (mounted) {
-        if (result['success']) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result['message']),
-              backgroundColor: AppTheme.successColor,
-            ),
-          );
-          // Navigate to reset password screen
-          Future.delayed(const Duration(milliseconds: 500), () {
-            Navigator.of(context).pushNamed('/reset-password');
-          });
-        } else {
-          setState(() => _isLoading = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result['message']),
-              backgroundColor: AppTheme.errorColor,
-            ),
-          );
-        }
+      if (result['success'] == true) {
+        Navigator.of(context).pushNamed(
+          '/reset-password',
+          arguments: widget.email,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message']?.toString() ?? 'Invalid or expired code'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -114,22 +101,25 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       setState(() => _isLoading = true);
 
       try {
-        final result = await MockAuthService.sendVerificationCode(widget.email);
+        final authService = AuthService();
+        final result = await authService.forgotPassword(widget.email);
 
         if (mounted) {
           setState(() => _isLoading = false);
-          if (result['success']) {
+          if (result['success'] == true) {
             _startResendCountdown();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Code resent to ${widget.email}'),
+                content: Text(
+                  result['message']?.toString() ?? 'Code resent to ${widget.email}',
+                ),
                 backgroundColor: AppTheme.successColor,
               ),
             );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(result['message']),
+                content: Text(result['message']?.toString() ?? 'Failed to resend code'),
                 backgroundColor: AppTheme.errorColor,
               ),
             );
@@ -182,15 +172,6 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // SizedBox(height: 40),
-              // GestureDetector(
-              //   onTap: () => Navigator.of(context).pop(),
-              //   child: Icon(
-              //     Icons.arrow_back,
-              //     color: AppTheme.textPrimary,
-              //     size: 24,
-              //   ),
-              // ),
               Padding(
                 padding: const EdgeInsets.only(top: 17),
                 child: Image.asset(
@@ -230,7 +211,6 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                 keyboardType: TextInputType.number,
                 enabled: !_isLoading,
                 onCompleted: (_) {
-                  // Auto submit when complete
                   _handleVerifyCode();
                 },
               ),

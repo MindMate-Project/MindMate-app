@@ -8,8 +8,6 @@ class AuthResponse {
   AuthResponse({this.user, this.token, this.message});
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
-    // Register response: { message: "...", data: { user: { name, email, role } } }
-    // Login response: { message: "...", token: "...", data: { _id, name, email, role } }
 
     User? user;
     String? token;

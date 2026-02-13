@@ -297,7 +297,14 @@ class _SignupState extends State<Signup> {
                 BlocConsumer<AuthCubit, AuthState>(
                   listener: (context, state) {
                     if (state is AuthSuccess) {
-                      Navigator.of(context).pushReplacementNamed('/home');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Please check your email to activate your account, then you can log in.',
+                          ),
+                        ),
+                      );
+                      Navigator.of(context).pushReplacementNamed('/login');
                     } else if (state is AuthFailure) {
                       ScaffoldMessenger.of(
                         context,

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/themes/app_theme.dart';
-import 'package:mindmate/services/mock_auth_service.dart';
+import 'package:mindmate/services/auth_service.dart';
 import 'package:mindmate/widgets/password_form_field.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
-  const ResetPasswordScreen({super.key});
+  final String? email;
+
+  const ResetPasswordScreen({super.key, this.email});
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -28,8 +29,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     if (_formKey.currentState!.validate()) {
       if (_passwordController.text != _confirmPasswordController.text) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Passwords do not match'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+        return;
+      }
+
+      final email = widget.email?.trim();
+      if (email == null || email.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Session expired. Please start from Forgot Password again.'),
             backgroundColor: AppTheme.errorColor,
           ),
         );
@@ -39,42 +51,33 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       setState(() => _isLoading = true);
 
       try {
-        final result = await MockAuthService.resetPassword(
-          'user@example.com',
+        final authService = AuthService();
+        await authService.resetPassword(
+          email,
           _passwordController.text,
+          _confirmPasswordController.text,
         );
 
         if (mounted) {
-          if (result['success']) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Password reset successfully'),
-                backgroundColor: AppTheme.successColor,
-              ),
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Password reset successfully. Log in with your new password.'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+          Future.delayed(const Duration(milliseconds: 500), () {
+            Navigator.of(context).pushNamedAndRemoveUntil(
+              '/login',
+              (route) => false,
             );
-
-            Future.delayed(const Duration(seconds: 1), () {
-              // Navigator.of(
-              //   context,
-              // ).pushNamedAndRemoveUntil('/updatedpass', (route) => false);
-              Navigator.of(context).pushNamed('/updatedpass');
-            });
-          } else {
-            setState(() => _isLoading = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(result['message']),
-                backgroundColor: AppTheme.errorColor,
-              ),
-            );
-          }
+          });
         }
       } catch (e) {
         if (mounted) {
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error: ${e.toString()}'),
+              content: Text(e.toString().replaceFirst('Exception: ', '')),
               backgroundColor: AppTheme.errorColor,
             ),
           );
@@ -93,15 +96,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // SizedBox(height: 40),
-              // GestureDetector(
-              //   onTap: () => Navigator.of(context).pop(),
-              //   child: Icon(
-              //     Icons.arrow_back,
-              //     color: AppTheme.textPrimary,
-              //     size: 24,
-              //   ),
-              // ),
               Padding(
                 padding: const EdgeInsets.only(top: 17),
                 child: Image.asset(
@@ -188,23 +182,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
               ),
               SizedBox(height: 20),
-
-              // Back to Login link
-              // Center(
-              //   child: TextButton(
-              //     onPressed: () => Navigator.of(
-              //       context,
-              //     ).pushNamedAndRemoveUntil('/login', (route) => false),
-              //     child: Text(
-              //       'Back to Login',
-              //       style: TextStyle(
-              //         color: AppTheme.secondaryColor,
-              //         fontSize: 14,
-              //         fontWeight: FontWeight.w500,
-              //       ),
-              //     ),
-              //   ),
-              // ),
             ],
           ),
         ),

@@ -33,12 +33,10 @@ class AuthService {
       }
     }
 
-    // Dio automatically parses JSON, so if it's a Map, it's already parsed
     if (response.data is Map) {
       return response.data;
     }
 
-    // If it's still a string, it might be plain text error
     if (response.data is String) {
       return {'message': response.data};
     }
@@ -213,17 +211,50 @@ class AuthService {
     }
   }
 
-  /// Reset password using email, code, and new password
-  /// Returns AuthResponse with user data and token
+  Future<Map<String, dynamic>> verifyResetPassword(String code) async {
+    try {
+      final response = await _dio.post(
+        '/api/auth/verify-reset-password',
+        data: {'code': code},
+      );
+
+      final responseBody = _handleResponse(response);
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': responseBody['message'] ?? 'Code verified.',
+        };
+      } else {
+        final errorMessage =
+            responseBody['message'] ??
+            responseBody['error'] ??
+            'Invalid or expired code';
+        return {'success': false, 'message': errorMessage};
+      }
+    } on DioException catch (e) {
+      return {
+        'success': false,
+        'message': _extractErrorMessage(e, 'Invalid or expired code'),
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Error: ${e.toString()}'};
+    }
+  }
+
   Future<AuthResponse> resetPassword(
     String email,
-    String code,
     String newPassword,
+    String passwordConfirmation,
   ) async {
     try {
       final response = await _dio.post(
         '/api/auth/reset-password',
-        data: {'email': email, 'code': code, 'password': newPassword},
+        data: {
+          'email': email,
+          'password': newPassword,
+          'passwordConfirmation': passwordConfirmation,
+        },
       );
 
       final responseBody = _handleResponse(response);
