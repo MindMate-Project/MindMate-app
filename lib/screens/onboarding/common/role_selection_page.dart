@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mindmate/themes/app_theme.dart';
+import 'package:mindmate/screens/onboarding/common/onboarding_data.dart';
 
 class RoleSelectionPage extends StatelessWidget {
   const RoleSelectionPage({super.key});
@@ -64,7 +65,10 @@ class RoleSelectionPage extends StatelessWidget {
 
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pushNamed('/caregiver_onboarding');
+                Navigator.of(context).pushNamed(
+                  '/onboarding',
+                  arguments: caregiverOnboardingData,
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
@@ -87,7 +91,10 @@ class RoleSelectionPage extends StatelessWidget {
 
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pushNamed('/patient_onboarding');
+                Navigator.of(context).pushNamed(
+                  '/onboarding',
+                  arguments: patientOnboardingData,
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,

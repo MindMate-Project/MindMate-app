@@ -11,8 +11,8 @@ import 'package:mindmate/screens/auth/verify_code.dart';
 import 'package:mindmate/screens/auth/reset_password.dart';
 import 'package:mindmate/screens/auth/updated_pass.dart';
 import 'package:mindmate/screens/onboarding/common/role_selection_page.dart';
-import 'package:mindmate/screens/onboarding/patient/ui/patient_onboarding_screen.dart';
-import 'package:mindmate/screens/onboarding/caregiver/ui/caregiver_onboarding_screen.dart';
+import 'package:mindmate/screens/onboarding/common/onboarding_screen.dart';
+import 'package:mindmate/screens/onboarding/common/onboarding_item.dart';
 
 void main() {
   runApp(
@@ -29,10 +29,14 @@ void main() {
           '/home': (context) => Home(),
           '/forgot_password': (context) => ForgotPasswordScreen(),
           '/updatedpass': (context) => UpdatedPass(),
-          '/patient_onboarding': (_) => const PatientOnboardingScreen(),
-          '/caregiver_onboarding': (_) => const CaregiverOnboardingScreen(),
         },
         onGenerateRoute: (settings) {
+          if (settings.name == '/onboarding') {
+            final items = settings.arguments as List<OnboardingItem>;
+            return MaterialPageRoute(
+              builder: (_) => OnboardingScreen(items: items),
+            );
+          }
           if (settings.name == '/verify-code') {
             final email = settings.arguments as String;
             return MaterialPageRoute(

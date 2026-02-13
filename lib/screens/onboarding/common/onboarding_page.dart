@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mindmate/themes/app_theme.dart';
-import '../common/onboarding_item.dart';
+import 'onboarding_item.dart';
 
 class OnboardingPage extends StatelessWidget {
   final OnboardingItem item;
