@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/themes/app_theme.dart';
@@ -158,7 +160,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
         color: AppTheme.textPrimary,
       ),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: Color(0xFFB9C0C9), width: 2),
         borderRadius: BorderRadius.circular(12),
         color: Colors.white,
       ),
@@ -174,32 +176,49 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundWhite,
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      body: SafeArea(
+        minimum: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 54),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 40),
-              GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: Icon(
-                  Icons.arrow_back,
-                  color: AppTheme.textPrimary,
-                  size: 24,
+              // SizedBox(height: 40),
+              // GestureDetector(
+              //   onTap: () => Navigator.of(context).pop(),
+              //   child: Icon(
+              //     Icons.arrow_back,
+              //     color: AppTheme.textPrimary,
+              //     size: 24,
+              //   ),
+              // ),
+              Padding(
+                padding: const EdgeInsets.only(top: 17),
+                child: Image.asset(
+                  'assets/images/splash.png',
+                  width: 52,
+                  height: 50,
                 ),
               ),
-              SizedBox(height: 32),
+              SizedBox(height: 33),
 
-              Text("Check your email", style: AppTheme.heading1),
+              Text(
+                "Check your email",
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                  letterSpacing: -0.017,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
 
-              SizedBox(height: 17),
+              SizedBox(height: 18),
 
               Text(
                 "We’ve sent a password reset code to your email",
                 style: AppTheme.caption,
               ),
-              SizedBox(height: 35),
+              SizedBox(height: 41),
 
               // PIN Input
               Pinput(
@@ -216,7 +235,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                 },
               ),
 
-              SizedBox(height: 35),
+              SizedBox(height: 28),
 
               // Verify Button
               SizedBox(
@@ -248,13 +267,13 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                           'Verify Code',
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                 ),
               ),
 
-              SizedBox(height: 24),
+              SizedBox(height: 36),
 
               // Resend Code Section
               Center(
@@ -268,12 +287,12 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                         fontWeight: FontWeight.w400,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    // SizedBox(height: 8),
                     if (_resendCountdown > 0)
                       Text(
                         "Resend in ${_resendCountdown}s",
                         style: TextStyle(
-                          color: AppTheme.textTertiary,
+                          color: AppTheme.textSecondary,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
@@ -282,9 +301,9 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                       TextButton(
                         onPressed: _isLoading ? null : _handleResendCode,
                         child: Text(
-                          'Resend Code',
+                          'Resend',
                           style: TextStyle(
-                            color: AppTheme.secondaryColor,
+                            color: AppTheme.primaryColor,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),

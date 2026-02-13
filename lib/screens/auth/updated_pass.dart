@@ -21,7 +21,7 @@ class _UpdatedPassState extends State<UpdatedPass> {
 
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Image.asset('../assets/images/splash.png'),
+              Image.asset('assets/images/splash.png'),
               SizedBox(height: 15),
               Text(
                 textAlign: TextAlign.center,
@@ -30,6 +30,8 @@ class _UpdatedPassState extends State<UpdatedPass> {
                   fontSize: 20,
                   color: AppTheme.textPrimary,
                   fontWeight: FontWeight.w500,
+                  height: 1.5,
+                  // letterSpacing: -0.5,
                 ),
               ),
               SizedBox(height: 24),
@@ -38,6 +40,7 @@ class _UpdatedPassState extends State<UpdatedPass> {
                 'You can now log in with your new password',
                 style: TextStyle(
                   fontSize: 12,
+                  height: 1.25,
                   color: Color(0xff989898),
                   fontWeight: FontWeight.w500,
                 ),

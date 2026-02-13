@@ -45,16 +45,16 @@ class _PasswordFormFieldState extends State<PasswordFormField> {
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: AppTheme.neutralMedium),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: AppTheme.primaryColor, width: 1),
         ),
       ),
       obscureText: _obscureText,

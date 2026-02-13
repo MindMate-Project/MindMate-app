@@ -81,20 +81,22 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundWhite,
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      body: SafeArea(
+        minimum: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 54),
         child: SingleChildScrollView(
+          // padding: EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.only(top: 36, left: 0),
+                padding: const EdgeInsets.only(top: 17, left: 0),
                 child: Image.asset(
-                  '../assets/images/splash.png',
+                  'assets/images/splash.png',
                   width: 50,
                   height: 50,
                 ),
               ),
+              SizedBox(height: 33),
 
               Text("Forgot Password?", style: AppTheme.heading1),
 
@@ -104,16 +106,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 "Don't worry! Enter your email to reset the password",
                 style: AppTheme.caption,
               ),
-              SizedBox(height: 35),
+              SizedBox(height: AppTheme.spacingXXL),
 
               Form(
                 key: _formKey,
                 child: Column(
+                  spacing: AppTheme.spacingS,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text("Email", style: AppTheme.label),
 
-                    SizedBox(height: 8),
                     CustomTextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
@@ -124,7 +126,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: 26),
+                SizedBox(height: AppTheme.spacingXXL),
               SizedBox(
                 width: double.infinity,
                 height: 45,
@@ -138,7 +140,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     elevation: 0,
-                    disabledBackgroundColor: Colors.grey.shade400,
+                    // disabledBackgroundColor: Colors.grey.shade400,
                   ),
                   child: _isLoading
                       ? SizedBox(
@@ -154,27 +156,28 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       : Text(
                           'Send Code',
                           style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            height: 1.2,
                           ),
                         ),
                 ),
               ),
-              SizedBox(height: 20),
-              // Back to login link
-              Center(
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(
-                    'Back to Login',
-                    style: TextStyle(
-                      color: AppTheme.secondaryColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
+              // SizedBox(height: 20),
+              // // Back to login link
+              // Center(
+              //   child: TextButton(
+              //     onPressed: () => Navigator.of(context).pop(),
+              //     child: Text(
+              //       'Back to Login',
+              //       style: TextStyle(
+              //         color: AppTheme.secondaryColor,
+              //         fontSize: 14,
+              //         fontWeight: FontWeight.w500,
+              //       ),
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         ),

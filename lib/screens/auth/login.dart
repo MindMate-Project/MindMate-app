@@ -40,29 +40,30 @@ class _LoginState extends State<Login> {
     return Scaffold(
       backgroundColor: AppTheme.backgroundWhite,
       body: SafeArea(
+        minimum: EdgeInsets.fromLTRB(24, 26, 24, 39),
         child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 24.0),
+          // padding: EdgeInsets.symmetric(horizontal: 24.0),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 36, 0, 10),
+                  padding: const EdgeInsets.only(top: 26),
                   child: Image.asset(
                     'assets/images/splash.png',
-                    width: 50,
+                    width: 52,
                     height: 50,
                   ),
                 ),
-
+                SizedBox(height: 30),
                 // Title
                 Column(
-                  spacing: 12,
+                  spacing: AppTheme.spacingS,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    Text("Log in to your Account", style: AppTheme.heading1),
+                    Text("Login to your Account", style: AppTheme.heading1),
                     Text(
                       "Enter your email and password to log in",
                       style: AppTheme.caption,
@@ -70,11 +71,11 @@ class _LoginState extends State<Login> {
                   ],
                 ),
 
-                SizedBox(height: 22),
+                SizedBox(height: AppTheme.spacingXXL),
 
                 // Email field
                 Column(
-                  spacing: 8.0,
+                  spacing: AppTheme.spacingS,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text("Email", style: AppTheme.label),
@@ -88,11 +89,11 @@ class _LoginState extends State<Login> {
                   ],
                 ),
 
-                SizedBox(height: 26),
+                SizedBox(height: AppTheme.spacingL),
 
                 // Password field
                 Column(
-                  spacing: 8.0,
+                  spacing: AppTheme.spacingS,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text("Password", style: AppTheme.label),
@@ -100,7 +101,7 @@ class _LoginState extends State<Login> {
                   ],
                 ),
 
-                SizedBox(height: 22),
+                SizedBox(height: AppTheme.spacingL),
 
                 // Forgot password
                 Align(
@@ -118,7 +119,7 @@ class _LoginState extends State<Login> {
                     child: Text(
                       'Forgot Password?',
                       style: TextStyle(
-                        color: AppTheme.textButton,
+                        color: AppTheme.primaryColor,
                         fontWeight: FontWeight.w600,
                         fontSize: 12,
                       ),
@@ -126,7 +127,7 @@ class _LoginState extends State<Login> {
                   ),
                 ),
 
-                SizedBox(height: 24),
+                SizedBox(height: AppTheme.spacingL),
 
                 // Login button
                 BlocConsumer<AuthCubit, AuthState>(
@@ -156,10 +157,11 @@ class _LoginState extends State<Login> {
                         child: state is AuthLoading
                             ? CircularProgressIndicator(color: Colors.white)
                             : Text(
-                                'Log in',
+                                'Login',
                                 style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.2,
                                 ),
                               ),
                       ),
@@ -167,12 +169,12 @@ class _LoginState extends State<Login> {
                   },
                 ),
 
-                SizedBox(height: 45),
+                SizedBox(height: AppTheme.spacingL),
 
                 Column(
                   children: <Widget>[
                     Row(
-                      spacing: 16,
+                      spacing: AppTheme.spacingL,
                       children: <Widget>[
                         Expanded(
                           child: Divider(color: Color(0xFFEDF1F3), height: 18),
@@ -186,7 +188,7 @@ class _LoginState extends State<Login> {
                   ],
                 ),
 
-                SizedBox(height: 12),
+                SizedBox(height: AppTheme.spacingM),
                 SizedBox(
                   width: double.infinity,
                   height: 45,
@@ -213,10 +215,11 @@ class _LoginState extends State<Login> {
                           height: 18,
                         ),
                         Text(
-                          'Log in',
+                          'Continue with Google',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
+                            height: 1.4,
                           ),
                         ),
                       ],

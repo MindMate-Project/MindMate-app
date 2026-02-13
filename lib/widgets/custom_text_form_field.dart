@@ -12,7 +12,7 @@ class CustomTextFormField extends StatefulWidget {
     required this.controller,
     this.validator,
     this.keyboardType,
-    this.hintText = '', 
+    this.hintText = '',
     bool? enabled,
   });
 
@@ -32,16 +32,16 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: AppTheme.neutralMedium),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: AppTheme.primaryColor, width: 1),
         ),
       ),
       validator: widget.validator,

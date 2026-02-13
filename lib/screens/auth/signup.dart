@@ -68,10 +68,10 @@ class _SignupState extends State<Signup> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(top: 36, left: 0),
+                  padding: const EdgeInsets.only(top: 26, left: 0),
                   child: Image.asset(
                     'assets/images/splash.png',
-                    width: 50,
+                    width: 52,
                     height: 50,
                   ),
                 ),

@@ -87,26 +87,35 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundWhite,
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      body: SafeArea(
+        minimum: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 54),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 40),
-              GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: Icon(
-                  Icons.arrow_back,
-                  color: AppTheme.textPrimary,
-                  size: 24,
+              // SizedBox(height: 40),
+              // GestureDetector(
+              //   onTap: () => Navigator.of(context).pop(),
+              //   child: Icon(
+              //     Icons.arrow_back,
+              //     color: AppTheme.textPrimary,
+              //     size: 24,
+              //   ),
+              // ),
+              Padding(
+                padding: const EdgeInsets.only(top: 17),
+                child: Image.asset(
+                  'assets/images/splash.png',
+                  width: 52,
+                  height: 50,
                 ),
               ),
+
               SizedBox(height: 32),
 
               Text("Set new password", style: AppTheme.heading2),
 
-              SizedBox(height: 17),
+              SizedBox(height: 26),
 
               Text(
                 "Ensure it differs from previous ones for security",
@@ -123,7 +132,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     Text("Set Password", style: AppTheme.label),
                     SizedBox(height: 8),
                     PasswordFormField(controller: _passwordController),
-                    SizedBox(height: 20),
+                    SizedBox(height: 22),
 
                     // Confirm Password Field
                     Text("Confirm Password", style: AppTheme.label),
@@ -141,7 +150,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: 35),
+              SizedBox(height: 37),
 
               // Reset Password Button
               SizedBox(
@@ -156,7 +165,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     elevation: 0,
-                    disabledBackgroundColor: Colors.grey.shade400,
+                    // disabledBackgroundColor: Colors.grey.shade400,
                   ),
                   child: _isLoading
                       ? SizedBox(
@@ -170,10 +179,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                           ),
                         )
                       : Text(
-                          'Reset Password',
+                          'Update Password',
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                 ),
@@ -181,21 +190,21 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               SizedBox(height: 20),
 
               // Back to Login link
-              Center(
-                child: TextButton(
-                  onPressed: () => Navigator.of(
-                    context,
-                  ).pushNamedAndRemoveUntil('/login', (route) => false),
-                  child: Text(
-                    'Back to Login',
-                    style: TextStyle(
-                      color: AppTheme.secondaryColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
+              // Center(
+              //   child: TextButton(
+              //     onPressed: () => Navigator.of(
+              //       context,
+              //     ).pushNamedAndRemoveUntil('/login', (route) => false),
+              //     child: Text(
+              //       'Back to Login',
+              //       style: TextStyle(
+              //         color: AppTheme.secondaryColor,
+              //         fontSize: 14,
+              //         fontWeight: FontWeight.w500,
+              //       ),
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         ),

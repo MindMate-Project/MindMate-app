@@ -27,7 +27,7 @@ class RoleSelectionPage extends StatelessWidget {
             Text(
               'Welcome',
               style: TextStyle(
-                color: AppTheme.secondaryColor,
+                color: AppTheme.primaryColor,
                 fontSize: 32,
                 fontWeight: FontWeight.w500,
                 fontFamily: 'Poppins',
@@ -67,7 +67,7 @@ class RoleSelectionPage extends StatelessWidget {
                 Navigator.of(context).pushNamed('/caregiver_onboarding');
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.secondaryColor,
+                backgroundColor: AppTheme.primaryColor,
                 fixedSize: const Size(269, 50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(50),
@@ -90,7 +90,7 @@ class RoleSelectionPage extends StatelessWidget {
                 Navigator.of(context).pushNamed('/patient_onboarding');
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.secondaryColor,
+                backgroundColor: AppTheme.primaryColor,
                 fixedSize: const Size(269, 50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(50),
