@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/cubits/auth_cubit.dart';
+import 'package:mindmate/screens/home_screen.dart';
 import 'package:mindmate/services/auth_service.dart';
 import 'package:mindmate/screens/splash.dart';
 import 'package:mindmate/screens/auth/login.dart';
 import 'package:mindmate/screens/auth/signup.dart';
-import 'package:mindmate/screens/home.dart';
 import 'package:mindmate/screens/auth/forgot_password.dart';
 import 'package:mindmate/screens/auth/verify_code.dart';
 import 'package:mindmate/screens/auth/reset_password.dart';
@@ -26,7 +26,7 @@ void main() {
           '/roleSelection': (context) => RoleSelectionPage(),
           '/login': (context) => Login(),
           '/signup': (context) => Signup(),
-          '/home': (context) => Home(),
+          '/home': (context) => HomePage(),
           '/forgot_password': (context) => ForgotPasswordScreen(),
           '/updatedpass': (context) => UpdatedPass(),
         },
