@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mindmate/themes/app_theme.dart';
+import 'package:mindmate/widgets/bottom_nav_bar_widget.dart';
+import '../widgets/upcoming_appointment_card.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -37,7 +39,24 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      bottomNavigationBar: BottomNavBarWidget(
+        selectedIndex: 0,
+        onTap: (index) {
+          switch (index) {
+            case 1:
+              Navigator.pushNamed(context, '/memory');
+              break;
+            case 3:
+              Navigator.pushNamed(context, '/reminders');
+              break;
+            case 4:
+              Navigator.pushNamed(context, '/profile');
+              break;
+            default:
+              break;
+          }
+        },
+      ),
     );
   }
 
@@ -94,125 +113,11 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         const SizedBox(height: 15),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF0F8FF),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  // Doctor's profile picture
-                  Container(
-                    width: 70,
-                    height: 70,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      image: const DecorationImage(
-                        image: NetworkImage('https://i.pravatar.cc/150?img=33'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 15),
-                  // Doctor's details
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Dr. Khaled Ali',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2D3142),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Cardiologist',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              // Appointment date and time
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today,
-                            color: Colors.grey[600],
-                            size: 20,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            '07-02-2026',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[700],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.access_time,
-                            color: Colors.grey[600],
-                            size: 20,
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            '09:00 AM',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[700],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+        UpcomingAppointmentCard(
+          doctorName: 'Dr. Khaled Ali',
+          specialty: 'Cardiologist',
+          date: '07-02-2026',
+          time: '09:00 AM',
         ),
       ],
     );
@@ -251,7 +156,9 @@ class _HomePageState extends State<HomePage> {
             _buildActionCard(
               icon: Icons.access_time,
               label: 'Reminder',
-              onTap: () {},
+              onTap: () {
+                Navigator.pushNamed(context, '/reminders');
+              },
             ),
             _buildActionCard(
               icon: Icons.medication,
@@ -293,104 +200,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return Container(
-      height: 80,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: const Offset(0, -3),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(icon: Icons.home_outlined, label: 'Home', index: 0),
-              _buildNavItem(
-                icon: Icons.psychology_outlined,
-                label: 'Memory',
-                index: 1,
-              ),
-              const SizedBox(width: 60), // Space for FAB
-              _buildNavItem(
-                icon: Icons.access_time_outlined,
-                label: 'Reminder',
-                index: 3,
-              ),
-              _buildNavItem(
-                icon: Icons.person_outline,
-                label: 'Profile',
-                index: 4,
-              ),
-            ],
-          ),
-          // Center camera button
-          Positioned(
-            top: 10,
-            left: MediaQuery.of(context).size.width / 2 - 35,
-            child: Container(
-              width: 70,
-              height: 70,
-              decoration: const BoxDecoration(
-                color: AppTheme.primaryColor,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(
-                  Icons.camera_alt_outlined,
-                  color: Colors.white,
-                  size: 32,
-                ),
-                onPressed: () {},
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem({
-    required IconData icon,
-    required String label,
-    required int index,
-  }) {
-    final isSelected = _selectedIndex == index;
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _selectedIndex = index;
-        });
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: isSelected ? AppTheme.primaryColor : Colors.grey[400],
-            size: 28,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: isSelected ? AppTheme.primaryColor : Colors.grey[400],
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            ),
-          ),
-        ],
       ),
     );
   }
