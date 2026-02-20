@@ -12,9 +12,11 @@ class AppTheme {
   static const Color neutralMedium = Color(0xFF9BA4B4);
   static const Color neutralLightBlue = Color(0xFFB9C0C9);
   static const Color neutralSkyBlue = Color(0xFF8EC0D3);
+  static const Color neutralWhite = Colors.white;
+  static const Color neutralBlack = Colors.black;
+
   // Background Colors
   static const Color backgroundWhite = Colors.white;
-  static const Color cardColor = Colors.white;
 
   // Text Colors
   static const Color textPrimary = Color(0xFF5EA5C0);
