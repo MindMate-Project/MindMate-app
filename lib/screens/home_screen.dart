@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mindmate/screens/face_recognition.dart';
 import 'package:mindmate/themes/app_theme.dart';
 
 class HomePage extends StatefulWidget {
@@ -241,7 +242,14 @@ class _HomePageState extends State<HomePage> {
             _buildActionCard(
               icon: Icons.camera_alt,
               label: 'Face recognition',
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FaceScanStartPage(),
+                  ),
+                );
+              },
             ),
             _buildActionCard(
               icon: Icons.psychology,
@@ -352,7 +360,14 @@ class _HomePageState extends State<HomePage> {
                   color: Colors.white,
                   size: 32,
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FaceScanStartPage(),
+                  ),
+                );
+                },
               ),
             ),
           ),

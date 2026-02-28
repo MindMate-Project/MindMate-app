@@ -142,6 +142,9 @@ logs/
 # Test
 .test_env
 
+# Secrets
+lib/config/secrets.dart
+
 # Miscellaneous
 *.class
 *.pyc
