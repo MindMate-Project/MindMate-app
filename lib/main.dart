@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mindmate/cubits/auth_cubit.dart';
-import 'package:mindmate/screens/home_screen.dart';
-import 'package:mindmate/services/auth_service.dart';
-import 'package:mindmate/screens/splash.dart';
-import 'package:mindmate/screens/auth/login.dart';
-import 'package:mindmate/screens/auth/signup.dart';
-import 'package:mindmate/screens/auth/forgot_password.dart';
-import 'package:mindmate/screens/auth/verify_code.dart';
-import 'package:mindmate/screens/auth/reset_password.dart';
-import 'package:mindmate/screens/auth/updated_pass.dart';
-import 'package:mindmate/screens/onboarding/common/role_selection_page.dart';
-import 'package:mindmate/screens/onboarding/common/onboarding_screen.dart';
-import 'package:mindmate/screens/onboarding/common/onboarding_item.dart';
-import 'package:mindmate/screens/reminders/reminders.dart';
-import 'package:mindmate/utils/responsive.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:mindmate/features/patient/home/presentation/screens/home_screen.dart';
+import 'package:mindmate/features/caregiver/presentation/screens/home_screen.dart'
+    as caregiver;
+import 'package:mindmate/features/auth/data/services/auth_service.dart';
+import 'package:mindmate/features/auth/presentation/screens/splash_screen.dart';
+import 'package:mindmate/features/auth/presentation/screens/login_screen.dart';
+import 'package:mindmate/features/auth/presentation/screens/signup_screen.dart';
+import 'package:mindmate/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:mindmate/features/auth/presentation/screens/verify_code_screen.dart';
+import 'package:mindmate/features/auth/presentation/screens/reset_password_screen.dart';
+import 'package:mindmate/features/auth/presentation/screens/updated_pass_screen.dart';
+import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/role_selection_page.dart';
+import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_screen.dart';
+import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_item.dart';
+import 'package:mindmate/features/patient/reminders/presentation/screens/reminders_screen.dart';
+import 'package:mindmate/core/utils/responsive.dart';
 
 void main() {
   runApp(
@@ -27,14 +29,16 @@ void main() {
             debugShowCheckedModeBanner: false,
             initialRoute: '/splash',
             routes: {
-              '/splash': (context) => Splash(),
-              '/roleSelection': (context) => RoleSelectionPage(),
-              '/login': (context) => Login(),
-              '/signup': (context) => Signup(),
-              '/home': (context) => HomePage(),
-              '/forgot_password': (context) => ForgotPasswordScreen(),
-              '/updatedpass': (context) => UpdatedPass(),
-              '/reminders': (context) => RemindersScreen(),
+              '/splash': (context) => const Splash(),
+              '/roleSelection': (context) => const RoleSelectionPage(),
+              '/login': (context) => const Login(),
+              '/signup': (context) => const Signup(),
+              '/patient_home': (context) => const PatientHomePage(),
+              '/caregiver_home': (context) =>
+                  const caregiver.CaregiverHomePage(),
+              '/forgot_password': (context) => const ForgotPasswordScreen(),
+              '/updatedpass': (context) => const UpdatedPass(),
+              '/patient_reminders': (context) => const RemindersScreen(),
             },
             onGenerateRoute: (settings) {
               if (settings.name == '/onboarding') {
