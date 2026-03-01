@@ -16,6 +16,10 @@ import 'package:mindmate/features/onboarding/presentation/screens/onboarding/com
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_screen.dart';
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_item.dart';
 import 'package:mindmate/features/patient/reminders/presentation/screens/reminders_screen.dart';
+import 'package:mindmate/features/patient/profile/presentation/screens/patient_profile.dart';
+import 'package:mindmate/features/patient/profile/presentation/screens/edit_profile_screen.dart';
+import 'package:mindmate/features/patient/profile/presentation/screens/notifications_screen.dart';
+import 'package:mindmate/features/patient/profile/presentation/screens/privacy_policy_screen.dart';
 import 'package:mindmate/core/utils/responsive.dart';
 
 void main() {
@@ -39,6 +43,12 @@ void main() {
               '/forgot_password': (context) => const ForgotPasswordScreen(),
               '/updatedpass': (context) => const UpdatedPass(),
               '/patient_reminders': (context) => const RemindersScreen(),
+              '/profile': (context) => const PatientProfileScreen(),
+              '/edit_profile': (context) => const EditProfileScreen(),
+              '/notifications': (context) => const NotificationsScreen(),
+              '/privacy_policy': (context) => const PrivacyPolicyScreen(),
+              // '/medical_information': (context) =>
+              //     const MedicalInformationScreen(),
             },
             onGenerateRoute: (settings) {
               if (settings.name == '/onboarding') {
