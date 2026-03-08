@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import '../config/api_config.dart';
+import 'package:mindmate/core/config/api_config.dart';
 
 class FaceRecognitionService {
   static final Dio _dio = Dio(BaseOptions(
