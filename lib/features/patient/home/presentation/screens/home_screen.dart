@@ -1,0 +1,206 @@
+import 'package:flutter/material.dart';
+import 'package:mindmate/core/themes/app_theme.dart';
+import 'package:mindmate/core/widgets/bottom_nav_bar_widget.dart';
+import 'package:mindmate/core/widgets/upcoming_appointment_card.dart';
+
+class PatientHomePage extends StatefulWidget {
+  const PatientHomePage({Key? key}) : super(key: key);
+
+  @override
+  State<PatientHomePage> createState() => _PatientHomePageState();
+}
+
+class _PatientHomePageState extends State<PatientHomePage> {
+  int _selectedIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // top greeting section
+                _buildGreetingSection(),
+                const SizedBox(height: 30),
+
+                // upcoming Appointment section
+                _buildUpcomingAppointment(),
+                const SizedBox(height: 30),
+
+                // quick Actions section
+                _buildQuickActions(),
+              ],
+            ),
+          ),
+        ),
+      ),
+      bottomNavigationBar: BottomNavBarWidget(
+        selectedIndex: 0,
+        onTap: (index) {
+          switch (index) {
+            case 1:
+              Navigator.pushNamed(context, '/memory');
+              break;
+            case 3:
+              Navigator.pushNamed(context, '/patient_reminders');
+              break;
+            case 4:
+              Navigator.pushNamed(context, '/profile');
+              break;
+            default:
+              break;
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildGreetingSection() {
+    return Row(
+      children: [
+        // Profile picture
+        Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.grey[300],
+            image: const DecorationImage(
+              image: NetworkImage('https://i.pravatar.cc/150?img=12'),
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        const SizedBox(width: 15),
+        // Greeting text
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Hello, Ahmed',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2D3142),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Friday - Aug 12',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUpcomingAppointment() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Upcoming Appointment',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.primaryColor,
+          ),
+        ),
+        const SizedBox(height: 15),
+        UpcomingAppointmentCard(
+          doctorName: 'Dr. Khaled Ali',
+          specialty: 'Cardiologist',
+          date: '07-02-2026',
+          time: '09:00 AM',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickActions() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Quick Actions',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.primaryColor,
+          ),
+        ),
+        const SizedBox(height: 15),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          mainAxisSpacing: 15,
+          crossAxisSpacing: 15,
+          children: [
+            _buildActionCard(
+              icon: Icons.camera_alt,
+              label: 'Face recognition',
+              onTap: () {},
+            ),
+            _buildActionCard(
+              icon: Icons.psychology,
+              label: 'Memory Bank',
+              onTap: () {},
+            ),
+            _buildActionCard(
+              icon: Icons.access_time,
+              label: 'Reminder',
+              onTap: () {
+                Navigator.pushNamed(context, '/patient_reminders');
+              },
+            ),
+            _buildActionCard(
+              icon: Icons.medication,
+              label: 'Medication',
+              onTap: () {},
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionCard({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.primaryColor,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 50, color: Colors.white),
+            const SizedBox(height: 15),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
