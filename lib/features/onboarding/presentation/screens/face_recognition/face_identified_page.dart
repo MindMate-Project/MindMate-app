@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../themes/app_theme.dart';
+import 'package:mindmate/core/themes/app_theme.dart';
 
 class FaceIdentifiedPage extends StatelessWidget {
   final String name;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../themes/app_theme.dart';
+import 'package:mindmate/core/themes/app_theme.dart';
 
 class FaceStrangerPage extends StatelessWidget {
   const FaceStrangerPage({Key? key}) : super(key: key);

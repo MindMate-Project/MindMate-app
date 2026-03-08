@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../cubits/auth_cubit.dart';
-import '../../cubits/auth_state.dart';
-import '../../services/face_recognition_service.dart';
-import '../../themes/app_theme.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
+import 'package:mindmate/features/auth/data/services/face_recognition_service.dart';
+import 'package:mindmate/core/themes/app_theme.dart';
 import 'face_identified_page.dart';
 import 'face_stranger_page.dart';
 

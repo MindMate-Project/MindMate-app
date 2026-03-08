@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../themes/app_theme.dart';
+import 'package:mindmate/core/themes/app_theme.dart';
 import 'face_scanning_page.dart';
 
 class FaceCameraPage extends StatefulWidget {
