@@ -42,3 +42,26 @@ android {
 flutter {
     source = "../.."
 }
+
+// Workaround: GeneratedPluginRegistrant.java references SharedPreferencesPlugin
+// which is a Kotlin class. javac can't resolve it due to Gradle parallel compilation.
+// We strip ONLY that one line and register it via reflection in MainActivity.kt,
+// leaving all other (Java-based) plugin registrations intact.
+afterEvaluate {
+    tasks.withType(JavaCompile::class.java).configureEach {
+        doFirst {
+            val regFile = file("src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java")
+            if (regFile.exists()) {
+                val content = regFile.readText()
+                val fixed = content.lines().joinToString("\n") { line ->
+                    if (line.contains("SharedPreferencesPlugin")) {
+                        "      // Removed: $line  (registered via reflection in MainActivity.kt)"
+                    } else {
+                        line
+                    }
+                }
+                regFile.writeText(fixed)
+            }
+        }
+    }
+}

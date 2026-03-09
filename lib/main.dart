@@ -22,7 +22,8 @@ import 'package:mindmate/features/patient/profile/presentation/screens/notificat
 import 'package:mindmate/features/patient/profile/presentation/screens/privacy_policy_screen.dart';
 import 'package:mindmate/core/utils/responsive.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(
     BlocProvider(
       create: (context) => AuthCubit(AuthService()),
