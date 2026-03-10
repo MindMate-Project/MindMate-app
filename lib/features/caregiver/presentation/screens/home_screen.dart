@@ -47,7 +47,7 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
         onTap: (index) {
           switch (index) {
             case 1:
-              Navigator.pushNamed(context, '/caregiver_monitoring');
+              Navigator.pushNamed(context, '/memory');
               break;
             case 3:
               // Navigator.pushNamed(context, '/caregiver_alerts');

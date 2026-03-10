@@ -21,12 +21,18 @@ import 'package:mindmate/features/patient/profile/presentation/screens/edit_prof
 import 'package:mindmate/features/patient/profile/presentation/screens/notifications_screen.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/privacy_policy_screen.dart';
 import 'package:mindmate/core/utils/responsive.dart';
+import 'package:mindmate/features/memory/presentation/screens/memory_screen.dart';
+import 'package:mindmate/features/memory/presentation/cubit/memory_cubit.dart';
+import 'package:mindmate/features/memory/data/services/memory_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
-    BlocProvider(
-      create: (context) => AuthCubit(AuthService()),
+    MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => AuthCubit(AuthService())),
+        BlocProvider(create: (context) => MemoryCubit(MemoryService())),
+      ],
       child: Builder(
         builder: (context) {
           Responsive.init(context);
@@ -43,6 +49,7 @@ void main() async {
                   const caregiver.CaregiverHomePage(),
               '/forgot_password': (context) => const ForgotPasswordScreen(),
               '/updatedpass': (context) => const UpdatedPass(),
+              '/memory': (context) => const MemoryScreen(),
               '/patient_reminders': (context) => const RemindersScreen(),
               '/profile': (context) => const PatientProfileScreen(),
               '/edit_profile': (context) => const EditProfileScreen(),

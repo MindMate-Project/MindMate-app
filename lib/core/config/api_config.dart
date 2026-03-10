@@ -16,4 +16,7 @@ class ApiConfig {
   // Face Recognition endpoints
   static const String faceBase = '$baseUrl/api/face';
   static const String identifyFaceEndpoint = '$faceBase/patient/identify-face';
+
+  // Memory endpoints
+  static const String memoryBase = '$baseUrl/api/memories';
 }

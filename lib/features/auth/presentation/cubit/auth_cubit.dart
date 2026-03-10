@@ -31,6 +31,19 @@ class AuthCubit extends Cubit<AuthState> {
       final response = await authService.login(email, password);
       if (response.user != null && response.token != null) {
         await _saveToken(response.token!);
+
+        // Save patient ID for features like Memory
+        final user = response.user!;
+        if (user.role == 'patient' && user.id != null) {
+          // Patient: use their own ID
+          await _savePatientId(user.id!);
+        } else if (user.role == 'caregiver' &&
+            user.patients != null &&
+            user.patients!.isNotEmpty) {
+          // Caregiver: use the first linked patient's ID
+          await _savePatientId(user.patients!.first);
+        }
+
         emit(AuthSuccess(response.user!, response.token));
       } else {
         emit(AuthFailure('Login failed: Invalid response from server'));
@@ -77,6 +90,12 @@ class AuthCubit extends Cubit<AuthState> {
     await prefs.setString('auth_token', token);
   }
 
+  /// Save patient ID for use by other features (Memory, etc.)
+  Future<void> _savePatientId(String patientId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('patient_id', patientId);
+  }
+
   /// Get saved authentication token from local storage
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -89,10 +108,11 @@ class AuthCubit extends Cubit<AuthState> {
     return token != null && token.isNotEmpty;
   }
 
-  /// Logout and clear stored token
+  /// Logout and clear stored data
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
+    await prefs.remove('patient_id');
     emit(AuthInitial());
   }
 }

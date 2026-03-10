@@ -159,7 +159,9 @@ class _PatientHomePageState extends State<PatientHomePage> {
             _buildActionCard(
               icon: Icons.psychology,
               label: 'Memory Bank',
-              onTap: () {},
+              onTap: () {
+                Navigator.pushNamed(context, '/memory');
+              },
             ),
             _buildActionCard(
               icon: Icons.access_time,
