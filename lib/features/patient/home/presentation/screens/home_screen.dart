@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/widgets/bottom_nav_bar_widget.dart';
 import 'package:mindmate/core/widgets/upcoming_appointment_card.dart';
-import 'package:mindmate/features/onboarding/presentation/screens/face_recognition.dart';
+import 'package:mindmate/features/patient/face_recognition/face_recognition.dart';
 
 class PatientHomePage extends StatefulWidget {
   const PatientHomePage({Key? key}) : super(key: key);
