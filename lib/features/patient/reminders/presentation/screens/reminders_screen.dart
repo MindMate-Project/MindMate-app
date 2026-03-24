@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/utils/responsive.dart';
-import '../../../../../core/widgets/upcoming_appointment_card.dart';
+import 'package:mindmate/core/widgets/appointment_card.dart';
+import 'package:mindmate/core/widgets/medication_card.dart';
 import 'package:mindmate/core/widgets/bottom_nav_bar_widget.dart';
 
 class Appointment {
@@ -25,14 +26,18 @@ class Medication {
   final String time;
   final String name;
   final String count;
-  final Color pillColor;
+  final String frequency;
+  final DateTime startDate;
+  final DateTime? endDate;
 
   const Medication({
     required this.date,
     required this.time,
     required this.name,
     required this.count,
-    required this.pillColor,
+    this.frequency = 'Daily',
+    required this.startDate,
+    this.endDate,
   });
 }
 
@@ -113,28 +118,32 @@ class _RemindersScreenState extends State<RemindersScreen>
         time: '8:00 am',
         name: 'Amlodipine',
         count: '1 tablet',
-        pillColor: Colors.red,
+        startDate: DateTime(now.year, 7, 25),
+        endDate: DateTime(now.year, 3, 25),
       ),
       Medication(
         date: weekDays[1],
         time: '2:00 pm',
         name: 'Aspirin',
         count: '1 tablet',
-        pillColor: Colors.blue,
+        startDate: DateTime(now.year, 7, 25),
+        endDate: DateTime(now.year, 3, 25),
       ),
       Medication(
         date: weekDays[1],
         time: '6:30 pm',
         name: 'Memantine',
         count: '1 tablet',
-        pillColor: Colors.pink.shade200,
+        startDate: DateTime(now.year, 7, 25),
+        endDate: DateTime(now.year, 3, 25),
       ),
       Medication(
         date: weekDays[1],
         time: '10:00 pm',
         name: 'Donepezil',
         count: '1 tablet',
-        pillColor: Colors.pink,
+        startDate: DateTime(now.year, 7, 25),
+        endDate: DateTime(now.year, 3, 25),
       ),
       // Friday (index 4)
       Medication(
@@ -142,21 +151,24 @@ class _RemindersScreenState extends State<RemindersScreen>
         time: '7:00 am',
         name: 'Donepezil',
         count: '1 tablet',
-        pillColor: Colors.pink,
+        startDate: DateTime(now.year, 7, 25),
+        endDate: DateTime(now.year, 3, 25),
       ),
       Medication(
         date: weekDays[4],
         time: '3:00 pm',
         name: 'Memantine',
         count: '1 tablet',
-        pillColor: Colors.pink.shade200,
+        startDate: DateTime(now.year, 7, 25),
+        endDate: DateTime(now.year, 3, 25),
       ),
       Medication(
         date: weekDays[4],
         time: '9:00 pm',
         name: 'Amlodipine',
         count: '1 tablet',
-        pillColor: Colors.red,
+        startDate: DateTime(now.year, 7, 25),
+        endDate: DateTime(now.year, 3, 25),
       ),
     ];
   }
@@ -259,80 +271,13 @@ class _RemindersScreenState extends State<RemindersScreen>
   }
 
   Widget _buildMedicationCard(Medication medication) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Time
-          SizedBox(
-            width: 50.w,
-            child: Text(
-              medication.time,
-              style: TextStyle(
-                fontSize: 16.sp,
-                color: AppTheme.neutralBlack,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          // Medication card
-          Container(
-            width: 190.w,
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-            decoration: BoxDecoration(
-              color: AppTheme.neutralLight,
-              borderRadius: BorderRadius.circular(12.w),
-            ),
-            child: Row(
-              children: [
-                // Pill icon (capsule shape)
-                Container(
-                  width: 40.w,
-                  height: 28.h,
-                  decoration: BoxDecoration(
-                    color: medication.pillColor,
-                    borderRadius: BorderRadius.circular(14.h),
-                  ),
-                  child: Center(
-                    child: Container(
-                      width: 28.w,
-                      height: 20.h,
-                      decoration: BoxDecoration(
-                        color: AppTheme.neutralWhite,
-                        borderRadius: BorderRadius.circular(10.h),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                // Medication info
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      medication.name,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.neutralBlack,
-                      ),
-                    ),
-                    SizedBox(height: 6.h),
-                    Text(
-                      medication.count,
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return MedicationCard(
+      name: medication.name,
+      dosage: medication.count,
+      frequency: medication.frequency,
+      startDate: medication.startDate,
+      endDate: medication.endDate,
+      time: medication.time,
     );
   }
 
@@ -488,22 +433,17 @@ class _RemindersScreenState extends State<RemindersScreen>
                     }
 
                     return ListView.builder(
-                      padding: EdgeInsets.only(bottom: 16.h),
+                      // padding: EdgeInsets.only(bottom: 16.h),
                       itemCount: appointments.length,
                       itemBuilder: (context, index) {
                         final ap = appointments[index];
-                        return Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 8.h,
-                          ),
-                          child: UpcomingAppointmentCard(
-                            doctorName: ap.doctorName,
-                            specialty: ap.specialty,
-                            date: ap.appointmentDate,
-                            time: ap.time,
-                            imageUrl: null,
-                          ),
+                        return AppointmentCard(
+                          doctorName: ap.doctorName,
+                          specialty: ap.specialty,
+                          location: 'Qasr El Einy Hospital',
+                          date: ap.appointmentDate,
+                          time: ap.time,
+                          type: 'follow-up',
                         );
                       },
                     );
@@ -530,13 +470,17 @@ class _RemindersScreenState extends State<RemindersScreen>
                     }
 
                     return ListView.builder(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 8.h,
-                      ),
+                      // padding: EdgeInsets.all(16),
                       itemCount: medications.length,
                       itemBuilder: (context, index) {
-                        return _buildMedicationCard(medications[index]);
+                        final md = medications[index];
+                        return MedicationCard(
+                          name: md.name,
+                          dosage: md.count,
+                          frequency: md.frequency,
+                          startDate: md.startDate,
+                          time: md.time,
+                        );
                       },
                     );
                   },

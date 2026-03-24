@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/widgets/bottom_nav_bar_widget.dart';
-import 'package:mindmate/core/widgets/upcoming_appointment_card.dart';
+import 'package:mindmate/core/widgets/appointment_card.dart';
 import 'package:mindmate/features/patient/face_recognition/face_recognition.dart';
 
 class PatientHomePage extends StatefulWidget {
@@ -12,7 +12,7 @@ class PatientHomePage extends StatefulWidget {
 }
 
 class _PatientHomePageState extends State<PatientHomePage> {
-  int _selectedIndex = 0;
+
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +83,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Hello, Ahmed',
+              'Hello,',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -92,7 +92,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Friday - Aug 12',
+              DateTime.now().toString(),
               style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
           ],
@@ -113,11 +113,12 @@ class _PatientHomePageState extends State<PatientHomePage> {
             color: AppTheme.primaryColor,
           ),
         ),
-        const SizedBox(height: 15),
-        UpcomingAppointmentCard(
+        AppointmentCard(
           doctorName: 'Dr. Khaled Ali',
           specialty: 'Cardiologist',
+          location: 'Qasr El Einy Hospital',
           date: '07-02-2026',
+          type: 'follow-up',
           time: '09:00 AM',
         ),
       ],
