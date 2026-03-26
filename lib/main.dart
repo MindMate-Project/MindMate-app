@@ -15,6 +15,7 @@ import 'package:mindmate/features/auth/presentation/screens/updated_pass_screen.
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/role_selection_page.dart';
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_screen.dart';
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_item.dart';
+import 'package:mindmate/features/patient/profile/presentation/screens/caregivers.dart';
 import 'package:mindmate/features/patient/reminders/presentation/screens/reminders_screen.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/patient_profile.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/edit_profile_screen.dart';
@@ -24,6 +25,10 @@ import 'package:mindmate/core/utils/responsive.dart';
 import 'package:mindmate/features/memory/presentation/screens/memory_screen.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_cubit.dart';
 import 'package:mindmate/features/memory/data/services/memory_service.dart';
+import 'package:mindmate/features/patient/profile/presentation/cubit/profile_cubit.dart';
+import 'package:mindmate/features/patient/profile/data/services/profile_service.dart';
+// import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_cubit.dart';
+// import 'package:mindmate/features/patient/reminders/data/services/reminders_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +37,8 @@ void main() async {
       providers: [
         BlocProvider(create: (context) => AuthCubit(AuthService())),
         BlocProvider(create: (context) => MemoryCubit(MemoryService())),
+        BlocProvider(create: (context) => ProfileCubit(ProfileService())),
+        // BlocProvider(create: (context) => RemindersCubit(RemindersService())),
       ],
       child: Builder(
         builder: (context) {
@@ -54,6 +61,7 @@ void main() async {
               '/profile': (context) => const PatientProfileScreen(),
               '/edit_profile': (context) => const EditProfileScreen(),
               '/notifications': (context) => const NotificationsScreen(),
+              '/my_caregivers' : (context) => const MyCaregivers(),
               '/privacy_policy': (context) => const PrivacyPolicyScreen(),
               // '/medical_information': (context) =>
               //     const MedicalInformationScreen(),

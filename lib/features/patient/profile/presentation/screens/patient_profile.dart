@@ -81,7 +81,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   Widget _buildProfileSection(User? user) {
     final name = user?.name ?? '—';
     final email = user?.email ?? '—';
-    final phone = user?.phone ?? '';
+    final phone = user?.phoneNumber ?? '';
     final initial = name.isNotEmpty && name != '—' ? name[0].toUpperCase() : '?';
 
     return Padding(

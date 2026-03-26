@@ -3,18 +3,22 @@ class User {
   final String name;
   final String email;
   final String role;
-  final String? relation;
-  final String? phone;
+  // final String? relation;
+  final String phoneNumber;
   final List<String>? patients;
+  final String gender;
+  final DateTime? dateOfBirth;
 
   User({
     this.id,
     required this.name,
     required this.email,
     required this.role,
-    this.relation,
-    this.phone,
+    // this.relation,
+    required this.phoneNumber,
     this.patients,
+    required this.gender,
+    this.dateOfBirth,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -31,12 +35,22 @@ class User {
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       role: json['role'] ?? '',
-      relation: json['relation'],
-      phone: json['phone'],
+      // relation: json['relation'],
+      phoneNumber: (json['phoneNumber']).toString(),
       patients: json['patients'] != null
           ? List<String>.from(json['patients'].map((p) => p.toString()))
           : null,
+      gender: json['gender'],
+      dateOfBirth: _parseDate(json['dateOfBirth']),
     );
+  }
+
+  static DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    final s = value.toString().trim();
+    if (s.isEmpty) return null;
+    return DateTime.tryParse(s);
   }
 
   Map<String, dynamic> toJson() {
@@ -45,9 +59,10 @@ class User {
       'name': name,
       'email': email,
       'role': role,
-      'relation': relation,
-      'phone': phone,
+      'phoneNumber': phoneNumber,
       'patients': patients,
+      'gender': gender,
+      if (dateOfBirth != null) 'dateOfBirth': dateOfBirth!.toIso8601String(),
     };
   }
 }
