@@ -115,4 +115,12 @@ class AuthCubit extends Cubit<AuthState> {
     await prefs.remove('patient_id');
     emit(AuthInitial());
   }
+
+  /// Update current user in-memory (e.g. after profile update)
+  void updateUser(User user) {
+    final s = state;
+    if (s is AuthSuccess) {
+      emit(AuthSuccess(user, s.token));
+    }
+  }
 }
