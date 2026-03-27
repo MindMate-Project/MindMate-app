@@ -38,7 +38,8 @@ dependencies:
   equatable: ^2.0.5
   crypto: ^3.0.3
   email_validator: ^2.1.17
-  intl: ^0.18.1
+  intl: ^0.20.2
+  easy_date_timeline: ^2.0.9
   cached_network_image: ^3.3.1
   # pull_to_refresh: ^2.0.0
   # image_picker: ^1.0.7
