@@ -4,9 +4,9 @@ class User {
   final String email;
   final String role;
   // final String? relation;
-  final String phoneNumber;
+  final String? phoneNumber;
   final List<String>? patients;
-  final String gender;
+  final String? gender;
   final DateTime? dateOfBirth;
 
   User({
@@ -15,9 +15,9 @@ class User {
     required this.email,
     required this.role,
     // this.relation,
-    required this.phoneNumber,
+    this.phoneNumber,
     this.patients,
-    required this.gender,
+    this.gender,
     this.dateOfBirth,
   });
 
@@ -36,7 +36,7 @@ class User {
       email: json['email'] ?? '',
       role: json['role'] ?? '',
       // relation: json['relation'],
-      phoneNumber: (json['phoneNumber']).toString(),
+      phoneNumber: (json['phoneNumber']),
       patients: json['patients'] != null
           ? List<String>.from(json['patients'].map((p) => p.toString()))
           : null,

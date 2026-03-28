@@ -45,10 +45,11 @@ class _SignupState extends State<Signup> {
         name: '${_firstNameController.text} ${_lastNameController.text}',
         email: _emailController.text,
         role: _selectedRole ?? 'patient',
-        relation: _selectedRole == 'caregiver'
-            ? _relationController.text
-            : null,
-        phone: _selectedRole == 'caregiver' ? _phoneController.text : null,
+        gender: 'male',
+        // relation: _selectedRole == 'caregiver'
+        //     ? _relationController.text
+        //     : null,
+        phoneNumber:_phoneController.text,
       );
       context.read<AuthCubit>().register(user, _passwordController.text);
     }
@@ -341,7 +342,7 @@ class _SignupState extends State<Signup> {
 
                 SizedBox(height: 24),
 
-                // Sign up link
+                // login link
                 Center(
                   child: Wrap(
                     crossAxisAlignment: WrapCrossAlignment.center,

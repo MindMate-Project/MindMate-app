@@ -130,7 +130,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _firstNameController.text = nameParts.$1;
           _lastNameController.text = nameParts.$2;
           _emailController.text = state.user.email;
-          _phoneController.text = state.user.phoneNumber;
+          _phoneController.text = state.user.phoneNumber.toString();
           _genderController.text = _normalizeGender(state.user.gender) ?? _genderController.text;
           _selectedDate = state.user.dateOfBirth;
           setState(() {});
