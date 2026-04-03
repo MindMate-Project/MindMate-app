@@ -1,40 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/utils/responsive.dart';
-import '../../../../../core/widgets/upcoming_appointment_card.dart';
+import 'package:mindmate/core/widgets/appointment_card.dart';
+import 'package:mindmate/core/widgets/medication_card.dart';
 import 'package:mindmate/core/widgets/bottom_nav_bar_widget.dart';
-
-class Appointment {
-  final DateTime date;
-  final String doctorName;
-  final String specialty;
-  final String time;
-  final String appointmentDate;
-
-  const Appointment({
-    required this.date,
-    required this.doctorName,
-    required this.specialty,
-    required this.time,
-    required this.appointmentDate,
-  });
-}
-
-class Medication {
-  final DateTime date;
-  final String time;
-  final String name;
-  final String count;
-  final Color pillColor;
-
-  const Medication({
-    required this.date,
-    required this.time,
-    required this.name,
-    required this.count,
-    required this.pillColor,
-  });
-}
+import 'package:mindmate/features/patient/reminders/data/models/reminder_item.dart';
+import 'package:mindmate/features/patient/reminders/data/services/reminders_service.dart';
+import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_cubit.dart';
+import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_state.dart';
+import 'package:mindmate/features/patient/reminders/presentation/widgets/week_calenddar.dart';
 
 class RemindersScreen extends StatefulWidget {
   const RemindersScreen({super.key});
@@ -46,333 +22,46 @@ class RemindersScreen extends StatefulWidget {
 class _RemindersScreenState extends State<RemindersScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late int _selectedDayIndex;
-  late DateTime _selectedDate;
-
-  // test appointments and medication
-  late final List<Appointment> _appointments;
-  late final List<Medication> _medications;
+  // late int _selectedDayIndex;
+  DateTime _selectedDate = DateTime.now();
+  late final RemindersCubit _remindersCubit;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
 
-    final weekDays = _weekDays();
-    final now = DateTime.now();
-
-    // Find today's index in the week, default to Tuesday (index 1) if not found
-    _selectedDayIndex = weekDays.indexWhere(
-      (d) => d.year == now.year && d.month == now.month && d.day == now.day,
-    );
-    if (_selectedDayIndex == -1) {
-      _selectedDayIndex = 1;
-    }
-
-    _selectedDate = weekDays[_selectedDayIndex];
-
-    // test data
-    _appointments = [
-      // Monday (index 0)
-      Appointment(
-        date: weekDays[0],
-        doctorName: 'Dr. Sarah Ahmed',
-        specialty: 'Neurologist',
-        time: '10:00 AM',
-        appointmentDate: _formatAppointmentDate(weekDays[0]),
-      ),
-      // Tuesday (index 1)
-      Appointment(
-        date: weekDays[1],
-        doctorName: 'Dr. Khaled Ali',
-        specialty: 'Cardiologist',
-        time: '09:00 AM',
-        appointmentDate: _formatAppointmentDate(weekDays[1]),
-      ),
-      Appointment(
-        date: weekDays[1],
-        doctorName: 'Dr. Khaled Ali',
-        specialty: 'Cardiologist',
-        time: '02:00 PM',
-        appointmentDate: _formatAppointmentDate(weekDays[1]),
-      ),
-      // Wednesday (index 2)
-      Appointment(
-        date: weekDays[2],
-        doctorName: 'Dr. Mohamed Hassan',
-        specialty: 'Dermatologist',
-        time: '11:00 AM',
-        appointmentDate: _formatAppointmentDate(weekDays[2]),
-      ),
-    ];
-
-    _medications = [
-      // Tuesday (index 1)
-      Medication(
-        date: weekDays[1],
-        time: '8:00 am',
-        name: 'Amlodipine',
-        count: '1 tablet',
-        pillColor: Colors.red,
-      ),
-      Medication(
-        date: weekDays[1],
-        time: '2:00 pm',
-        name: 'Aspirin',
-        count: '1 tablet',
-        pillColor: Colors.blue,
-      ),
-      Medication(
-        date: weekDays[1],
-        time: '6:30 pm',
-        name: 'Memantine',
-        count: '1 tablet',
-        pillColor: Colors.pink.shade200,
-      ),
-      Medication(
-        date: weekDays[1],
-        time: '10:00 pm',
-        name: 'Donepezil',
-        count: '1 tablet',
-        pillColor: Colors.pink,
-      ),
-      // Friday (index 4)
-      Medication(
-        date: weekDays[4],
-        time: '7:00 am',
-        name: 'Donepezil',
-        count: '1 tablet',
-        pillColor: Colors.pink,
-      ),
-      Medication(
-        date: weekDays[4],
-        time: '3:00 pm',
-        name: 'Memantine',
-        count: '1 tablet',
-        pillColor: Colors.pink.shade200,
-      ),
-      Medication(
-        date: weekDays[4],
-        time: '9:00 pm',
-        name: 'Amlodipine',
-        count: '1 tablet',
-        pillColor: Colors.red,
-      ),
-    ];
+    _remindersCubit = RemindersCubit(RemindersService());
+    _remindersCubit.loadPatientReminders();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _remindersCubit.close();
     super.dispose();
   }
 
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
+  bool _isAppointment(ReminderItem reminder) {
+    return reminder.type.toLowerCase() == 'appointment';
   }
 
-  List<DateTime> _weekDays() {
-    final now = DateTime.now();
-    // Start from Monday
-    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    return List.generate(
-      7,
-      (i) => DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day + i),
-    );
+  bool _isMedication(ReminderItem reminder) {
+    return reminder.type.toLowerCase() == 'medication';
   }
 
-  Widget _buildWeekCalendar() {
-    final days = _weekDays();
-    const weekdayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  DateTime _reminderDate(ReminderItem reminder) {
+    if (_isAppointment(reminder)) {
+      // Appointments use `appointmentDate` when available.
+      return reminder.appointmentDate ?? reminder.scheduledTime;
+    }
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      child: Column(
-        children: [
-          // Day names row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: weekdayNames
-                .map(
-                  (day) => Expanded(
-                    child: Center(
-                      child: Text(
-                        day,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: AppTheme.neutralDark,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-          SizedBox(height: 8.h),
-          // Dates row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(7, (index) {
-              final d = days[index];
-              final isSelected = index == _selectedDayIndex;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedDayIndex = index;
-                      _selectedDate = d;
-                    });
-                  },
-                  child: Container(
-                    height: 44.w,
-                    alignment: Alignment.center,
-                    child: Container(
-                      width: 44.w,
-                      height: 44.w,
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppTheme.neutralSkyBlue
-                            : Colors.transparent,
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '${d.day}',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: isSelected
-                              ? AppTheme.neutralWhite
-                              : AppTheme.neutralDark,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-        ],
-      ),
-    );
+    // Medication reminders are grouped by the reminder `scheduledTime` date.
+    return reminder.scheduledTime;
   }
 
-  Widget _buildMedicationCard(Medication medication) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Time
-          SizedBox(
-            width: 50.w,
-            child: Text(
-              medication.time,
-              style: TextStyle(
-                fontSize: 16.sp,
-                color: AppTheme.neutralBlack,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          // Medication card
-          Container(
-            width: 190.w,
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
-            decoration: BoxDecoration(
-              color: AppTheme.neutralLight,
-              borderRadius: BorderRadius.circular(12.w),
-            ),
-            child: Row(
-              children: [
-                // Pill icon (capsule shape)
-                Container(
-                  width: 40.w,
-                  height: 28.h,
-                  decoration: BoxDecoration(
-                    color: medication.pillColor,
-                    borderRadius: BorderRadius.circular(14.h),
-                  ),
-                  child: Center(
-                    child: Container(
-                      width: 28.w,
-                      height: 20.h,
-                      decoration: BoxDecoration(
-                        color: AppTheme.neutralWhite,
-                        borderRadius: BorderRadius.circular(10.h),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                // Medication info
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      medication.name,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.neutralBlack,
-                      ),
-                    ),
-                    SizedBox(height: 6.h),
-                    Text(
-                      medication.count,
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        color: AppTheme.primaryColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDateHeader(DateTime date) {
-    const weekdays = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ];
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-
-    final now = DateTime.now();
-    final isToday =
-        now.year == date.year && now.month == date.month && now.day == date.day;
-
-    final dayName = weekdays[date.weekday - 1];
-    final day = date.day.toString().padLeft(2, '0');
-    final month = months[date.month - 1];
-    final year = date.year;
-
-    return isToday
-        ? 'Today $dayName, $day $month $year'
-        : '$dayName, $day $month $year';
+  String _formatTime12h(DateTime time) {
+    return DateFormat('hh:mm a').format(time); // Outputs: 09:30 AM
   }
 
   String _formatAppointmentDate(DateTime date) {
@@ -383,186 +72,237 @@ class _RemindersScreenState extends State<RemindersScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-        ),
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios,
-            size: 30,
-            color: AppTheme.neutralWhite,
+    return BlocProvider.value(
+      value: _remindersCubit,
+      child: Scaffold(
+        appBar: AppBar(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
           ),
-          onPressed: () => Navigator.pushNamed(context, '/patient_home'),
-        ),
-        title: Text(
-          "Reminders",
-          style: TextStyle(
-            fontSize: 20,
-            color: AppTheme.neutralWhite,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {},
+          leading: IconButton(
             icon: Icon(
-              Icons.notifications,
-              size: 24,
+              Icons.arrow_back_ios,
+              size: 30,
               color: AppTheme.neutralWhite,
             ),
+            onPressed: () => Navigator.pushNamed(context, '/patient_home'),
           ),
-        ],
-        backgroundColor: AppTheme.neutralSkyBlue,
-      ),
-      body: Column(
-        children: [
-          // Tabs
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
-            decoration: BoxDecoration(
-              color: AppTheme.neutralLight,
-              borderRadius: BorderRadius.circular(40.w),
+          title: Text(
+            "Reminders",
+            style: TextStyle(
+              fontSize: 20,
+              color: AppTheme.neutralWhite,
+              fontWeight: FontWeight.w500,
             ),
-            child: TabBar(
-              controller: _tabController,
-              indicator: BoxDecoration(
-                color: AppTheme.primaryColor,
+          ),
+          actions: [
+            IconButton(
+              onPressed: () {},
+              icon: Icon(
+                Icons.notifications,
+                size: 24,
+                color: AppTheme.neutralWhite,
+              ),
+            ),
+          ],
+          backgroundColor: AppTheme.neutralSkyBlue,
+        ),
+        body: Column(
+          children: [
+            // Tabs
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
+              decoration: BoxDecoration(
+                color: AppTheme.neutralLight,
                 borderRadius: BorderRadius.circular(40.w),
               ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              dividerColor: Colors.transparent,
-              labelColor: AppTheme.neutralWhite,
-              unselectedLabelColor: AppTheme.neutralBlack,
-              labelStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              unselectedLabelStyle: TextStyle(fontSize: 16),
-              tabs: [
-                Tab(text: 'Appointments'),
-                Tab(text: 'Medication'),
-              ],
-            ),
-          ),
-
-          // Week calendar
-          _buildWeekCalendar(),
-
-          // Date header
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                _formatDateHeader(_selectedDate),
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.neutralDark,
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  color: AppTheme.primaryColor,
+                  borderRadius: BorderRadius.circular(40.w),
                 ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerColor: Colors.transparent,
+                labelColor: AppTheme.neutralWhite,
+                unselectedLabelColor: AppTheme.neutralBlack,
+                labelStyle: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+                unselectedLabelStyle: TextStyle(fontSize: 16),
+                tabs: const [
+                  Tab(text: 'Appointments'),
+                  Tab(text: 'Medication'),
+                ],
               ),
             ),
-          ),
 
-          // Content
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                // Appointments tab
-                Builder(
-                  builder: (context) {
-                    final appointments = _appointments
-                        .where((a) => _isSameDay(a.date, _selectedDate))
-                        .toList();
-
-                    if (appointments.isEmpty) {
-                      return Center(
-                        child: Text(
-                          'No appointments for this day',
-                          style: TextStyle(
-                            color: AppTheme.neutralMedium,
-                            fontSize: 14.sp,
-                          ),
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      padding: EdgeInsets.only(bottom: 16.h),
-                      itemCount: appointments.length,
-                      itemBuilder: (context, index) {
-                        final ap = appointments[index];
-                        return Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16.w,
-                            vertical: 8.h,
-                          ),
-                          child: UpcomingAppointmentCard(
-                            doctorName: ap.doctorName,
-                            specialty: ap.specialty,
-                            date: ap.appointmentDate,
-                            time: ap.time,
-                            imageUrl: null,
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-
-                // Medication tab
-                Builder(
-                  builder: (context) {
-                    final medications = _medications
-                        .where((m) => _isSameDay(m.date, _selectedDate))
-                        .toList();
-
-                    if (medications.isEmpty) {
-                      return Center(
-                        child: Text(
-                          'No medications for this day',
-                          style: TextStyle(
-                            color: AppTheme.neutralMedium,
-                            fontSize: 14.sp,
-                          ),
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 8.h,
-                      ),
-                      itemCount: medications.length,
-                      itemBuilder: (context, index) {
-                        return _buildMedicationCard(medications[index]);
-                      },
-                    );
-                  },
-                ),
-              ],
+            // Week calendar
+            WeeklyCalendarWidget(
+              selectedDate: _selectedDate,
+              onDateSelected: (newDate) {
+                setState(() {
+                  _selectedDate = newDate;
+                });
+              },
             ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavBarWidget(
-        selectedIndex: 3,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              Navigator.pushNamed(context, '/patient_home');
-              break;
-            case 1:
-              Navigator.pushNamed(context, '/memory');
-              break;
-            case 4:
-              Navigator.pushNamed(context, '/profile');
-              break;
-            default:
-              break;
-          }
-        },
+
+            // Content
+            Expanded(
+              child: BlocBuilder<RemindersCubit, RemindersState>(
+                builder: (context, state) {
+                  if (state is RemindersLoading) {
+                    return Center(
+                      child: CircularProgressIndicator(
+                        color: AppTheme.primaryColor,
+                      ),
+                    );
+                  }
+
+                  if (state is RemindersError) {
+                    return Center(
+                      child: Text(
+                        state.message,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppTheme.neutralMedium,
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                    );
+                  }
+
+                  final reminders = state is RemindersLoaded
+                      ? state.reminders
+                      : <ReminderItem>[];
+
+                  final appointments =
+                      reminders
+                          .where(
+                            (r) =>
+                                _isAppointment(r) &&
+                                DateUtils.isSameDay(
+                                  _reminderDate(r),
+                                  _selectedDate,
+                                ),
+                          )
+                          .toList()
+                        ..sort(
+                          (a, b) => a.scheduledTime.compareTo(b.scheduledTime),
+                        );
+
+                  final medications =
+                      reminders
+                          .where(
+                            (r) =>
+                                _isMedication(r) &&
+                                DateUtils.isSameDay(
+                                  _reminderDate(r),
+                                  _selectedDate,
+                                ),
+                          )
+                          .toList()
+                        ..sort(
+                          (a, b) => a.scheduledTime.compareTo(b.scheduledTime),
+                        );
+
+                  return TabBarView(
+                    controller: _tabController,
+                    children: [
+                      // Appointments tab
+                      Builder(
+                        builder: (context) {
+                          if (appointments.isEmpty) {
+                            return Center(
+                              child: Text(
+                                'No appointments for this day',
+                                style: TextStyle(
+                                  color: AppTheme.neutralMedium,
+                                  fontSize: 14.sp,
+                                ),
+                              ),
+                            );
+                          }
+
+                          return ListView.builder(
+                            itemCount: appointments.length,
+                            itemBuilder: (context, index) {
+                              final ap = appointments[index];
+                              final date =
+                                  ap.appointmentDate ?? ap.scheduledTime;
+
+                              return AppointmentCard(
+                                doctorName: ap.doctorName ?? 'Unknown doctor',
+                                specialty: ap.specialty ?? 'Unknown specialty',
+                                location: ap.location ?? 'Unknown location',
+                                date: _formatAppointmentDate(date),
+                                time: _formatTime12h(ap.scheduledTime),
+                                type: ap.appointmentType ?? 'appointment',
+                              );
+                            },
+                          );
+                        },
+                      ),
+
+                      // Medication tab
+                      Builder(
+                        builder: (context) {
+                          if (medications.isEmpty) {
+                            return Center(
+                              child: Text(
+                                'No medications for this day',
+                                style: TextStyle(
+                                  color: AppTheme.neutralMedium,
+                                  fontSize: 14.sp,
+                                ),
+                              ),
+                            );
+                          }
+
+                          return ListView.builder(
+                            itemCount: medications.length,
+                            itemBuilder: (context, index) {
+                              final md = medications[index];
+                              return MedicationCard(
+                                name: md.medicineName ?? 'Unknown medicine',
+                                dosage: md.dosage ?? '—',
+                                frequency: md.frequency?.isNotEmpty == true
+                                    ? md.frequency!
+                                    : 'Daily',
+                                startDate: md.startDate ?? md.scheduledTime,
+                                endDate: md.endDate,
+                                time: _formatTime12h(md.scheduledTime),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+        bottomNavigationBar: BottomNavBarWidget(
+          selectedIndex: 3,
+          onTap: (index) {
+            switch (index) {
+              case 0:
+                Navigator.pushNamed(context, '/patient_home');
+                break;
+              case 1:
+                Navigator.pushNamed(context, '/memory');
+                break;
+              case 4:
+                Navigator.pushNamed(context, '/profile');
+                break;
+              default:
+                break;
+            }
+          },
+        ),
       ),
     );
   }

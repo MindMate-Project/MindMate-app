@@ -94,15 +94,10 @@ class AuthService {
         'email': user.email,
         'password': password,
         'role': user.role,
+        'phoneNumber' :user.phoneNumber,
       };
 
       // Add optional fields for caregiver
-      if (user.relation != null) {
-        body['relation'] = user.relation!;
-      }
-      if (user.phone != null) {
-        body['phone'] = user.phone!;
-      }
       if (user.patients != null && user.patients!.isNotEmpty) {
         body['patients'] = user.patients!.map((p) => p.toString()).toList();
       }

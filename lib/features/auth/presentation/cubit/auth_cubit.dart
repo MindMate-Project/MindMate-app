@@ -37,12 +37,13 @@ class AuthCubit extends Cubit<AuthState> {
         if (user.role == 'patient' && user.id != null) {
           // Patient: use their own ID
           await _savePatientId(user.id!);
-        } else if (user.role == 'caregiver' &&
-            user.patients != null &&
-            user.patients!.isNotEmpty) {
-          // Caregiver: use the first linked patient's ID
-          await _savePatientId(user.patients!.first);
         }
+        //  else if (user.role == 'caregiver' &&
+        //     user.patients != null &&
+        //     user.patients!.isNotEmpty) {
+        //   // Caregiver: use the first linked patient's ID
+        //   await _savePatientId(user.patients!.first);
+        // }
 
         emit(AuthSuccess(response.user!, response.token));
       } else {
@@ -114,5 +115,13 @@ class AuthCubit extends Cubit<AuthState> {
     await prefs.remove('auth_token');
     await prefs.remove('patient_id');
     emit(AuthInitial());
+  }
+
+  /// Update current user in-memory (e.g. after profile update)
+  void updateUser(User user) {
+    final s = state;
+    if (s is AuthSuccess) {
+      emit(AuthSuccess(user, s.token));
+    }
   }
 }
