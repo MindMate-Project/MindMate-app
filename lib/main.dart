@@ -24,7 +24,6 @@ import 'package:mindmate/core/utils/responsive.dart';
 import 'package:mindmate/features/memory/presentation/screens/memory_screen.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_cubit.dart';
 import 'package:mindmate/features/memory/data/services/memory_service.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
