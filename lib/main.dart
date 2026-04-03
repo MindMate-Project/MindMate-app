@@ -15,7 +15,7 @@ import 'package:mindmate/features/auth/presentation/screens/updated_pass_screen.
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/role_selection_page.dart';
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_screen.dart';
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_item.dart';
-import 'package:mindmate/features/patient/profile/presentation/screens/caregivers.dart';
+// import 'package:mindmate/features/patient/profile/presentation/screens/caregivers.dart';
 import 'package:mindmate/features/patient/reminders/presentation/screens/reminders_screen.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/patient_profile.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/edit_profile_screen.dart';
@@ -61,7 +61,7 @@ void main() async {
               '/profile': (context) => const PatientProfileScreen(),
               '/edit_profile': (context) => const EditProfileScreen(),
               '/notifications': (context) => const NotificationsScreen(),
-              '/my_caregivers' : (context) => const MyCaregivers(),
+              // '/my_caregivers' : (context) => const MyCaregivers(),
               '/privacy_policy': (context) => const PrivacyPolicyScreen(),
               // '/medical_information': (context) =>
               //     const MedicalInformationScreen(),
