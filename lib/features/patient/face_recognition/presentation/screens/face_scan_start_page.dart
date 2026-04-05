@@ -52,11 +52,20 @@ class FaceScanStartPage extends StatelessWidget {
                     width: 3,
                   ),
                 ),
-                child: Center(
-                  child: Icon(
-                    Icons.person,
-                    size: 100,
-                    color: Colors.grey[400],
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(17),
+                  child: Image.asset(
+                    'assets/images/face_scan_placeholder.jpg',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Center(
+                        child: Icon(
+                          Icons.face_retouching_natural,
+                          size: 100,
+                          color: AppTheme.primaryColor.withOpacity(0.5),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),

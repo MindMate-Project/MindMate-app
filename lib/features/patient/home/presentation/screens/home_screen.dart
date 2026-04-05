@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/widgets/bottom_nav_bar_widget.dart';
 import 'package:mindmate/core/widgets/appointment_card.dart';
+import 'package:mindmate/core/widgets/medicine_card.dart';
 import 'package:mindmate/features/patient/face_recognition/face_recognition.dart';
 
 class PatientHomePage extends StatefulWidget {
@@ -31,6 +32,10 @@ class _PatientHomePageState extends State<PatientHomePage> {
 
                 // upcoming Appointment section
                 _buildUpcomingAppointment(),
+                const SizedBox(height: 30),
+
+                // today's Medicine section
+                _buildTodaysMedicine(),
                 const SizedBox(height: 30),
 
                 // quick Actions section
@@ -212,6 +217,30 @@ class _PatientHomePageState extends State<PatientHomePage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTodaysMedicine() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Today's Medicine",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.primaryColor,
+          ),
+        ),
+        const MedicineCard(
+          name: 'Metformin',
+          dosage: '2 Capsules',
+          frequency: 'Daily',
+          time: '12:00 PM',
+          startDate: '25 July',
+          endDate: '25 March',
+        ),
+      ],
     );
   }
 }

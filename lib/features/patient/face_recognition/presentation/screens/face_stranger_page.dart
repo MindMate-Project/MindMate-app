@@ -1,8 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
+import 'face_camera_page.dart';
 
 class FaceStrangerPage extends StatelessWidget {
-  const FaceStrangerPage({Key? key}) : super(key: key);
+  final String? capturedImagePath;
+
+  const FaceStrangerPage({Key? key, this.capturedImagePath}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +17,7 @@ class FaceStrangerPage extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+          onPressed: () => Navigator.popUntil(context, ModalRoute.withName('/patient_home')),
         ),
         title: const Text(
           'Face Recognition',
@@ -40,26 +44,36 @@ class FaceStrangerPage extends StatelessWidget {
               
               const SizedBox(height: 40),
               
+              // Display the captured image with not-found badge
               Stack(
                 alignment: Alignment.center,
                 children: [
                   Container(
-                    width: 180,
-                    height: 180,
+                    width: 200,
+                    height: 200,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.grey[300],
-                      border: Border.all(color: Colors.red, width: 4),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.red, width: 3),
+                      color: Colors.grey[200],
                     ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 100,
-                      color: Colors.grey,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(17),
+                      child: capturedImagePath != null
+                          ? Image.file(
+                              File(capturedImagePath!),
+                              fit: BoxFit.cover,
+                              width: 200,
+                              height: 200,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(Icons.person, size: 100, color: Colors.grey);
+                              },
+                            )
+                          : const Icon(Icons.person, size: 100, color: Colors.grey),
                     ),
                   ),
                   Positioned(
-                    bottom: 5,
-                    right: 5,
+                    bottom: -5,
+                    right: -5,
                     child: Container(
                       width: 50,
                       height: 50,
@@ -71,7 +85,7 @@ class FaceStrangerPage extends StatelessWidget {
                       child: const Icon(
                         Icons.close,
                         color: Colors.white,
-                        size: 30,
+                        size: 28,
                       ),
                     ),
                   ),
@@ -132,7 +146,13 @@ class FaceStrangerPage extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.pop(context);
+                        // Go back to camera page to take another photo
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const FaceCameraPage(),
+                          ),
+                        );
                       },
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: AppTheme.primaryColor, width: 2),

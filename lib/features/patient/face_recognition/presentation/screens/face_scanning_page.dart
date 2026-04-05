@@ -91,6 +91,7 @@ class _FaceScanningPageState extends State<FaceScanningPage> {
               confidence: (personData?['confidence'] ?? personData?['similarity'] ?? personData?['score'] ?? 0.0).toDouble(),
               imageUrl: personData?['image_url'] ?? personData?['photo'] ?? personData?['avatar'],
               patientId: personData?['id'] ?? personData?['patient_id'],
+              capturedImagePath: widget.imagePath,
             ),
           ),
         );
@@ -99,7 +100,9 @@ class _FaceScanningPageState extends State<FaceScanningPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const FaceStrangerPage(),
+            builder: (context) => FaceStrangerPage(
+              capturedImagePath: widget.imagePath,
+            ),
           ),
         );
       }

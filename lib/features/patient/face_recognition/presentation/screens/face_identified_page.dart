@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
+import 'face_camera_page.dart';
 
 class FaceIdentifiedPage extends StatelessWidget {
   final String name;
@@ -7,6 +9,7 @@ class FaceIdentifiedPage extends StatelessWidget {
   final double confidence;
   final String? imageUrl;
   final String? patientId;
+  final String? capturedImagePath;
 
   const FaceIdentifiedPage({
     Key? key,
@@ -15,6 +18,7 @@ class FaceIdentifiedPage extends StatelessWidget {
     this.confidence = 0.0,
     this.imageUrl,
     this.patientId,
+    this.capturedImagePath,
   }) : super(key: key);
 
   @override
@@ -26,8 +30,10 @@ class FaceIdentifiedPage extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () =>
-              Navigator.popUntil(context, (route) => route.isFirst),
+          onPressed: () {
+            // Pop back to the patient home screen (past FaceScanStartPage)
+            Navigator.popUntil(context, ModalRoute.withName('/patient_home'));
+          },
         ),
         title: const Text(
           'Face Recognition',
@@ -54,47 +60,50 @@ class FaceIdentifiedPage extends StatelessWidget {
 
               const SizedBox(height: 40),
 
+              // Display the captured image with identified badge
               Stack(
                 alignment: Alignment.center,
                 children: [
                   Container(
-                    width: 180,
-                    height: 180,
+                    width: 200,
+                    height: 200,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.grey[300],
-                      border: Border.all(color: Colors.green, width: 4),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.green, width: 3),
+                      color: Colors.grey[200],
                     ),
-                    child: ClipOval(
-                      child: imageUrl != null
-                          ? Image.network(
-                              imageUrl!,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(17),
+                      child: capturedImagePath != null
+                          ? Image.file(
+                              File(capturedImagePath!),
                               fit: BoxFit.cover,
+                              width: 200,
+                              height: 200,
                               errorBuilder: (context, error, stackTrace) {
-                                return const Icon(
-                                  Icons.person,
-                                  size: 100,
-                                  color: Colors.grey,
-                                );
+                                return const Icon(Icons.person, size: 100, color: Colors.grey);
                               },
-                              loadingBuilder:
-                                  (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return const Center(
-                                      child: CircularProgressIndicator(),
-                                    );
-                                  },
                             )
-                          : const Icon(
-                              Icons.person,
-                              size: 100,
-                              color: Colors.grey,
-                            ),
+                          : imageUrl != null
+                              ? Image.network(
+                                  imageUrl!,
+                                  fit: BoxFit.cover,
+                                  width: 200,
+                                  height: 200,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Icon(Icons.person, size: 100, color: Colors.grey);
+                                  },
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return const Center(child: CircularProgressIndicator());
+                                  },
+                                )
+                              : const Icon(Icons.person, size: 100, color: Colors.grey),
                     ),
                   ),
                   Positioned(
-                    bottom: 5,
-                    right: 5,
+                    bottom: -5,
+                    right: -5,
                     child: Container(
                       width: 50,
                       height: 50,
@@ -106,7 +115,7 @@ class FaceIdentifiedPage extends StatelessWidget {
                       child: const Icon(
                         Icons.check,
                         color: Colors.white,
-                        size: 30,
+                        size: 28,
                       ),
                     ),
                   ),
@@ -148,7 +157,13 @@ class FaceIdentifiedPage extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.pop(context);
+                        // Go back to camera page to take another photo
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const FaceCameraPage(),
+                          ),
+                        );
                       },
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(

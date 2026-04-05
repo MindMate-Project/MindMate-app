@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
+import 'package:mindmate/features/patient/face_recognition/face_recognition.dart';
 
 typedef OnNavTap = void Function(int index);
 
@@ -80,7 +81,14 @@ class BottomNavBarWidget extends StatelessWidget {
                   color: Colors.white,
                   size: 32,
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const FaceScanStartPage(),
+                    ),
+                  );
+                },
               ),
             ),
           ),

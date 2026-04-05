@@ -25,14 +25,11 @@ import 'package:mindmate/core/utils/responsive.dart';
 import 'package:mindmate/features/memory/presentation/screens/memory_screen.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_cubit.dart';
 import 'package:mindmate/features/memory/data/services/memory_service.dart';
-<<<<<<< HEAD
-=======
 import 'package:mindmate/features/patient/profile/presentation/cubit/profile_cubit.dart';
 import 'package:mindmate/features/patient/profile/data/services/profile_service.dart';
 import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_cubit.dart';
-import 'package:mindmate/features/patient/reminders/data/services/reminders_service.dart';
+import 'package:mindmate/features/patient/reminders/data/services/reminders_service.dart'; 
 
->>>>>>> 91d6612e0fe258ee1fa14b3550cd5338d400da2e
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
@@ -43,6 +40,7 @@ void main() async {
         BlocProvider(create: (context) => ProfileCubit(ProfileService())),
         BlocProvider(create: (context) => RemindersCubit(RemindersService())),
       ],
+      
       child: Builder(
         builder: (context) {
           Responsive.init(context);
