@@ -16,7 +16,7 @@ class InfoPillCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.all(10),
+      margin: EdgeInsets.symmetric(vertical: 10, horizontal: 0),
       decoration: BoxDecoration(
         color: AppTheme.neutralLight,
         borderRadius: BorderRadius.circular(16),
@@ -32,7 +32,7 @@ class InfoPillCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: children,
-              ), 
+              ),
             ),
           ),
 
