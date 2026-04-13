@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/patient/home/presentation/screens/home_screen.dart';
-import 'package:mindmate/features/caregiver/presentation/screens/home_screen.dart'
+import 'package:mindmate/features/caregiver/home/presentation/screens/caregiver_home_screen.dart'
     as caregiver;
 import 'package:mindmate/features/auth/data/services/auth_service.dart';
 import 'package:mindmate/features/auth/presentation/screens/splash_screen.dart';

@@ -4,14 +4,12 @@ import 'package:mindmate/core/themes/app_theme.dart';
 class PatientCard extends StatelessWidget {
   final String name;
   final String relation;
-  final String imageUrl;
   final VoidCallback onTap;
 
   const PatientCard({
     Key? key,
     required this.name,
     required this.relation,
-    required this.imageUrl,
     required this.onTap,
   }) : super(key: key);
 
@@ -30,16 +28,13 @@ class PatientCard extends StatelessWidget {
           children: [
             // Patient avatar
             Container(
-              width: 56,
-              height: 56,
+              width: 50,
+              height: 50,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.neutralWhite,
-                image: DecorationImage(
-                  image: NetworkImage(imageUrl),
-                  fit: BoxFit.cover,
-                ),
+                color: Colors.grey[300],
               ),
+              child: const Icon(Icons.person),
             ),
             const SizedBox(width: 12),
             // Patient info

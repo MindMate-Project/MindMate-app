@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
-import 'package:mindmate/core/widgets/bottom_nav_bar_widget.dart';
+// import 'package:mindmate/core/widgets/bottom_nav_bar_widget.dart';
+import 'package:mindmate/core/widgets/caregiver_bottom_nav.dart';
 import '../widgets/patient_card.dart';
+import 'package:mindmate/core/widgets/appointment_card.dart';
+import 'package:mindmate/core/widgets/medication_card.dart';
+import 'package:mindmate/features/caregiver/home/presentation/screens/assign_patient.dart';
 
 class CaregiverHomePage extends StatefulWidget {
   const CaregiverHomePage({Key? key}) : super(key: key);
@@ -19,7 +23,6 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
       'id': '1',
       'name': 'Ahmed Mohamed',
       'relation': 'Father',
-      'imageUrl': 'https://i.pravatar.cc/150?img=12',
     },
   ];
 
@@ -37,45 +40,42 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
                 _buildGreetingSection(),
                 const SizedBox(height: 30),
                 _buildPatientsSection(),
+                AppointmentCard(
+                  doctorName: 'Doctor Name',
+                  specialty: 'Specialty',
+                  type: 'Type',
+                  date: '2024-06-01',
+                  time: '10:00 AM',
+                  location: 'Location',
+                ),
+                MedicationCard(
+                  name: 'Medication Name',
+                  dosage: '10mg',
+                  frequency: 'Daily',
+                  startDate: DateTime.now(),
+                  time: 'Morning',
+                ),
               ],
             ),
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavBarWidget(
-        selectedIndex: 0,
-        onTap: (index) {
-          switch (index) {
-            case 1:
-              Navigator.pushNamed(context, '/memory');
-              break;
-            case 3:
-              // Navigator.pushNamed(context, '/caregiver_alerts');
-              break;
-            case 4:
-              // Navigator.pushNamed(context, '/profile');
-              break;
-            default:
-              break;
-          }
-        },
-      ),
+      bottomNavigationBar: CaregiverBottomNav(),
     );
   }
 
   Widget _buildGreetingSection() {
     return Row(
       children: [
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.grey[300],
-            image: const DecorationImage(
-              image: NetworkImage('https://i.pravatar.cc/150?img=20'),
-              fit: BoxFit.cover,
+        Expanded(
+          child: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.grey[300],
             ),
+            child: const Icon(Icons.person),
           ),
         ),
         const SizedBox(width: 15),
@@ -92,7 +92,7 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Ready to take care of your patients today',
+              'Ready to take care of your patients today?',
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
@@ -119,6 +119,10 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
             ElevatedButton.icon(
               onPressed: () {
                 // Handle add patient
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AddPatient()),
+                );
               },
               icon: const Icon(Icons.add),
               label: const Text('Add'),
@@ -139,7 +143,7 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
             return PatientCard(
               name: patient['name'],
               relation: patient['relation'],
-              imageUrl: patient['imageUrl'],
+              // imageUrl: patient['imageUrl'],
               onTap: () {
                 // Navigate to patient detail
               },
