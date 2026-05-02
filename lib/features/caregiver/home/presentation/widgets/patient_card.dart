@@ -5,12 +5,14 @@ class PatientCard extends StatelessWidget {
   final String name;
   final String relation;
   final VoidCallback onTap;
+  final bool isSelected;
 
   const PatientCard({
     Key? key,
     required this.name,
     required this.relation,
     required this.onTap,
+    this.isSelected = false,
   }) : super(key: key);
 
   @override
@@ -23,6 +25,9 @@ class PatientCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppTheme.neutralLight,
           borderRadius: BorderRadius.circular(16),
+          border: isSelected
+              ? Border.all(color: AppTheme.primaryColor, width: 1.5)
+              : null,
         ),
         child: Row(
           children: [
