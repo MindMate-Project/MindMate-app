@@ -44,7 +44,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                     child: Column(
                       children: [
                         _buildProfileSection(user),
-                        _buildMenuOptions(context),
+                        _buildMenuOptions(context, user),
                       ],
                     ),
                   ),
@@ -179,12 +179,18 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     );
   }
 
-  Widget _buildMenuOptions(BuildContext context) {
+  Widget _buildMenuOptions(BuildContext context, User? user) {
+    final isPatient = user?.role == 'patient';
     final options = [
       _ProfileOption(
         title: 'Edit Profile Information',
         onTap: () => _navigateTo('/edit_profile'),
       ),
+      if (isPatient)
+        _ProfileOption(
+          title: 'Caregiver requests',
+          onTap: () => _navigateTo('/patient_assignment_inbox'),
+        ),
       _ProfileOption(
         title: 'Notifications',
         onTap: () => _navigateTo('/notifications'),
