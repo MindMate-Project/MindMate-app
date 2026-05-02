@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mindmate/core/widgets/info_pill_card.dart';
+import 'package:mindmate/core/widgets/info_card.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 
 class AppointmentCard extends StatelessWidget {
@@ -17,7 +17,7 @@ class AppointmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InfoPillCard(
+    return InfoCard(
       tag: type,
       children: [
         Text(doctorName, style: _titleStyle),
