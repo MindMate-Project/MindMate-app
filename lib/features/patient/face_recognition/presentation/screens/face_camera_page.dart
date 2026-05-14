@@ -3,7 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
+import 'package:image/image.dart' as img;
 import 'face_scanning_page.dart';
+
+Future<String> fixImageRotation(String imagePath) async {
+  final bytes = await File(imagePath).readAsBytes();
+  final decoded = img.decodeImage(bytes);
+  if (decoded == null) return imagePath;
+  
+  final fixed = img.bakeOrientation(decoded); // reads EXIF, applies rotation, strips tag
+  await File(imagePath).writeAsBytes(img.encodeJpg(fixed));
+  return imagePath;
+}
 
 class FaceCameraPage extends StatefulWidget {
   const FaceCameraPage({Key? key}) : super(key: key);
@@ -66,7 +77,7 @@ class _FaceCameraPageState extends State<FaceCameraPage> with WidgetsBindingObse
 
       _cameraController = CameraController(
         frontCamera,
-        ResolutionPreset.low,
+        ResolutionPreset.high,
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.jpeg,
       );
@@ -95,8 +106,9 @@ class _FaceCameraPageState extends State<FaceCameraPage> with WidgetsBindingObse
 
     try {
       final XFile image = await _cameraController!.takePicture();
+      final fixedPath = await fixImageRotation(image.path);
       setState(() {
-        _capturedImage = File(image.path);
+        _capturedImage = File(fixedPath);
       });
       _showSnackBar('Photo captured!', isError: false);
     } catch (e) {
