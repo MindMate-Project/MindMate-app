@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
-import 'package:mindmate/features/auth/data/services/auth_service.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/core/widgets/custom_text_form_field.dart';
 import 'package:mindmate/core/utils/validation.utils.dart';
 
@@ -27,16 +29,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       setState(() => _isLoading = true);
 
       try {
-        final authService = AuthService();
-        final result = await authService.forgotPassword(
-          _emailController.text.trim(),
-        );
+        final authCubit = context.read<AuthCubit>();
+        await authCubit.forgotPassword(_emailController.text.trim());
+        final currentState = authCubit.state;
 
         if (mounted) {
-          if (result['success'] == true) {
+          if (currentState is ForgotPasswordSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(result['message'] ?? 'Code sent to your email'),
+                content: Text(currentState.message),
                 backgroundColor: AppTheme.successColor,
               ),
             );
@@ -48,7 +49,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  result['message']?.toString() ?? 'Failed to send code',
+                  currentState is AuthFailure
+                      ? currentState.error
+                      : 'Failed to send code',
                 ),
                 backgroundColor: AppTheme.errorColor,
               ),

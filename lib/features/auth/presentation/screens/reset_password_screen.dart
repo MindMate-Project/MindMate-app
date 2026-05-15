@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
-import 'package:mindmate/features/auth/data/services/auth_service.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/core/widgets/password_form_field.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
@@ -53,37 +55,52 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       setState(() => _isLoading = true);
 
       try {
-        final authService = AuthService();
-        await authService.resetPassword(
+        final authCubit = context.read<AuthCubit>();
+        await authCubit.resetPassword(
           email,
+          '',
           _passwordController.text,
-          _confirmPasswordController.text,
         );
+        final currentState = authCubit.state;
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Password reset successfully. Log in with your new password.',
+          if (currentState is ResetPasswordSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Password reset successfully. Log in with your new password.',
+                ),
+                backgroundColor: AppTheme.successColor,
               ),
-              backgroundColor: AppTheme.successColor,
-            ),
-          );
-          Future.delayed(const Duration(milliseconds: 500), () {
-            Navigator.of(
-              context,
-            ).pushNamedAndRemoveUntil('/login', (route) => false);
-          });
+            );
+            Future.delayed(const Duration(milliseconds: 500), () {
+              Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil('/login', (route) => false);
+            });
+          } else if (currentState is AuthFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  currentState.error.replaceFirst('Exception: ', ''),
+                ),
+                backgroundColor: AppTheme.errorColor,
+              ),
+            );
+          }
         }
       } catch (e) {
         if (mounted) {
-          setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(e.toString().replaceFirst('Exception: ', '')),
               backgroundColor: AppTheme.errorColor,
             ),
           );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
         }
       }
     }
