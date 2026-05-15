@@ -1,45 +1,19 @@
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:mindmate/core/config/api_config.dart';
+import 'package:mindmate/core/network/api_http_client.dart';
+import 'package:mindmate/core/network/patient_context_store.dart';
 import 'package:mindmate/features/memory/data/models/memory_item.dart';
 
 class MemoryService {
   final Dio _dio;
+  final PatientContextStore _patientContextStore = PatientContextStore();
 
-  MemoryService()
-      : _dio = Dio(
-          BaseOptions(
-            baseUrl: ApiConfig.baseUrl,
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            connectTimeout: const Duration(seconds: 30),
-            receiveTimeout: const Duration(seconds: 30),
-          ),
-        );
-
-  /// Retrieve the saved auth token
-  Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
-  }
+  MemoryService() : _dio = ApiHttpClient.dio;
 
   /// Retrieve the saved patient ID
-  Future<String?> _getPatientId() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('patient_id');
-  }
+  Future<String?> _getPatientId() => _patientContextStore.getActivePatientId();
 
   /// Build authorization headers
-  Future<Options> _authOptions() async {
-    final token = await _getToken();
-    return Options(
-      headers: {
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-    );
-  }
+  Future<Options> _authOptions() => ApiHttpClient.authorizedOptions();
 
   /// Fetch all memories for the current patient
   /// Endpoint: GET /api/memories/patient/:patientId
@@ -47,7 +21,9 @@ class MemoryService {
     try {
       final patientId = await _getPatientId();
       if (patientId == null || patientId.isEmpty) {
-        throw Exception('Patient ID not found. Please log in again.');
+        throw Exception(
+          'No connected patient. Please connect at least one patient first.',
+        );
       }
 
       final response = await _dio.get(

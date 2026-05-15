@@ -1,49 +1,26 @@
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:mindmate/core/config/api_config.dart';
+import 'package:mindmate/core/network/api_http_client.dart';
+import 'package:mindmate/core/network/patient_context_store.dart';
 import 'package:mindmate/features/patient/reminders/data/models/reminder_item.dart';
 
 class RemindersService {
   final Dio _dio;
+  final PatientContextStore _patientContextStore = PatientContextStore();
 
-  RemindersService()
-      : _dio = Dio(
-          BaseOptions(
-            baseUrl: ApiConfig.baseUrl,
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            connectTimeout: const Duration(seconds: 30),
-            receiveTimeout: const Duration(seconds: 30),
-          ),
-        );
+  RemindersService() : _dio = ApiHttpClient.dio;
 
-  Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
-  }
+  Future<String?> _getPatientId() => _patientContextStore.getActivePatientId();
 
-  Future<String?> _getPatientId() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('patient_id');
-  }
-
-  Future<Options> _authOptions() async {
-    final token = await _getToken();
-    return Options(
-      headers: {
-        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
-      },
-    );
-  }
+  Future<Options> _authOptions() => ApiHttpClient.authorizedOptions();
 
   /// Patient endpoint:
   /// GET /api/reminders/patient/:patientId
   Future<List<ReminderItem>> getPatientReminders() async {
     final patientId = await _getPatientId();
     if (patientId == null || patientId.isEmpty) {
-      throw Exception('Patient ID not found. Please log in again.');
+      throw Exception(
+        'No connected patient. Please connect at least one patient first.',
+      );
     }
 
     final response = await _dio.get(
