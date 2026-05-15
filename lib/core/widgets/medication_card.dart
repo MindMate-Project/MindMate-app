@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mindmate/core/widgets/info_pill_card.dart';
+import 'package:mindmate/core/widgets/info_card.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 
 class MedicationCard extends StatelessWidget {
@@ -25,7 +25,7 @@ class MedicationCard extends StatelessWidget {
     final started = 'Started ${_formatDayMonth(startDate)}';
     final end = endDate == null ? '' : ' | End ${_formatDayMonth(endDate!)}';
 
-    return InfoPillCard(
+    return InfoCard(
       tag: time,
       children: [
         Row(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/patient/home/presentation/screens/home_screen.dart';
-import 'package:mindmate/features/caregiver/presentation/screens/home_screen.dart'
+import 'package:mindmate/features/caregiver/home/presentation/screens/caregiver_home_screen.dart'
     as caregiver;
 import 'package:mindmate/features/auth/data/services/auth_service.dart';
 import 'package:mindmate/features/auth/presentation/screens/splash_screen.dart';
@@ -15,11 +15,14 @@ import 'package:mindmate/features/auth/presentation/screens/updated_pass_screen.
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/role_selection_page.dart';
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_screen.dart';
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_item.dart';
-// import 'package:mindmate/features/patient/profile/presentation/screens/caregivers.dart';
 import 'package:mindmate/features/patient/reminders/presentation/screens/reminders_screen.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/patient_profile.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/notifications_screen.dart';
+import 'package:mindmate/features/patient/profile/presentation/screens/patient_assignment_inbox_screen.dart';
+import 'package:mindmate/features/caregiver/home/presentation/screens/caregiver_notifications_screen.dart';
+import 'package:mindmate/features/assignments/data/services/assignment_service.dart';
+import 'package:mindmate/features/assignments/presentation/cubit/patient_assignment_requests_cubit.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/privacy_policy_screen.dart';
 import 'package:mindmate/core/utils/responsive.dart';
 import 'package:mindmate/features/memory/presentation/screens/memory_screen.dart';
@@ -62,10 +65,12 @@ void main() async {
               '/profile': (context) => const PatientProfileScreen(),
               '/edit_profile': (context) => const EditProfileScreen(),
               '/notifications': (context) => const NotificationsScreen(),
-              // '/my_caregivers' : (context) => const MyCaregivers(),
+              '/patient_assignment_inbox': (context) => BlocProvider(
+                    create: (_) => PatientAssignmentRequestsCubit(AssignmentService()),
+                    child: const PatientAssignmentInboxScreen(),
+                  ),
+              '/caregiver_notifications': (context) => const CaregiverNotificationsScreen(),
               '/privacy_policy': (context) => const PrivacyPolicyScreen(),
-              // '/medical_information': (context) =>
-              //     const MedicalInformationScreen(),
             },
             onGenerateRoute: (settings) {
               if (settings.name == '/onboarding') {
