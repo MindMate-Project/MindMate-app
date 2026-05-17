@@ -1,62 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
-import 'package:mindmate/features/caregiver/home/presentation/screens/caregiver_home_screen.dart';
-import 'package:mindmate/features/memory/presentation/screens/memory_screen.dart';
-import 'package:mindmate/features/patient/profile/presentation/screens/patient_profile.dart';
-import 'package:mindmate/features/patient/reminders/presentation/screens/reminders_screen.dart';
 
-class CaregiverBottomNav extends StatefulWidget {
-  const CaregiverBottomNav({super.key});
+class CaregiverBottomNav extends StatelessWidget {
+  const CaregiverBottomNav({
+    super.key,
+    required this.selectedIndex,
+    required this.onTap,
+  });
 
-  @override
-  State<CaregiverBottomNav> createState() => _CaregiverBottomNavState();
-}
-
-class _CaregiverBottomNavState extends State<CaregiverBottomNav> {
-  int selectedIndex = 0;
-
-  void _onTap(int index) {
-    setState(() => selectedIndex = index);
-
-    switch (index) {
-      case 0:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => CaregiverHomePage()),
-        );
-        break;
-      case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => MemoryScreen()),
-        );
-        break;
-      case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => RemindersScreen()),
-        );
-        break;
-      case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => RemindersScreen()),
-        );
-        break;
-      case 4:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => PatientProfileScreen()),
-        );
-        break;
-    }
-  }
+  final int selectedIndex;
+  final ValueChanged<int> onTap;
 
   Widget _buildNavItem(IconData icon, String label, int index) {
     final isSelected = selectedIndex == index;
-
     return InkWell(
-      onTap: () => _onTap(index),
+      onTap: () => onTap(index),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

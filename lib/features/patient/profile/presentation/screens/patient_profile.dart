@@ -5,7 +5,7 @@ import 'package:mindmate/features/auth/domain/models/user_model.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
-import 'package:mindmate/core/widgets/bottom_nav_bar_widget.dart';
+import 'package:mindmate/core/navigation/app_bottom_nav.dart';
 import 'package:mindmate/core/widgets/profile_app_bar.dart';
 
 class PatientProfileScreen extends StatefulWidget {
@@ -52,26 +52,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
               ],
             ),
           ),
-          bottomNavigationBar: BottomNavBarWidget(
-        selectedIndex: 4,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              Navigator.pushReplacementNamed(context, '/patient_home');
-              break;
-            case 1:
-              Navigator.pushNamed(context, '/memory');
-              break;
-            case 3:
-              Navigator.pushReplacementNamed(context, '/patient_reminders');
-              break;
-            case 4:
-              break; // Already on profile
-            default:
-              break;
-          }
-        },
-      ),
+          bottomNavigationBar: const AppBottomNav(selectedIndex: 4),
         );
       },
     );

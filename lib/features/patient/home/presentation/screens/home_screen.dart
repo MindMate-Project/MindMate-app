@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
-import 'package:mindmate/core/widgets/bottom_nav_bar_widget.dart';
+import 'package:mindmate/core/navigation/app_bottom_nav.dart';
 import 'package:mindmate/core/widgets/appointment_card.dart';
 import 'package:mindmate/core/widgets/medicine_card.dart';
 import 'package:mindmate/features/patient/face_recognition/face_recognition.dart';
@@ -45,24 +45,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavBarWidget(
-        selectedIndex: 0,
-        onTap: (index) {
-          switch (index) {
-            case 1:
-              Navigator.pushNamed(context, '/memory');
-              break;
-            case 3:
-              Navigator.pushNamed(context, '/patient_reminders');
-              break;
-            case 4:
-              Navigator.pushNamed(context, '/profile');
-              break;
-            default:
-              break;
-          }
-        },
-      ),
+      bottomNavigationBar: const AppBottomNav(selectedIndex: 0),
     );
   }
 
