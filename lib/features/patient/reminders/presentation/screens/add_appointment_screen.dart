@@ -10,11 +10,15 @@ import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/patient/reminders/data/mappers/reminder_api_mapper.dart';
 import 'package:mindmate/features/patient/reminders/data/models/notify_before_options.dart';
+import 'package:mindmate/features/patient/reminders/data/models/reminder_item.dart';
 import 'package:mindmate/features/patient/reminders/data/services/reminders_service.dart';
 import 'package:mindmate/features/patient/reminders/presentation/widgets/notify_before_field.dart';
 
 class AddAppointmentScreen extends StatefulWidget {
-  const AddAppointmentScreen({super.key});
+  const AddAppointmentScreen({super.key, this.initialReminder});
+
+  /// When set, the screen edits this reminder (PUT) instead of creating (POST).
+  final ReminderItem? initialReminder;
 
   @override
   State<AddAppointmentScreen> createState() => _AddAppointmentScreenState();
@@ -35,6 +39,31 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
   bool _submitting = false;
 
   static const _purposes = ['Consultation', 'Follow-Up', 'Lab', 'Scan'];
+
+  bool get _isEdit => widget.initialReminder != null;
+
+  DateTime get _datePickerFirstDate {
+    if (!_isEdit) return DateTime.now();
+    final r = widget.initialReminder!;
+    final day =
+        r.appointmentDate ?? ReminderApiMapper.dateOnly(r.scheduledTime);
+    final today = ReminderApiMapper.dateOnly(DateTime.now());
+    return day.isBefore(today) ? day : today;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final r = widget.initialReminder;
+    if (r == null) return;
+    _doctor.text = r.doctorName ?? '';
+    _specialty.text = r.specialty ?? '';
+    _location.text = r.location ?? '';
+    _notes.text = r.notes ?? '';
+    _purpose = ReminderApiMapper.appointmentTypeToUi(r.appointmentType);
+    _date = r.appointmentDate ?? ReminderApiMapper.dateOnly(r.scheduledTime);
+    _time = TimeOfDay.fromDateTime(r.scheduledTime);
+  }
 
   @override
   void dispose() {
@@ -77,7 +106,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     }
 
     final scheduled = ReminderApiMapper.mergeDateAndTime(_date!, _time!);
-    if (scheduled.isBefore(DateTime.now())) {
+    if (!_isEdit && scheduled.isBefore(DateTime.now())) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Appointment time cannot be in the past')),
       );
@@ -86,17 +115,32 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
 
     setState(() => _submitting = true);
     try {
-      await _service.createAppointment(
-        caregiverId: caregiverId,
-        doctorName: _doctor.text,
-        specialty: _specialty.text,
-        location: _location.text,
-        appointmentTypeUi: _purpose!,
-        appointmentDate: _date!,
-        appointmentTime: _time!,
-        notifyBefore: _notifyBefore,
-        notes: _notes.text,
-      );
+      final existing = widget.initialReminder;
+      if (existing != null) {
+        await _service.updateAppointment(
+          id: existing.id,
+          caregiverId: caregiverId,
+          doctorName: _doctor.text,
+          specialty: _specialty.text,
+          location: _location.text,
+          appointmentTypeUi: _purpose!,
+          appointmentDate: _date!,
+          appointmentTime: _time!,
+          notes: _notes.text,
+        );
+      } else {
+        await _service.createAppointment(
+          caregiverId: caregiverId,
+          doctorName: _doctor.text,
+          specialty: _specialty.text,
+          location: _location.text,
+          appointmentTypeUi: _purpose!,
+          appointmentDate: _date!,
+          appointmentTime: _time!,
+          notifyBefore: _notifyBefore,
+          notes: _notes.text,
+        );
+      }
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
@@ -113,7 +157,9 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.neutralWhite,
-      appBar: const ProfileAppBar(title: 'Add New Appointment'),
+      appBar: ProfileAppBar(
+        title: _isEdit ? 'Edit Appointment' : 'Add New Appointment',
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -178,7 +224,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                       onDateSelected: (d) => setState(() => _date = d),
                       hintText: 'Select date',
                       dateFormat: DateFormat('dd-MM-yyyy'),
-                      firstDate: DateTime.now(),
+                      firstDate: _datePickerFirstDate,
                       lastDate: DateTime(2100),
                     ),
                   ),
@@ -198,11 +244,13 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
               ],
             ),
             const SizedBox(height: AppTheme.spacingL),
-            NotifyBeforeField(
-              value: _notifyBefore,
-              enabled: !_submitting,
-              onChanged: (v) => setState(() => _notifyBefore = v),
-            ),
+            if (!_isEdit)
+              NotifyBeforeField(
+                value: _notifyBefore,
+                enabled: !_submitting,
+                onChanged: (v) => setState(() => _notifyBefore = v),
+              ),
+            if (!_isEdit) const SizedBox(height: AppTheme.spacingL),
             const SizedBox(height: AppTheme.spacingL),
             LabeledFormField(
               label: 'Notes',

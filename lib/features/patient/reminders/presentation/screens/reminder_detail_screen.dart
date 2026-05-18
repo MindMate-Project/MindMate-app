@@ -76,11 +76,17 @@ class _ReminderDetailView extends StatelessWidget {
     }
   }
 
-  void _onEdit(BuildContext context, ReminderItem item) {
-    final page = _isAppointment(item)
-        ? const AddAppointmentScreen()
-        : const AddMedicationScreen();
-    Navigator.push(context, MaterialPageRoute<void>(builder: (_) => page));
+  Future<void> _onEdit(BuildContext context, ReminderItem item) async {
+    final isAppointment = item.type.toLowerCase() == 'appointment';
+    final page = isAppointment
+        ? AddAppointmentScreen(initialReminder: item)
+        : AddMedicationScreen(initialReminder: item);
+    final saved = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute<bool>(builder: (_) => page),
+    );
+    if (!context.mounted || saved != true) return;
+    await context.read<ReminderDetailCubit>().load(item.id);
   }
 
   @override
@@ -144,7 +150,7 @@ class _DetailBody extends StatelessWidget {
   final ReminderItem item;
   final bool isDeleting;
   final bool isCaregiver;
-  final VoidCallback onEdit;
+  final Future<void> Function() onEdit;
   final VoidCallback onDelete;
 
   bool get _isAppointment => item.type.toLowerCase() == 'appointment';

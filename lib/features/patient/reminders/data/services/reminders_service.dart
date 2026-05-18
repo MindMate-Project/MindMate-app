@@ -57,6 +57,21 @@ class RemindersService {
     }
   }
 
+  Future<void> _putReminder(String id, Map<String, dynamic> body) async {
+    try {
+      final response = await _dio.put(
+        '/api/reminders/$id',
+        data: body,
+        options: await _authOptions(),
+      );
+      if (response.statusCode == 200 || response.statusCode == 204) return;
+      throw Exception('Failed to update reminder (${response.statusCode})');
+    } on DioException catch (e) {
+      final msg = ApiHttpClient.messageFromResponseData(e.response?.data);
+      throw Exception(msg ?? e.message ?? 'Failed to update reminder');
+    }
+  }
+
   Future<({String patientId, String caregiverId})> _actorIds(
     String caregiverId,
   ) async {
@@ -120,6 +135,38 @@ class RemindersService {
     await _pruneAppointmentNotifications(created, notifyBefore);
   }
 
+  /// PUT /api/reminders/:id — appointment (partial update).
+  Future<void> updateAppointment({
+    required String id,
+    required String caregiverId,
+    required String doctorName,
+    required String specialty,
+    required String location,
+    required String appointmentTypeUi,
+    required DateTime appointmentDate,
+    required TimeOfDay appointmentTime,
+    String? notes,
+  }) async {
+    final ids = await _actorIds(caregiverId);
+    final scheduled = ReminderApiMapper.mergeDateAndTime(
+      appointmentDate,
+      appointmentTime,
+    );
+
+    await _putReminder(id, {
+      'scheduledTime': ReminderApiMapper.toInstantIso(scheduled),
+      'doctorName': doctorName.trim(),
+      'specialty': specialty.trim(),
+      'location': location.trim(),
+      'appointmentType':
+          ReminderApiMapper.appointmentTypeFromUi(appointmentTypeUi),
+      'appointmentDate': ReminderApiMapper.toDateIso(appointmentDate),
+      if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+      'patient': ids.patientId,
+      'caregiver': ids.caregiverId,
+    });
+  }
+
   /// POST /api/reminders — medication.
   Future<void> createMedication({
     required String caregiverId,
@@ -166,6 +213,38 @@ class RemindersService {
         ),
       );
     }
+  }
+
+  /// PUT /api/reminders/:id — medication (partial update).
+  Future<void> updateMedication({
+    required String id,
+    required String caregiverId,
+    required String medicineName,
+    required String dosage,
+    required String formUi,
+    required String frequencyUi,
+    required int timesPerDay,
+    required DateTime startDate,
+    required DateTime endDate,
+    required TimeOfDay time,
+  }) async {
+    final ids = await _actorIds(caregiverId);
+    final scheduled = ReminderApiMapper.mergeDateAndTime(startDate, time);
+    final frequency = ReminderApiMapper.frequencyFromUi(frequencyUi);
+
+    await _putReminder(id, {
+      'scheduledTime': ReminderApiMapper.toInstantIso(scheduled),
+      'medicineName': medicineName.trim(),
+      'dosage': dosage.trim(),
+      'form': ReminderApiMapper.medicationFormFromUi(formUi),
+      'frequency': frequency,
+      'timesPerDay': timesPerDay,
+      'startDate': ReminderApiMapper.toDateIso(startDate),
+      if (frequency == 'daily' || frequency == 'weekly')
+        'endDate': ReminderApiMapper.toDateIso(endDate),
+      'patient': ids.patientId,
+      'caregiver': ids.caregiverId,
+    });
   }
 
   /// GET /api/reminders/patient/:patientId

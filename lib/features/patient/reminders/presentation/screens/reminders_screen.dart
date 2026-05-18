@@ -50,15 +50,13 @@ class _RemindersScreenState extends State<RemindersScreen>
   bool _isCaregiver(AuthState authState) => AppBottomNav.isCaregiver(authState);
 
   Future<void> _openDetail(String reminderId) async {
-    final deleted = await Navigator.push<bool>(
+    await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) => ReminderDetailScreen(reminderId: reminderId),
       ),
     );
-    if (deleted == true) {
-      _remindersCubit.loadPatientReminders();
-    }
+    if (mounted) _remindersCubit.loadPatientReminders();
   }
 
   Future<void> _onCaregiverAddPressed() async {

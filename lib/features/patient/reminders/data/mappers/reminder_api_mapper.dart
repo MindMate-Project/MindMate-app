@@ -41,9 +41,60 @@ abstract final class ReminderApiMapper {
     }
   }
 
+  /// Maps API `appointmentType` to UI radio labels.
+  static String? appointmentTypeToUi(String? api) {
+    if (api == null || api.trim().isEmpty) return null;
+    switch (api.trim().toLowerCase()) {
+      case 'consultation':
+        return 'Consultation';
+      case 'follow-up':
+      case 'followup':
+        return 'Follow-Up';
+      case 'lab':
+        return 'Lab';
+      case 'scan':
+        return 'Scan';
+      default:
+        final s = api.trim();
+        return s.isEmpty ? null : '${s[0].toUpperCase()}${s.substring(1).toLowerCase()}';
+    }
+  }
+
   static String medicationFormFromUi(String label) => label.toLowerCase();
 
+  static String? medicationFormToUi(String? api) {
+    if (api == null || api.trim().isEmpty) return null;
+    switch (api.trim().toLowerCase()) {
+      case 'tablet':
+        return 'Tablet';
+      case 'capsule':
+        return 'Capsule';
+      case 'syrup':
+        return 'Syrup';
+      case 'injection':
+        return 'Injection';
+      default:
+        final s = api.trim();
+        return '${s[0].toUpperCase()}${s.substring(1).toLowerCase()}';
+    }
+  }
+
   static String frequencyFromUi(String label) => label.toLowerCase();
+
+  static String? frequencyToUi(String? api) {
+    if (api == null || api.trim().isEmpty) return null;
+    switch (api.trim().toLowerCase()) {
+      case 'once':
+        return 'Once';
+      case 'daily':
+        return 'Daily';
+      case 'weekly':
+        return 'Weekly';
+      default:
+        final s = api.trim();
+        return '${s[0].toUpperCase()}${s.substring(1).toLowerCase()}';
+    }
+  }
 
   static int parseTimesPerDay(String? raw) {
     if (raw == null || raw.trim().isEmpty) return 1;

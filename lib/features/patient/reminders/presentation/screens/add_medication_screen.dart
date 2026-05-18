@@ -10,11 +10,15 @@ import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/patient/reminders/data/mappers/reminder_api_mapper.dart';
 import 'package:mindmate/features/patient/reminders/data/models/notify_before_options.dart';
+import 'package:mindmate/features/patient/reminders/data/models/reminder_item.dart';
 import 'package:mindmate/features/patient/reminders/data/services/reminders_service.dart';
 import 'package:mindmate/features/patient/reminders/presentation/widgets/notify_before_field.dart';
 
 class AddMedicationScreen extends StatefulWidget {
-  const AddMedicationScreen({super.key});
+  const AddMedicationScreen({super.key, this.initialReminder});
+
+  /// When set, the screen edits this reminder (PUT) instead of creating (POST).
+  final ReminderItem? initialReminder;
 
   @override
   State<AddMedicationScreen> createState() => _AddMedicationScreenState();
@@ -37,6 +41,35 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
 
   static const _types = ['Tablet', 'Capsule', 'Syrup', 'Injection'];
   static const _frequencies = ['Once', 'Daily', 'Weekly'];
+
+  bool get _isEdit => widget.initialReminder != null;
+
+  DateTime get _fromDateFirstSelectable {
+    if (!_isEdit) return DateTime.now();
+    final r = widget.initialReminder!;
+    final start =
+        r.startDate ?? ReminderApiMapper.dateOnly(r.scheduledTime);
+    final today = ReminderApiMapper.dateOnly(DateTime.now());
+    return start.isBefore(today) ? start : today;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final r = widget.initialReminder;
+    if (r == null) return;
+    _drugName.text = r.medicineName ?? '';
+    _dosage.text = r.dosage ?? '';
+    if (r.timesPerDay != null) {
+      _timePerDay.text = r.timesPerDay.toString();
+    }
+    final start = r.startDate ?? ReminderApiMapper.dateOnly(r.scheduledTime);
+    _fromDate = start;
+    _toDate = r.endDate ?? start;
+    _time = TimeOfDay.fromDateTime(r.scheduledTime);
+    _type = ReminderApiMapper.medicationFormToUi(r.form);
+    _frequency = ReminderApiMapper.frequencyToUi(r.frequency);
+  }
 
   @override
   void dispose() {
@@ -88,7 +121,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     }
 
     final scheduled = ReminderApiMapper.mergeDateAndTime(_fromDate!, _time!);
-    if (scheduled.isBefore(DateTime.now())) {
+    if (!_isEdit && scheduled.isBefore(DateTime.now())) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Start time cannot be in the past')),
       );
@@ -97,18 +130,34 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
 
     setState(() => _submitting = true);
     try {
-      await _service.createMedication(
-        caregiverId: caregiverId,
-        medicineName: _drugName.text,
-        dosage: _dosage.text,
-        formUi: _type!,
-        frequencyUi: _frequency!,
-        timesPerDay: ReminderApiMapper.parseTimesPerDay(_timePerDay.text),
-        startDate: _fromDate!,
-        endDate: _toDate!,
-        time: _time!,
-        notifyBefore: _notifyBefore,
-      );
+      final existing = widget.initialReminder;
+      if (existing != null) {
+        await _service.updateMedication(
+          id: existing.id,
+          caregiverId: caregiverId,
+          medicineName: _drugName.text,
+          dosage: _dosage.text,
+          formUi: _type!,
+          frequencyUi: _frequency!,
+          timesPerDay: ReminderApiMapper.parseTimesPerDay(_timePerDay.text),
+          startDate: _fromDate!,
+          endDate: _toDate!,
+          time: _time!,
+        );
+      } else {
+        await _service.createMedication(
+          caregiverId: caregiverId,
+          medicineName: _drugName.text,
+          dosage: _dosage.text,
+          formUi: _type!,
+          frequencyUi: _frequency!,
+          timesPerDay: ReminderApiMapper.parseTimesPerDay(_timePerDay.text),
+          startDate: _fromDate!,
+          endDate: _toDate!,
+          time: _time!,
+          notifyBefore: _notifyBefore,
+        );
+      }
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
@@ -155,7 +204,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.neutralWhite,
-      appBar: const ProfileAppBar(title: 'Add New Medicine'),
+      appBar: ProfileAppBar(
+        title: _isEdit ? 'Edit Medicine' : 'Add New Medicine',
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -227,7 +278,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                       }),
                       hintText: 'Select date',
                       dateFormat: DateFormat('dd-MM-yyyy'),
-                      firstDate: DateTime.now(),
+                      firstDate: _fromDateFirstSelectable,
                       lastDate: DateTime(2100),
                     ),
                   ),
@@ -241,7 +292,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                       onDateSelected: (d) => setState(() => _toDate = d),
                       hintText: 'Select date',
                       dateFormat: DateFormat('dd-MM-yyyy'),
-                      firstDate: _fromDate ?? DateTime.now(),
+                      firstDate: _fromDate ?? _fromDateFirstSelectable,
                       lastDate: DateTime(2100),
                     ),
                   ),
@@ -249,12 +300,13 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               ],
             ),
             const SizedBox(height: AppTheme.spacingL),
-            NotifyBeforeField(
-              value: _notifyBefore,
-              enabled: !_submitting,
-              onChanged: (v) => setState(() => _notifyBefore = v),
-            ),
-            const SizedBox(height: AppTheme.spacingXXL),
+            if (!_isEdit)
+              NotifyBeforeField(
+                value: _notifyBefore,
+                enabled: !_submitting,
+                onChanged: (v) => setState(() => _notifyBefore = v),
+              ),
+            if (!_isEdit) const SizedBox(height: AppTheme.spacingXXL),
             Row(
               children: [
                 Expanded(
