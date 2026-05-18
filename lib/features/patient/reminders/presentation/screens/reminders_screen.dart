@@ -89,6 +89,7 @@ class _RemindersScreenState extends State<RemindersScreen>
         builder: (context, authState) {
           final isCaregiver = _isCaregiver(authState);
           return Scaffold(
+            backgroundColor: AppTheme.backgroundWhite,
             appBar: AppBar(
               leading: IconButton(
                 icon: Icon(

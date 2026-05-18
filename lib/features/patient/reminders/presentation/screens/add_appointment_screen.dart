@@ -61,7 +61,9 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_date == null || _time == null || _purpose == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please complete date, time, and purpose')),
+        const SnackBar(
+          content: Text('Please complete date, time, and purpose'),
+        ),
       );
       return;
     }
@@ -100,9 +102,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
-        ),
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -170,7 +170,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  flex: 3,
+                  flex: 2,
                   child: LabeledFormField(
                     label: 'Date *',
                     child: DatePickerField(
@@ -206,10 +206,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
             const SizedBox(height: AppTheme.spacingL),
             LabeledFormField(
               label: 'Notes',
-              child: CustomTextFormField(
-                controller: _notes,
-                hintText: '',
-              ),
+              child: CustomTextFormField(controller: _notes, hintText: ''),
             ),
             const SizedBox(height: AppTheme.spacingXXL),
             Row(

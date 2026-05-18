@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mindmate/core/network/patient_context_store.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/register_request.dart';
 import '../../domain/models/user_model.dart';
 import '../../data/services/auth_service.dart';
@@ -10,6 +13,10 @@ class AuthCubit extends Cubit<AuthState> {
   final AuthService authService;
   final PatientContextStore _patientContextStore = PatientContextStore();
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  static const _tokenKey = 'auth_token';
+  static const _userJsonKey = 'auth_user';
+  static const _rememberMeKey = 'remember_me';
+  static const _onboardingCompletedKey = 'onboarding_completed';
 
   AuthCubit(this.authService) : super(AuthInitial());
 
@@ -28,35 +35,69 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Login with email and password
-  Future<void> login(String email, String password) async {
+  /// Login with email and password.
+  /// When [rememberMe] is false, the session ends on the next app launch.
+  Future<void> login(
+    String email,
+    String password, {
+    required bool rememberMe,
+  }) async {
     emit(AuthLoading());
     try {
       final response = await authService.login(email, password);
       if (response.user != null && response.token != null) {
-        await _saveToken(response.token!);
-
-        // Save patient ID
         final user = response.user!;
-        if (user.role == 'patient' && user.id != null) {
-          // Patient: use their own ID
-          await _patientContextStore.setActivePatientId(user.id!);
-        } else if (user.role == 'caregiver' &&
-            user.patients != null &&
-            user.patients!.isNotEmpty) {
-          // Caregiver: auto-select first linked patient as initial context.
-          await _patientContextStore.setActivePatientId(user.patients!.first);
-        } else {
-          await _patientContextStore.clearActivePatientId();
-        }
-
-        emit(AuthSuccess(response.user!, response.token));
+        await _persistSession(user, response.token!, rememberMe: rememberMe);
+        emit(AuthSuccess(user, response.token));
       } else {
         emit(AuthFailure('Login failed: Invalid response from server'));
       }
     } catch (e) {
       emit(AuthFailure(e.toString()));
     }
+  }
+
+  Future<bool> getRememberMe() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_rememberMeKey) ?? false;
+  }
+
+  Future<void> markOnboardingComplete() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_onboardingCompletedKey, true);
+  }
+
+  /// Resolves the first route after splash (session restore or guest flow).
+  Future<String> resolveStartRoute() async {
+    final prefs = await SharedPreferences.getInstance();
+    final rememberMe = prefs.getBool(_rememberMeKey) ?? false;
+
+    if (!rememberMe) {
+      await _clearCredentials(keepRememberMeFlag: true);
+    } else {
+      final token = await getToken();
+      final userJson = await _secureStorage.read(key: _userJsonKey);
+      if (token != null &&
+          token.isNotEmpty &&
+          userJson != null &&
+          userJson.isNotEmpty) {
+        try {
+          final user = User.fromJson(
+            jsonDecode(userJson) as Map<String, dynamic>,
+          );
+          await _applyPatientContext(user);
+          emit(AuthSuccess(user, token));
+          return _homeRouteFor(user.role);
+        } catch (_) {
+          await _clearCredentials();
+        }
+      } else {
+        await _clearCredentials();
+      }
+    }
+
+    final onboardingDone = prefs.getBool(_onboardingCompletedKey) ?? false;
+    return onboardingDone ? '/login' : '/roleSelection';
   }
 
   /// Send password reset code to email
@@ -85,7 +126,11 @@ class AuthCubit extends Cubit<AuthState> {
         newPassword,
       );
       if (response.user != null && response.token != null) {
-        await _saveToken(response.token!);
+        await _persistSession(
+          response.user!,
+          response.token!,
+          rememberMe: true,
+        );
         emit(ResetPasswordSuccess(response.user!, response.token!));
       } else {
         emit(AuthFailure('Password reset failed: Invalid response from server'));
@@ -95,23 +140,63 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Save authentication token to local storage
-  Future<void> _saveToken(String token) async {
-    await _secureStorage.write(key: 'auth_token', value: token);
+  Future<void> _persistSession(
+    User user,
+    String token, {
+    required bool rememberMe,
+  }) async {
+    await _secureStorage.write(key: _tokenKey, value: token);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_rememberMeKey, rememberMe);
+
+    if (rememberMe) {
+      await _secureStorage.write(
+        key: _userJsonKey,
+        value: jsonEncode(user.toJson()),
+      );
+    } else {
+      await _secureStorage.delete(key: _userJsonKey);
+    }
+
+    await _applyPatientContext(user);
   }
 
-  Future<String?> getToken() async {
-    return _secureStorage.read(key: 'auth_token');
+  Future<void> _applyPatientContext(User user) async {
+    if (user.role == 'patient' && user.id != null) {
+      await _patientContextStore.setActivePatientId(user.id!);
+    } else if (user.role == 'caregiver' &&
+        user.patients != null &&
+        user.patients!.isNotEmpty) {
+      await _patientContextStore.setActivePatientId(user.patients!.first);
+    } else {
+      await _patientContextStore.clearActivePatientId();
+    }
   }
+
+  String _homeRouteFor(String role) =>
+      role == 'caregiver' ? '/caregiver_home' : '/patient_home';
+
+  Future<String?> getToken() async => _secureStorage.read(key: _tokenKey);
 
   Future<bool> isAuthenticated() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool(_rememberMeKey) ?? false)) return false;
     final token = await getToken();
     return token != null && token.isNotEmpty;
   }
 
+  Future<void> _clearCredentials({bool keepRememberMeFlag = false}) async {
+    await _secureStorage.delete(key: _tokenKey);
+    await _secureStorage.delete(key: _userJsonKey);
+    if (!keepRememberMeFlag) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_rememberMeKey, false);
+    }
+  }
+
   /// Logout and clear stored data
   Future<void> logout() async {
-    await _secureStorage.delete(key: 'auth_token');
+    await _clearCredentials();
     await _patientContextStore.clearActivePatientId();
     emit(AuthInitial());
   }

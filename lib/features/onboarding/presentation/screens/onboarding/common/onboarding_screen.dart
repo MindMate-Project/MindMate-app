@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_item.dart';
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_page.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
@@ -51,7 +53,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  void _goToAuth() {
+  Future<void> _goToAuth() async {
+    await context.read<AuthCubit>().markOnboardingComplete();
+    if (!mounted) return;
     Navigator.pushReplacementNamed(context, '/signup');
   }
 
@@ -62,6 +66,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final isLast = _currentIndex == items.length - 1;
 
     return Scaffold(
+      backgroundColor: AppTheme.backgroundWhite,
       body: SafeArea(
         minimum: const EdgeInsets.symmetric(horizontal: 37, vertical: 40),
         child: Column(
@@ -102,6 +107,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             const SizedBox(height: 33),
             _buildBottomButtons(isFirst, isLast),
+            const SizedBox(height: 20),
           ],
         ),
       ),

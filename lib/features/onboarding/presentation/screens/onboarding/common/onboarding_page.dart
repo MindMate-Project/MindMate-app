@@ -14,7 +14,7 @@ class OnboardingPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
-          flex: 3,
+          flex: 2,
           child: Center(
             child: Image.asset(
               item.imagePath,
