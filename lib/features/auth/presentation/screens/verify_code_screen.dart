@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/features/auth/data/services/auth_service.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:pinput/pinput.dart';
 
 class VerifyCodeScreen extends StatefulWidget {
@@ -104,18 +107,18 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       setState(() => _isLoading = true);
 
       try {
-        final authService = AuthService();
-        final result = await authService.forgotPassword(widget.email);
+        final authCubit = context.read<AuthCubit>();
+        await authCubit.forgotPassword(widget.email);
+        final currentState = authCubit.state;
 
         if (mounted) {
           setState(() => _isLoading = false);
-          if (result['success'] == true) {
+          if (currentState is ForgotPasswordSuccess) {
             _startResendCountdown();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  result['message']?.toString() ??
-                      'Code resent to ${widget.email}',
+                  currentState.message,
                 ),
                 backgroundColor: AppTheme.successColor,
               ),
@@ -124,7 +127,9 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  result['message']?.toString() ?? 'Failed to resend code',
+                  currentState is AuthFailure
+                      ? currentState.error
+                      : 'Failed to resend code',
                 ),
                 backgroundColor: AppTheme.errorColor,
               ),

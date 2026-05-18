@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:mindmate/core/network/api_http_client.dart';
 import '../../domain/models/auth_response_model.dart';
 import '../../domain/models/user_model.dart';
 import 'package:mindmate/core/config/api_config.dart';
@@ -6,18 +7,7 @@ import 'package:mindmate/core/config/api_config.dart';
 class AuthService {
   final Dio _dio;
 
-  AuthService()
-    : _dio = Dio(
-        BaseOptions(
-          baseUrl: ApiConfig.baseUrl,
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          connectTimeout: const Duration(seconds: 30),
-          receiveTimeout: const Duration(seconds: 30),
-        ),
-      );
+  AuthService() : _dio = ApiHttpClient.dio;
 
   /// Helper method to handle errors and parse responses
   dynamic _handleResponse(Response response) {

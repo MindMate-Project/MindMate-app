@@ -9,6 +9,7 @@ class MedicationCard extends StatelessWidget {
   final DateTime startDate;
   final DateTime? endDate;
   final String time;
+  final VoidCallback? onTap;
 
   const MedicationCard({
     super.key,
@@ -18,6 +19,7 @@ class MedicationCard extends StatelessWidget {
     required this.startDate,
     this.endDate,
     required this.time,
+    this.onTap,
   });
 
   @override
@@ -25,7 +27,10 @@ class MedicationCard extends StatelessWidget {
     final started = 'Started ${_formatDayMonth(startDate)}';
     final end = endDate == null ? '' : ' | End ${_formatDayMonth(endDate!)}';
 
-    return InfoCard(
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: InfoCard(
       tag: time,
       children: [
         Row(
@@ -75,6 +80,7 @@ class MedicationCard extends StatelessWidget {
           ],
         ),
       ],
+      ),
     );
   }
 

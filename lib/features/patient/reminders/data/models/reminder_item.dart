@@ -44,10 +44,14 @@ class ReminderItem {
   factory ReminderItem.fromJson(Map<String, dynamic> json) {
     DateTime? parseDate(dynamic value) {
       if (value == null) return null;
-      if (value is DateTime) return value;
-      final s = value.toString();
-      if (s.trim().isEmpty) return null;
-      return DateTime.tryParse(s);
+      if (value is DateTime) {
+        return value.isUtc ? value.toLocal() : value;
+      }
+      final s = value.toString().trim();
+      if (s.isEmpty) return null;
+      final parsed = DateTime.tryParse(s);
+      if (parsed == null) return null;
+      return parsed.isUtc ? parsed.toLocal() : parsed;
     }
 
     int? parseInt(dynamic value) {

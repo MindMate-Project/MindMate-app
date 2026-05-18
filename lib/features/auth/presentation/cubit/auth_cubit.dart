@@ -1,11 +1,14 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:mindmate/core/network/patient_context_store.dart';
 import '../../domain/models/user_model.dart';
 import '../../data/services/auth_service.dart';
 import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final AuthService authService;
+  final PatientContextStore _patientContextStore = PatientContextStore();
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
   AuthCubit(this.authService) : super(AuthInitial());
 
@@ -36,14 +39,15 @@ class AuthCubit extends Cubit<AuthState> {
         final user = response.user!;
         if (user.role == 'patient' && user.id != null) {
           // Patient: use their own ID
-          await _savePatientId(user.id!);
+          await _patientContextStore.setActivePatientId(user.id!);
+        } else if (user.role == 'caregiver' &&
+            user.patients != null &&
+            user.patients!.isNotEmpty) {
+          // Caregiver: auto-select first linked patient as initial context.
+          await _patientContextStore.setActivePatientId(user.patients!.first);
+        } else {
+          await _patientContextStore.clearActivePatientId();
         }
-        //  else if (user.role == 'caregiver' &&
-        //     user.patients != null &&
-        //     user.patients!.isNotEmpty) {
-        //   // Caregiver: use the first linked patient's ID
-        //   await _savePatientId(user.patients!.first);
-        // }
 
         emit(AuthSuccess(response.user!, response.token));
       } else {
@@ -55,52 +59,49 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   /// Send password reset code to email
-  // Future<void> forgotPassword(String email) async {
-  //   emit(ForgotPasswordLoading());
-  //   try {
-  //     final result = await authService.forgotPassword(email);
-  //     if (result['success'] == true) {
-  //       emit(ForgotPasswordSuccess(result['message'] ?? 'Code sent successfully'));
-  //     } else {
-  //       emit(AuthFailure(result['message'] ?? 'Failed to send reset code'));
-  //     }
-  //   } catch (e) {
-  //     emit(AuthFailure(e.toString()));
-  //   }
-  // }
+  Future<void> forgotPassword(String email) async {
+    emit(ForgotPasswordLoading());
+    try {
+      final result = await authService.forgotPassword(email);
+      if (result['success'] == true) {
+        emit(ForgotPasswordSuccess(result['message'] ?? 'Code sent successfully'));
+      } else {
+        emit(AuthFailure(result['message'] ?? 'Failed to send reset code'));
+      }
+    } catch (e) {
+      emit(AuthFailure(e.toString()));
+    }
+  }
 
   /// Reset password using email, code, and new password
-  // Future<void> resetPassword(String email, String code, String newPassword) async {
-  //   emit(ResetPasswordLoading());
-  //   try {
-  //     final response = await authService.resetPassword(email, code, newPassword);
-  //     if (response.user != null && response.token != null) {
-  //       await _saveToken(response.token!);
-  //       emit(ResetPasswordSuccess(response.user!, response.token!));
-  //     } else {
-  //       emit(AuthFailure('Password reset failed: Invalid response from server'));
-  //     }
-  //   } catch (e) {
-  //     emit(AuthFailure(e.toString()));
-  //   }
-  // }
+  Future<void> resetPassword(String email, String code, String newPassword) async {
+    final _ = code;
+    emit(ResetPasswordLoading());
+    try {
+      final response = await authService.resetPassword(
+        email,
+        newPassword,
+        newPassword,
+      );
+      if (response.user != null && response.token != null) {
+        await _saveToken(response.token!);
+        emit(ResetPasswordSuccess(response.user!, response.token!));
+      } else {
+        emit(AuthFailure('Password reset failed: Invalid response from server'));
+      }
+    } catch (e) {
+      emit(AuthFailure(e.toString()));
+    }
+  }
 
   /// Save authentication token to local storage
   Future<void> _saveToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('auth_token', token);
-  }
-
-  /// Save patient ID for use by other features (Memory, etc.)
-  Future<void> _savePatientId(String patientId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('patient_id', patientId);
+    await _secureStorage.write(key: 'auth_token', value: token);
   }
 
   /// Get saved authentication token from local storage
   Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
+    return _secureStorage.read(key: 'auth_token');
   }
 
   /// Check if user is authenticated
@@ -111,9 +112,8 @@ class AuthCubit extends Cubit<AuthState> {
 
   /// Logout and clear stored data
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
-    await prefs.remove('patient_id');
+    await _secureStorage.delete(key: 'auth_token');
+    await _patientContextStore.clearActivePatientId();
     emit(AuthInitial());
   }
 
