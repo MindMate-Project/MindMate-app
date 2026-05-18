@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
-import 'package:mindmate/core/widgets/bottom_nav_bar_widget.dart';
+import 'package:mindmate/core/navigation/app_bottom_nav.dart';
 import 'package:mindmate/features/memory/data/models/memory_item.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_cubit.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_state.dart';
@@ -84,18 +84,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
           Expanded(child: _buildBody()),
         ],
       ),
-      bottomNavigationBar: BottomNavBarWidget(
-        selectedIndex: 1,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pop(context);
-          } else if (index == 3) {
-            Navigator.pushNamed(context, '/patient_reminders');
-          } else if (index == 4) {
-            Navigator.pushNamed(context, '/profile');
-          }
-        },
-      ),
+      bottomNavigationBar: const AppBottomNav(selectedIndex: 1),
     );
   }
 

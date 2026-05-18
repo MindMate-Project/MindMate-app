@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mindmate/core/network/patient_context_store.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
-// import 'package:mindmate/core/widgets/bottom_nav_bar_widget.dart';
-import 'package:mindmate/core/widgets/caregiver_bottom_nav.dart';
+import 'package:mindmate/core/navigation/app_bottom_nav.dart';
 import 'package:mindmate/features/assignments/data/models/assigned_patient_row.dart';
 import 'package:mindmate/features/assignments/data/services/assignment_service.dart';
 import '../widgets/patient_card.dart';
@@ -111,7 +110,7 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
           ),
         ),
       ),
-      bottomNavigationBar: CaregiverBottomNav(),
+      bottomNavigationBar: const AppBottomNav(selectedIndex: 0),
     );
   }
 

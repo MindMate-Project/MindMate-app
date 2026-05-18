@@ -31,27 +31,25 @@ class AuthFailure extends AuthState {
   List<Object?> get props => [error];
 }
 
-// // Forgot Password States
-// class ForgotPasswordLoading extends AuthState {}
+class ForgotPasswordLoading extends AuthState {}
 
-// class ForgotPasswordSuccess extends AuthState {
-//   final String message;
+class ForgotPasswordSuccess extends AuthState {
+  final String message;
 
-//   const ForgotPasswordSuccess(this.message);
+  const ForgotPasswordSuccess(this.message);
 
-//   @override
-//   List<Object?> get props => [message];
-// }
+  @override
+  List<Object?> get props => [message];
+}
 
-// Reset Password States
-// class ResetPasswordLoading extends AuthState {}
+class ResetPasswordLoading extends AuthState {}
 
-// class ResetPasswordSuccess extends AuthState {
-//   final User user;
-//   final String token;
+class ResetPasswordSuccess extends AuthState {
+  final User user;
+  final String token;
 
-//   const ResetPasswordSuccess(this.user, this.token);
+  const ResetPasswordSuccess(this.user, this.token);
 
-//   @override
-//   List<Object?> get props => [user, token];
-// }
+  @override
+  List<Object?> get props => [user, token];
+}

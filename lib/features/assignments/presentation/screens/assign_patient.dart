@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/utils/validation.utils.dart';
-import 'package:mindmate/core/widgets/caregiver_bottom_nav.dart';
+import 'package:mindmate/core/navigation/app_bottom_nav.dart';
 import 'package:mindmate/core/widgets/custom_elevated_button.dart';
 import 'package:mindmate/core/widgets/custom_text_form_field.dart';
 import 'package:mindmate/core/widgets/profile_app_bar.dart';
@@ -135,7 +135,7 @@ class _AddPatientState extends State<AddPatient> {
           ),
         ),
       ),
-      bottomNavigationBar: const CaregiverBottomNav(),
+      bottomNavigationBar: const AppBottomNav(selectedIndex: 0),
     );
   }
 }

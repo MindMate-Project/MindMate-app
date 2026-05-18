@@ -171,64 +171,7 @@ class _LoginState extends State<Login> {
                   },
                 ),
 
-                SizedBox(height: AppTheme.spacingL),
-
-                Column(
-                  children: <Widget>[
-                    Row(
-                      spacing: AppTheme.spacingL,
-                      children: <Widget>[
-                        Expanded(
-                          child: Divider(color: Color(0xFFEDF1F3), height: 18),
-                        ),
-                        Text("OR", style: AppTheme.bodyXSmall),
-                        Expanded(
-                          child: Divider(color: Color(0xFFEDF1F3), height: 18),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-
-                SizedBox(height: AppTheme.spacingM),
-                SizedBox(
-                  width: double.infinity,
-                  height: 45,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // log in with google
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.backgroundWhite,
-                      foregroundColor: Color(0xFF1A1C1E),
-
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(color: Color(0xffEFF0F6)),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Wrap(
-                      spacing: 10,
-                      children: [
-                        Image.asset(
-                          'assets/images/google_icon.png',
-                          width: 18,
-                          height: 18,
-                        ),
-                        Text(
-                          'Continue with Google',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(height: 107),
+                SizedBox(height: 50),
                 // Sign up link
                 Center(
                   child: Wrap(

@@ -1,37 +1,14 @@
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:mindmate/core/config/api_config.dart';
+import 'package:mindmate/core/network/api_http_client.dart';
 import 'package:mindmate/features/auth/domain/models/user_model.dart';
 
 class ProfileService {
   final Dio _dio;
 
   ProfileService()
-      : _dio = Dio(
-          BaseOptions(
-            baseUrl: ApiConfig.baseUrl,
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            connectTimeout: const Duration(seconds: 30),
-            receiveTimeout: const Duration(seconds: 30),
-          ),
-        );
+      : _dio = ApiHttpClient.dio;
 
-  Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
-  }
-
-  Future<Options> _authOptions() async {
-    final token = await _getToken();
-    return Options(
-      headers: {
-        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
-      },
-    );
-  }
+  Future<Options> _authOptions() => ApiHttpClient.authorizedOptions();
 
   Future<User> getMyProfile({required String role}) async {
     final endpoint = role == 'caregiver' ? '/api/caregiver' : '/api/patient';
