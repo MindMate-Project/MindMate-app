@@ -3,10 +3,10 @@ class User {
   final String name;
   final String email;
   final String role;
-  // final String? relation;
   final String? phoneNumber;
   final List<String>? patients;
   final String? gender;
+  final String? address;
   final DateTime? dateOfBirth;
 
   User({
@@ -14,10 +14,10 @@ class User {
     required this.name,
     required this.email,
     required this.role,
-    // this.relation,
     this.phoneNumber,
     this.patients,
     this.gender,
+    this.address,
     this.dateOfBirth,
   });
 
@@ -41,6 +41,7 @@ class User {
           ? List<String>.from(json['patients'].map((p) => p.toString()))
           : null,
       gender: json['gender'],
+      address: json['address']?.toString(),
       dateOfBirth: _parseDate(json['dateOfBirth']),
     );
   }
@@ -62,6 +63,7 @@ class User {
       'phoneNumber': phoneNumber,
       'patients': patients,
       'gender': gender,
+      if (address != null) 'address': address,
       if (dateOfBirth != null) 'dateOfBirth': dateOfBirth!.toIso8601String(),
     };
   }

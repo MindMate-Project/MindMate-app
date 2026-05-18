@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mindmate/core/network/patient_context_store.dart';
+import '../../domain/models/register_request.dart';
 import '../../domain/models/user_model.dart';
 import '../../data/services/auth_service.dart';
 import 'auth_state.dart';
@@ -13,10 +14,10 @@ class AuthCubit extends Cubit<AuthState> {
   AuthCubit(this.authService) : super(AuthInitial());
 
   /// Register a new user
-  Future<void> register(User user, String password) async {
+  Future<void> register(RegisterRequest request) async {
     emit(AuthLoading());
     try {
-      final response = await authService.register(user, password);
+      final response = await authService.register(request);
       if (response.user != null) {
         emit(AuthSuccess(response.user!, null));
       } else {
@@ -35,7 +36,7 @@ class AuthCubit extends Cubit<AuthState> {
       if (response.user != null && response.token != null) {
         await _saveToken(response.token!);
 
-        // Save patient ID for features like Memory
+        // Save patient ID
         final user = response.user!;
         if (user.role == 'patient' && user.id != null) {
           // Patient: use their own ID
@@ -73,7 +74,7 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  /// Reset password using email, code, and new password
+  /// Reset password 
   Future<void> resetPassword(String email, String code, String newPassword) async {
     final _ = code;
     emit(ResetPasswordLoading());
@@ -99,12 +100,10 @@ class AuthCubit extends Cubit<AuthState> {
     await _secureStorage.write(key: 'auth_token', value: token);
   }
 
-  /// Get saved authentication token from local storage
   Future<String?> getToken() async {
     return _secureStorage.read(key: 'auth_token');
   }
 
-  /// Check if user is authenticated
   Future<bool> isAuthenticated() async {
     final token = await getToken();
     return token != null && token.isNotEmpty;

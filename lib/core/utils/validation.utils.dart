@@ -46,15 +46,23 @@ class ValidationUtils {
     return null;
   }
 
-  // static String? validatePhone(String? phone) {
-  //   if (phone == null || phone.isEmpty) {
-  //     return null; // Phone is optional
-  //   }
-  //   if (!RegExp(r'^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$').hasMatch(phone)) {
-  //     return 'Enter a valid phone number';
-  //   }
-  //   return null;
-  // }
+  static String? validatePhone(String? phone, {bool required = false}) {
+    if (phone == null || phone.trim().isEmpty) {
+      return required ? 'Phone number is required' : null;
+    }
+    final cleaned = phone.replaceAll(RegExp(r'[\s\-().]'), '');
+    if (!RegExp(r'^\+?[0-9]{8,15}$').hasMatch(cleaned)) {
+      return 'Enter a valid phone number';
+    }
+    return null;
+  }
+
+  static String? validateRequired(String? value, String fieldLabel) {
+    if (value == null || value.trim().isEmpty) {
+      return '$fieldLabel is required';
+    }
+    return null;
+  }
 
   static String? validateAge(DateTime? birthDate) {
     if (birthDate == null) return null;
