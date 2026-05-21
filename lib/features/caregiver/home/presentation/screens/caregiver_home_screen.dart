@@ -11,7 +11,7 @@ import 'package:mindmate/features/assignments/presentation/screens/assign_patien
 import 'package:mindmate/features/caregiver/home/presentation/screens/caregiver_notifications_screen.dart';
 
 class CaregiverHomePage extends StatefulWidget {
-  const CaregiverHomePage({Key? key}) : super(key: key);
+  const CaregiverHomePage({super.key});
 
   @override
   State<CaregiverHomePage> createState() => _CaregiverHomePageState();

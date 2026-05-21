@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:mindmate/core/network/api_http_client.dart';
 import '../../domain/models/auth_response_model.dart';
 import '../../domain/models/register_request.dart';
-import 'package:mindmate/core/config/api_config.dart';
 
 class AuthService {
   final Dio _dio;
@@ -107,17 +106,10 @@ class AuthService {
   /// Returns AuthResponse with user data and token
   Future<AuthResponse> login(String email, String password) async {
     try {
-      print('Logging in: email=$email');
-      print('URL: ${ApiConfig.baseUrl}/api/auth/login');
-
       final response = await _dio.post(
         '/api/auth/login',
         data: {'email': email, 'password': password},
       );
-
-      print('Response status: ${response.statusCode}');
-      print('Response data type: ${response.data.runtimeType}');
-      print('Response data: ${response.data}');
 
       final responseBody = _handleResponse(response);
 
@@ -130,12 +122,8 @@ class AuthService {
         throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      print('DioException: ${e.type}');
-      print('Response: ${e.response?.data}');
-      print('Status: ${e.response?.statusCode}');
       throw Exception(_extractErrorMessage(e, 'Login failed'));
     } catch (e) {
-      print('General error: $e');
       throw Exception('Login error: ${e.toString()}');
     }
   }

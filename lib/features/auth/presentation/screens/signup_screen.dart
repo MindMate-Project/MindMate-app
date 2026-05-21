@@ -183,7 +183,7 @@ class _SignupState extends State<Signup> {
                 _labeledField(
                   label: 'Role',
                   field: DropdownButtonFormField<String>(
-                    value: _selectedRole,
+                    initialValue: _selectedRole,
                     hint: const Text('Select your role'),
                     items: _roles
                         .map(
@@ -202,7 +202,7 @@ class _SignupState extends State<Signup> {
                 _labeledField(
                   label: 'Gender',
                   field: DropdownButtonFormField<String>(
-                    value: _selectedGender,
+                    initialValue: _selectedGender,
                     hint: const Text('Select your gender'),
                     items: _genders
                         .map(

@@ -194,21 +194,23 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
             const SizedBox(height: AppTheme.spacingL),
             LabeledFormField(
               label: 'Purpose *',
-              child: Column(
-                children: _purposes
-                    .map(
-                      (p) => RadioListTile<String>(
-                        title: Text(p, style: AppTheme.label),
-                        value: p,
-                        groupValue: _purpose,
-                        activeColor: AppTheme.primaryColor,
-                        contentPadding: EdgeInsets.zero,
-                        onChanged: _submitting
-                            ? null
-                            : (v) => setState(() => _purpose = v),
-                      ),
-                    )
-                    .toList(),
+              child: RadioGroup<String>(
+                groupValue: _purpose,
+                onChanged: _submitting
+                    ? (_) {}
+                    : (v) => setState(() => _purpose = v),
+                child: Column(
+                  children: _purposes
+                      .map(
+                        (p) => RadioListTile<String>(
+                          title: Text(p, style: AppTheme.label),
+                          value: p,
+                          activeColor: AppTheme.primaryColor,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      )
+                      .toList(),
+                ),
               ),
             ),
             const SizedBox(height: AppTheme.spacingL),

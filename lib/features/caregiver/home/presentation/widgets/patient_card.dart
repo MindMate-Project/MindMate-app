@@ -8,12 +8,12 @@ class PatientCard extends StatelessWidget {
   final bool isSelected;
 
   const PatientCard({
-    Key? key,
+    super.key,
     required this.name,
     required this.relation,
     required this.onTap,
     this.isSelected = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

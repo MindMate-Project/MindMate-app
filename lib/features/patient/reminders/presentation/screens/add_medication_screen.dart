@@ -180,22 +180,24 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   }) {
     return LabeledFormField(
       label: label,
-      child: Wrap(
-        children: options
-            .map(
-              (o) => SizedBox(
-                width: 160,
-                child: RadioListTile<String>(
-                  title: Text(o, style: AppTheme.label),
-                  value: o,
-                  groupValue: groupValue,
-                  activeColor: AppTheme.primaryColor,
-                  contentPadding: EdgeInsets.zero,
-                  onChanged: _submitting ? null : onChanged,
+      child: RadioGroup<String>(
+        groupValue: groupValue,
+        onChanged: _submitting ? (_) {} : onChanged,
+        child: Wrap(
+          children: options
+              .map(
+                (o) => SizedBox(
+                  width: 160,
+                  child: RadioListTile<String>(
+                    title: Text(o, style: AppTheme.label),
+                    value: o,
+                    activeColor: AppTheme.primaryColor,
+                    contentPadding: EdgeInsets.zero,
+                  ),
                 ),
-              ),
-            )
-            .toList(),
+              )
+              .toList(),
+        ),
       ),
     );
   }

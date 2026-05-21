@@ -11,7 +11,7 @@ import 'face_stranger_page.dart';
 class FaceScanningPage extends StatefulWidget {
   final String? imagePath;
 
-  const FaceScanningPage({Key? key, this.imagePath}) : super(key: key);
+  const FaceScanningPage({super.key, this.imagePath});
 
   @override
   State<FaceScanningPage> createState() => _FaceScanningPageState();
@@ -77,17 +77,18 @@ class _FaceScanningPageState extends State<FaceScanningPage> {
       }
 
       if (isRecognized && personData != null) {
+        final pd = personData;
         // Prepare the name by combining firstName and lastName from the JSON
         String firstName =
-            personData?['firstName'] ?? personData?['name'] ?? 'Unknown';
-        String lastName = personData?['lastName'] ?? '';
+            pd['firstName'] ?? pd['name'] ?? 'Unknown';
+        String lastName = pd['lastName'] ?? '';
         String fullName = lastName.isNotEmpty
             ? '$firstName $lastName'
             : firstName;
 
         // Use relationship for the "Nickname/Relation" field
         String relation =
-            personData?['relationship'] ?? personData?['relation'] ?? 'Patient';
+            pd['relationship'] ?? pd['relation'] ?? 'Patient';
 
         Navigator.pushReplacement(
           context,
@@ -96,16 +97,16 @@ class _FaceScanningPageState extends State<FaceScanningPage> {
               name: fullName,
               nickname: relation,
               confidence:
-                  (personData?['confidence'] ??
-                          personData?['similarity'] ??
-                          personData?['score'] ??
+                  (pd['confidence'] ??
+                          pd['similarity'] ??
+                          pd['score'] ??
                           0.0)
                       .toDouble(),
               imageUrl:
-                  personData?['image_url'] ??
-                  personData?['photo'] ??
-                  personData?['avatar'],
-              patientId: personData?['id'] ?? personData?['patient_id'],
+                  pd['image_url'] ??
+                  pd['photo'] ??
+                  pd['avatar'],
+              patientId: pd['id'] ?? pd['patient_id'],
               capturedImagePath: widget.imagePath,
             ),
           ),
@@ -282,7 +283,7 @@ class _FaceScanningPageState extends State<FaceScanningPage> {
 }
 
 class _ScanningLineAnimation extends StatefulWidget {
-  const _ScanningLineAnimation({Key? key}) : super(key: key);
+  const _ScanningLineAnimation();
 
   @override
   State<_ScanningLineAnimation> createState() => _ScanningLineAnimationState();
@@ -330,7 +331,7 @@ class _ScanningLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppTheme.primaryColor.withOpacity(0.5)
+      ..color = AppTheme.primaryColor.withValues(alpha: 0.5)
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
 

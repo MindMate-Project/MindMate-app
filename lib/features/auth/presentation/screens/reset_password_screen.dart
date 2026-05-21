@@ -73,10 +73,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 backgroundColor: AppTheme.successColor,
               ),
             );
+            final navigator = Navigator.of(context);
             Future.delayed(const Duration(milliseconds: 500), () {
-              Navigator.of(
-                context,
-              ).pushNamedAndRemoveUntil('/login', (route) => false);
+              navigator.pushNamedAndRemoveUntil('/login', (route) => false);
             });
           } else if (currentState is AuthFailure) {
             ScaffoldMessenger.of(context).showSnackBar(

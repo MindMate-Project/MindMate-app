@@ -12,14 +12,14 @@ class FaceIdentifiedPage extends StatelessWidget {
   final String? capturedImagePath;
 
   const FaceIdentifiedPage({
-    Key? key,
+    super.key,
     required this.name,
     required this.nickname,
     this.confidence = 0.0,
     this.imageUrl,
     this.patientId,
     this.capturedImagePath,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +127,7 @@ class FaceIdentifiedPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
+                  color: Colors.green.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(

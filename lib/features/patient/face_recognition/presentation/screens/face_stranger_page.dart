@@ -6,7 +6,7 @@ import 'face_camera_page.dart';
 class FaceStrangerPage extends StatelessWidget {
   final String? capturedImagePath;
 
-  const FaceStrangerPage({Key? key, this.capturedImagePath}) : super(key: key);
+  const FaceStrangerPage({super.key, this.capturedImagePath});
 
   @override
   Widget build(BuildContext context) {
@@ -97,10 +97,10 @@ class FaceStrangerPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: Colors.red.withOpacity(0.3),
+                    color: Colors.red.withValues(alpha: 0.3),
                     width: 1,
                   ),
                 ),

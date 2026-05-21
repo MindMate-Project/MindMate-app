@@ -6,7 +6,7 @@ import 'package:mindmate/core/widgets/medicine_card.dart';
 import 'package:mindmate/features/patient/face_recognition/face_recognition.dart';
 
 class PatientHomePage extends StatefulWidget {
-  const PatientHomePage({Key? key}) : super(key: key);
+  const PatientHomePage({super.key});
 
   @override
   State<PatientHomePage> createState() => _PatientHomePageState();
