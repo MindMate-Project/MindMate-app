@@ -26,6 +26,7 @@ import 'package:mindmate/features/assignments/presentation/cubit/patient_assignm
 import 'package:mindmate/features/patient/profile/presentation/screens/privacy_policy_screen.dart';
 import 'package:mindmate/core/utils/responsive.dart';
 import 'package:mindmate/features/memory/presentation/screens/memory_screen.dart';
+import 'package:mindmate/features/memory/presentation/screens/add_memory_screen.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_cubit.dart';
 import 'package:mindmate/features/memory/data/services/memory_service.dart';
 import 'package:mindmate/features/patient/profile/presentation/cubit/profile_cubit.dart';
@@ -61,6 +62,7 @@ void main() async {
               '/forgot_password': (context) => const ForgotPasswordScreen(),
               '/updatedpass': (context) => const UpdatedPass(),
               '/memory': (context) => const MemoryScreen(),
+              '/memory/add': (context) => const AddMemoryScreen(),
               '/patient_reminders': (context) => const RemindersScreen(),
               '/profile': (context) => const PatientProfileScreen(),
               '/edit_profile': (context) => const EditProfileScreen(),

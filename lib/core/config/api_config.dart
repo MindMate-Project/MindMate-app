@@ -19,4 +19,9 @@ class ApiConfig {
 
   // Memory endpoints
   static const String memoryBase = '$baseUrl/api/memories';
+  // GET /api/memories/patient/:patientId  — list a patient's memories (already used)
+  // POST /api/memories                    — create a new memory (multipart for media)
+  static const String createMemoryEndpoint = '/api/memories';
+  static String memoriesForPatientEndpoint(String patientId) =>
+      '/api/memories/patient/$patientId';
 }

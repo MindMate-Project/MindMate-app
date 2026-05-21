@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:mindmate/core/config/api_config.dart';
 import 'package:mindmate/core/network/api_http_client.dart';
 import 'package:mindmate/core/network/patient_context_store.dart';
 import 'package:mindmate/features/memory/data/models/memory_item.dart';
@@ -27,7 +29,7 @@ class MemoryService {
       }
 
       final response = await _dio.get(
-        '/api/memories/patient/$patientId',
+        ApiConfig.memoriesForPatientEndpoint(patientId),
         options: await _authOptions(),
       );
 
@@ -71,5 +73,99 @@ class MemoryService {
   Future<List<MemoryItem>> getMemoriesByType(MemoryType type) async {
     final all = await getMemories();
     return all.where((item) => item.type == type).toList();
+  }
+
+  /// Create a new memory for the currently active patient.
+  ///
+  /// Endpoint: POST /api/memories  (multipart/form-data)
+  /// Required fields: type, title, content. patientId is read from
+  /// PatientContextStore. relation is required for photo/video memories
+  /// (per Figma comment #22 from the design team). mediaFile is required
+  /// for photo/video and ignored for text.
+  ///
+  /// Returns the created MemoryItem parsed from the API response. If the
+  /// backend hasn't implemented this endpoint yet (404 / 501), throws a
+  /// clear exception so the UI can show a "backend not ready" toast
+  /// without pretending the save succeeded.
+  Future<MemoryItem> createMemory({
+    required MemoryType type,
+    required String title,
+    required String content,
+    String? relation,
+    List<String>? tags,
+    File? mediaFile,
+  }) async {
+    final patientId = await _getPatientId();
+    if (patientId == null || patientId.isEmpty) {
+      throw Exception(
+        'No connected patient. Select a patient first.',
+      );
+    }
+
+    if (type != MemoryType.text && mediaFile == null) {
+      throw Exception('Please pick a ${type.name} file before saving.');
+    }
+    if (type != MemoryType.text &&
+        (relation == null || relation.trim().isEmpty)) {
+      throw Exception('Relation is required for photo and video memories.');
+    }
+
+    final formMap = <String, dynamic>{
+      'patientId': patientId,
+      'type': type.name,
+      'title': title.trim(),
+      'content': content.trim(),
+      if (relation != null && relation.trim().isNotEmpty)
+        'relation': relation.trim(),
+      if (tags != null && tags.isNotEmpty) 'tags': tags.join(','),
+    };
+
+    if (mediaFile != null) {
+      final fileName = mediaFile.path.split(RegExp(r'[\\/]')).last;
+      formMap['media'] = await MultipartFile.fromFile(
+        mediaFile.path,
+        filename: fileName,
+      );
+    }
+
+    final formData = FormData.fromMap(formMap);
+
+    try {
+      final response = await _dio.post(
+        ApiConfig.createMemoryEndpoint,
+        data: formData,
+        options: (await _authOptions()).copyWith(
+          contentType: 'multipart/form-data',
+        ),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+        Map<String, dynamic> created;
+        if (data is Map<String, dynamic>) {
+          final inner = data['data'] ?? data['memory'] ?? data['result'];
+          created = inner is Map<String, dynamic>
+              ? inner
+              : data;
+        } else {
+          throw Exception('Unexpected create response shape');
+        }
+        return MemoryItem.fromJson(created);
+      }
+      throw Exception('Failed to create memory (${response.statusCode})');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw Exception('Session expired. Please log in again.');
+      }
+      if (e.response?.statusCode == 404 || e.response?.statusCode == 501) {
+        throw Exception(
+          'Backend does not yet support memory creation '
+          '(${e.response?.statusCode}). Ask the API team to enable '
+          'POST ${ApiConfig.createMemoryEndpoint}.',
+        );
+      }
+      final msg = ApiHttpClient.messageFromResponseData(e.response?.data);
+      throw Exception(msg ?? e.message ?? 'Failed to create memory');
+    }
   }
 }

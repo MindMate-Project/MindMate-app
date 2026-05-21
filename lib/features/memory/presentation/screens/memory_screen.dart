@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/navigation/app_bottom_nav.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/memory/data/models/memory_item.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_cubit.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_state.dart';
@@ -84,7 +86,32 @@ class _MemoryScreenState extends State<MemoryScreen> {
           Expanded(child: _buildBody()),
         ],
       ),
+      floatingActionButton: _buildAddMemoryFab(),
       bottomNavigationBar: const AppBottomNav(selectedIndex: 1),
+    );
+  }
+
+  /// FAB visible only when the current user is a caregiver. Tapping it
+  /// pushes the Add Memory screen and reloads the list when it returns
+  /// with a `true` result (i.e. a memory was created).
+  Widget _buildAddMemoryFab() {
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, state) {
+        if (!AppBottomNav.isCaregiver(state)) {
+          return const SizedBox.shrink();
+        }
+        return FloatingActionButton(
+          backgroundColor: AppTheme.primaryColor,
+          tooltip: 'Add memory',
+          onPressed: () async {
+            final created = await Navigator.pushNamed(context, '/memory/add');
+            if (created == true && context.mounted) {
+              context.read<MemoryCubit>().loadMemories();
+            }
+          },
+          child: const Icon(Icons.add, color: Colors.white),
+        );
+      },
     );
   }
 
