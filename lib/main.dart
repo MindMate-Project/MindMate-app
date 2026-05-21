@@ -32,7 +32,7 @@ import 'package:mindmate/features/memory/data/services/memory_service.dart';
 import 'package:mindmate/features/patient/profile/presentation/cubit/profile_cubit.dart';
 import 'package:mindmate/features/patient/profile/data/services/profile_service.dart';
 import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_cubit.dart';
-import 'package:mindmate/features/patient/reminders/data/services/reminders_service.dart'; 
+import 'package:mindmate/features/patient/reminders/data/services/reminders_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +44,7 @@ void main() async {
         BlocProvider(create: (context) => ProfileCubit(ProfileService())),
         BlocProvider(create: (context) => RemindersCubit(RemindersService())),
       ],
-      
+
       child: Builder(
         builder: (context) {
           Responsive.init(context);

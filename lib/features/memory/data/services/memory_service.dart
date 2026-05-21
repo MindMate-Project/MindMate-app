@@ -110,11 +110,22 @@ class MemoryService {
       throw Exception('Relation is required for photo and video memories.');
     }
 
+    // Backend contract (from MindMate-Project/Backend
+    // src/controllers/memoryItem.controller.ts + uploadMemory.middleware.ts):
+    //  - patient_id (snake_case, required)
+    //  - type (required: 'photo' | 'video' | 'text')
+    //  - title (required)
+    //  - caption (required, NOT 'content')
+    //  - relation (optional)
+    //  - tags (optional, accepts comma-separated string or array)
+    //  - file (multer upload.single('file'), required for photo/video)
+    // Keep the Dart-side parameter names in camelCase; only translate to
+    // backend snake_case here at the service boundary.
     final formMap = <String, dynamic>{
-      'patientId': patientId,
+      'patient_id': patientId,
       'type': type.name,
       'title': title.trim(),
-      'content': content.trim(),
+      'caption': content.trim(),
       if (relation != null && relation.trim().isNotEmpty)
         'relation': relation.trim(),
       if (tags != null && tags.isNotEmpty) 'tags': tags.join(','),
@@ -122,7 +133,7 @@ class MemoryService {
 
     if (mediaFile != null) {
       final fileName = mediaFile.path.split(RegExp(r'[\\/]')).last;
-      formMap['media'] = await MultipartFile.fromFile(
+      formMap['file'] = await MultipartFile.fromFile(
         mediaFile.path,
         filename: fileName,
       );
