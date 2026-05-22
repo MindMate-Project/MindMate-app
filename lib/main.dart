@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/patient/home/presentation/screens/home_screen.dart';
 import 'package:mindmate/features/caregiver/home/presentation/screens/caregiver_home_screen.dart'
@@ -27,15 +28,29 @@ import 'package:mindmate/features/patient/profile/presentation/screens/privacy_p
 import 'package:mindmate/core/utils/responsive.dart';
 import 'package:mindmate/features/memory/presentation/screens/memory_screen.dart';
 import 'package:mindmate/features/memory/presentation/screens/add_memory_screen.dart';
+import 'package:mindmate/features/memory/presentation/screens/memory_drill_screen.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_cubit.dart';
 import 'package:mindmate/features/memory/data/services/memory_service.dart';
+import 'package:mindmate/features/memory/data/services/memory_training_service.dart';
 import 'package:mindmate/features/patient/profile/presentation/cubit/profile_cubit.dart';
 import 'package:mindmate/features/patient/profile/data/services/profile_service.dart';
 import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_cubit.dart';
 import 'package:mindmate/features/patient/reminders/data/services/reminders_service.dart';
 
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  tz.initializeTimeZones();
+  await MemoryTrainingService.instance.init(
+    onTap: (memoryId) {
+      rootNavigatorKey.currentState?.pushNamed(
+        '/memory/drill',
+        arguments: memoryId == null ? null : {'memoryId': memoryId},
+      );
+    },
+  );
+
   runApp(
     MultiBlocProvider(
       providers: [
@@ -50,6 +65,7 @@ void main() async {
           Responsive.init(context);
           return MaterialApp(
             debugShowCheckedModeBanner: false,
+            navigatorKey: rootNavigatorKey,
             initialRoute: '/splash',
             routes: {
               '/splash': (context) => const Splash(),
@@ -63,6 +79,7 @@ void main() async {
               '/updatedpass': (context) => const UpdatedPass(),
               '/memory': (context) => const MemoryScreen(),
               '/memory/add': (context) => const AddMemoryScreen(),
+              '/memory/drill': (context) => const MemoryDrillScreen(),
               '/patient_reminders': (context) => const RemindersScreen(),
               '/profile': (context) => const PatientProfileScreen(),
               '/edit_profile': (context) => const EditProfileScreen(),

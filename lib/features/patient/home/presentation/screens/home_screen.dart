@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/navigation/app_bottom_nav.dart';
 import 'package:mindmate/core/widgets/appointment_card.dart';
 import 'package:mindmate/core/widgets/medicine_card.dart';
+import 'package:mindmate/features/memory/data/models/memory_item.dart';
+import 'package:mindmate/features/memory/data/services/memory_training_service.dart';
+import 'package:mindmate/features/memory/presentation/cubit/memory_cubit.dart';
+import 'package:mindmate/features/memory/presentation/cubit/memory_state.dart';
 import 'package:mindmate/features/patient/face_recognition/face_recognition.dart';
 
 class PatientHomePage extends StatefulWidget {
@@ -13,7 +18,24 @@ class PatientHomePage extends StatefulWidget {
 }
 
 class _PatientHomePageState extends State<PatientHomePage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _applyTrainingSchedule());
+  }
 
+  Future<void> _applyTrainingSchedule() async {
+    if (!mounted) return;
+    final cubit = context.read<MemoryCubit>();
+    if (cubit.state is! MemoryLoaded) {
+      await cubit.loadMemories();
+    }
+    final state = cubit.state;
+    final memories = state is MemoryLoaded
+        ? <MemoryItem>[...state.photos, ...state.videos, ...state.texts]
+        : const <MemoryItem>[];
+    await MemoryTrainingService.instance.applyForPatient(memories);
+  }
 
   @override
   Widget build(BuildContext context) {

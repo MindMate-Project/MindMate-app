@@ -5,6 +5,7 @@ import 'package:mindmate/core/navigation/app_bottom_nav.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/memory/data/models/memory_item.dart';
+import 'package:mindmate/features/memory/data/services/memory_training_service.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_cubit.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_state.dart';
 import 'package:mindmate/features/memory/presentation/widgets/photo_tab.dart';
@@ -78,6 +79,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [_buildTrainingGearButton()],
       ),
       body: Column(
         children: [
@@ -91,9 +93,32 @@ class _MemoryScreenState extends State<MemoryScreen> {
     );
   }
 
-  /// FAB visible only when the current user is a caregiver. Tapping it
-  /// pushes the Add Memory screen and reloads the list when it returns
-  /// with a `true` result (i.e. a memory was created).
+  Widget _buildTrainingGearButton() {
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, state) {
+        if (!AppBottomNav.isCaregiver(state)) {
+          return const SizedBox.shrink();
+        }
+        return IconButton(
+          tooltip: 'Brain training',
+          icon: const Icon(Icons.settings_outlined, color: Colors.white),
+          onPressed: () => _showTrainingSheet(context),
+        );
+      },
+    );
+  }
+
+  Future<void> _showTrainingSheet(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: false,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => const _MemoryTrainingSheet(),
+    );
+  }
+
   Widget _buildAddMemoryFab() {
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, state) {
@@ -237,6 +262,180 @@ class _MemoryScreenState extends State<MemoryScreen> {
         return TextTab(items: _filtered(state.texts));
       default:
         return const SizedBox.shrink();
+    }
+  }
+}
+
+class _MemoryTrainingSheet extends StatefulWidget {
+  const _MemoryTrainingSheet();
+
+  @override
+  State<_MemoryTrainingSheet> createState() => _MemoryTrainingSheetState();
+}
+
+class _MemoryTrainingSheetState extends State<_MemoryTrainingSheet> {
+  bool _loading = true;
+  bool _enabled = false;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final value = await MemoryTrainingService.instance.isEnabled();
+    if (!mounted) return;
+    setState(() {
+      _enabled = value;
+      _loading = false;
+    });
+  }
+
+  Future<void> _onToggle(bool value) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      if (value) {
+        final ok = await MemoryTrainingService.instance.enable();
+        if (!mounted) return;
+        if (!ok) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Notification permission was denied. Enable it in '
+                'Settings to use brain training.',
+              ),
+            ),
+          );
+          setState(() => _enabled = false);
+          return;
+        }
+        setState(() => _enabled = true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Brain training enabled — 9 AM, 2 PM, 7 PM.'),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      } else {
+        await MemoryTrainingService.instance.disable();
+        if (!mounted) return;
+        setState(() => _enabled = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Brain training disabled.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+            const Text(
+              'Brain training reminders',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.secondaryColor,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Sends 3 daily notifications (9 AM, 2 PM, 7 PM) with a '
+              'random memory to the patient. Notifications appear on '
+              "the patient's device when they sign in.",
+              style: TextStyle(fontSize: 13, color: Colors.grey[700], height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            if (_loading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+              )
+            else
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text(
+                  'Enable brain training',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.secondaryColor,
+                  ),
+                ),
+                value: _enabled,
+                activeThumbColor: AppTheme.primaryColor,
+                onChanged: _busy ? null : _onToggle,
+              ),
+            const Divider(height: 24),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.notifications_active_outlined),
+              label: const Text('Send test notification now'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.primaryColor,
+                side: const BorderSide(color: AppTheme.primaryColor),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              onPressed: _busy ? null : _onSendTest,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Bypasses scheduling — fires immediately. Use to verify '
+              'notifications work at all on this device.',
+              style: TextStyle(fontSize: 12, color: Colors.grey[600], height: 1.4),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onSendTest() async {
+    setState(() => _busy = true);
+    try {
+      await MemoryTrainingService.instance.showTestNotification();
+      final pending = await MemoryTrainingService.instance.debugPending();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Test fired. Pending scheduled: ${pending.length} '
+            '(${pending.map((p) => '#${p.id}').join(', ')})',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Test notification failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 }

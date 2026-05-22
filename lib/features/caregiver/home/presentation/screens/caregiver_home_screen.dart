@@ -9,6 +9,7 @@ import 'package:mindmate/core/widgets/appointment_card.dart';
 import 'package:mindmate/core/widgets/medication_card.dart';
 import 'package:mindmate/features/assignments/presentation/screens/assign_patient.dart';
 import 'package:mindmate/features/caregiver/home/presentation/screens/caregiver_notifications_screen.dart';
+import 'package:mindmate/features/memory/data/services/memory_training_service.dart';
 
 class CaregiverHomePage extends StatefulWidget {
   const CaregiverHomePage({super.key});
@@ -29,6 +30,7 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
   @override
   void initState() {
     super.initState();
+    MemoryTrainingService.instance.cancelForCaregiver();
     _loadPatients();
   }
 
