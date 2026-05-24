@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:video_player/video_player.dart';
 
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/features/memory/data/models/memory_item.dart';
@@ -222,42 +223,11 @@ class _DrillContent extends StatelessWidget {
         );
 
       case MemoryType.video:
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          alignment: Alignment.center,
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.videocam_outlined,
-                  size: 72,
-                  color: Colors.grey[500],
-                ),
-                const SizedBox(height: AppTheme.spacingM),
-                Text(
-                  'Video memory',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[700],
-                  ),
-                ),
-                const SizedBox(height: AppTheme.spacingS),
-                Text(
-                  'Open the Memory tab to play.',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        );
+        final url = item.videoUrl;
+        if (url == null || url.isEmpty) {
+          return _placeholder(Icons.videocam_off_outlined);
+        }
+        return _VideoMemoryPlayer(url: url);
 
       case MemoryType.text:
         return Container(
@@ -286,6 +256,206 @@ class _DrillContent extends StatelessWidget {
       ),
       alignment: Alignment.center,
       child: Icon(icon, size: 80, color: Colors.grey[400]),
+    );
+  }
+}
+
+class _VideoMemoryPlayer extends StatefulWidget {
+  const _VideoMemoryPlayer({required this.url});
+
+  final String url;
+
+  @override
+  State<_VideoMemoryPlayer> createState() => _VideoMemoryPlayerState();
+}
+
+class _VideoMemoryPlayerState extends State<_VideoMemoryPlayer> {
+  VideoPlayerController? _controller;
+  bool _initFailed = false;
+  String? _errorDetail;
+
+  @override
+  void initState() {
+    super.initState();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    Uri uri;
+    try {
+      uri = Uri.parse(widget.url);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _initFailed = true;
+        _errorDetail = 'Invalid URL: ${widget.url}';
+      });
+      return;
+    }
+    final c = VideoPlayerController.networkUrl(uri);
+    _controller = c;
+    try {
+      await c.initialize();
+      if (!mounted) {
+        await c.dispose();
+        return;
+      }
+      c.addListener(_onTick);
+      setState(() {});
+    } catch (e) {
+      debugPrint('[VideoMemoryPlayer] init failed for ${widget.url}: $e');
+      if (!mounted) return;
+      setState(() {
+        _initFailed = true;
+        _errorDetail = e.toString();
+      });
+    }
+  }
+
+  void _onTick() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _controller?.removeListener(_onTick);
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  String _fmt(Duration d) {
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    final h = d.inHours;
+    return h > 0 ? '$h:$m:$s' : '$m:$s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_initFailed) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        alignment: Alignment.center,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline, size: 56, color: Colors.grey[500]),
+              const SizedBox(height: AppTheme.spacingS),
+              Text(
+                'Could not load video',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700],
+                ),
+              ),
+              const SizedBox(height: 8),
+              SelectableText(
+                widget.url,
+                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                textAlign: TextAlign.center,
+              ),
+              if (_errorDetail != null) ...[
+                const SizedBox(height: 8),
+                SelectableText(
+                  _errorDetail!,
+                  style: TextStyle(fontSize: 11, color: Colors.red[400]),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    final c = _controller;
+    if (c == null || !c.value.isInitialized) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(16),
+        ),
+        alignment: Alignment.center,
+        child: const CircularProgressIndicator(color: AppTheme.primaryColor),
+      );
+    }
+
+    final value = c.value;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        color: Colors.black,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => value.isPlaying ? c.pause() : c.play(),
+                child: Center(
+                  child: AspectRatio(
+                    aspectRatio: value.aspectRatio,
+                    child: VideoPlayer(c),
+                  ),
+                ),
+              ),
+            ),
+            _ControlBar(controller: c, format: _fmt),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ControlBar extends StatelessWidget {
+  const _ControlBar({required this.controller, required this.format});
+
+  final VideoPlayerController controller;
+  final String Function(Duration) format;
+
+  @override
+  Widget build(BuildContext context) {
+    final v = controller.value;
+    return Container(
+      color: Colors.black.withValues(alpha: 0.6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: Row(
+        children: [
+          IconButton(
+            tooltip: v.isPlaying ? 'Pause' : 'Play',
+            icon: Icon(
+              v.isPlaying ? Icons.pause : Icons.play_arrow,
+              color: Colors.white,
+            ),
+            onPressed: () => v.isPlaying ? controller.pause() : controller.play(),
+          ),
+          Expanded(
+            child: VideoProgressIndicator(
+              controller,
+              allowScrubbing: true,
+              colors: VideoProgressColors(
+                playedColor: AppTheme.primaryColor,
+                bufferedColor: Colors.white.withValues(alpha: 0.4),
+                backgroundColor: Colors.white.withValues(alpha: 0.2),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '${format(v.position)} / ${format(v.duration)}',
+            style: const TextStyle(color: Colors.white, fontSize: 12),
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
     );
   }
 }
