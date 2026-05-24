@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/patient/home/presentation/screens/home_screen.dart';
@@ -63,9 +64,15 @@ void main() async {
       child: Builder(
         builder: (context) {
           Responsive.init(context);
+          final baseTheme = ThemeData.light();
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             navigatorKey: rootNavigatorKey,
+            theme: baseTheme.copyWith(
+              textTheme: GoogleFonts.cairoTextTheme(baseTheme.textTheme),
+              primaryTextTheme:
+                  GoogleFonts.cairoTextTheme(baseTheme.primaryTextTheme),
+            ),
             initialRoute: '/splash',
             routes: {
               '/splash': (context) => const Splash(),

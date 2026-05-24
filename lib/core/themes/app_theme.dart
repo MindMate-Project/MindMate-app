@@ -39,7 +39,6 @@ class AppTheme {
     color: primaryColor,
     letterSpacing: -0.017,
     height: 1.5,
-    fontFamily: 'Poppins',
   );
 
   static const TextStyle heading2 = TextStyle(
