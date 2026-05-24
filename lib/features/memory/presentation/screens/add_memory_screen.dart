@@ -142,19 +142,17 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
           child: ListView(
             padding: const EdgeInsets.all(AppTheme.spacingL),
             children: [
-              // Type radio group
+              // Type selector — chunky pill row so Video doesn't get missed.
               LabeledFormField(
                 label: 'Type *',
-                child: RadioGroup<MemoryType>(
-                  groupValue: _type,
-                  onChanged: _submitting ? (_) {} : _onTypeChanged,
-                  child: Row(
-                    children: [
-                      _typeRadio(MemoryType.photo, 'Photo'),
-                      _typeRadio(MemoryType.video, 'Video'),
-                      _typeRadio(MemoryType.text, 'Text'),
-                    ],
-                  ),
+                child: Row(
+                  children: [
+                    _typePill(MemoryType.photo, 'Photo', Icons.photo_outlined),
+                    const SizedBox(width: 8),
+                    _typePill(MemoryType.video, 'Video', Icons.videocam_outlined),
+                    const SizedBox(width: 8),
+                    _typePill(MemoryType.text, 'Text', Icons.notes_outlined),
+                  ],
                 ),
               ),
               const SizedBox(height: AppTheme.spacingL),
@@ -280,55 +278,103 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
     );
   }
 
-  Widget _typeRadio(MemoryType value, String label) {
+  Widget _typePill(MemoryType value, String label, IconData icon) {
+    final selected = _type == value;
     return Expanded(
-      child: RadioListTile<MemoryType>(
-        value: value,
-        title: Text(label, style: AppTheme.label),
-        activeColor: AppTheme.primaryColor,
-        contentPadding: EdgeInsets.zero,
-        dense: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: _submitting ? null : () => _onTypeChanged(value),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: selected ? AppTheme.primaryColor : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: selected
+                  ? AppTheme.primaryColor
+                  : AppTheme.neutralMedium,
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 22,
+                color: selected ? Colors.white : AppTheme.secondaryColor,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: AppTheme.label.copyWith(
+                  color: selected ? Colors.white : AppTheme.secondaryColor,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildUploadButton() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.neutralMedium),
-      ),
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: const Icon(
-          Icons.upload_file,
-          color: AppTheme.primaryColor,
-        ),
-        title: Text(
-          _mediaFileName ?? 'Upload Media',
-          style: AppTheme.label.copyWith(
-            color: _mediaFileName == null
-                ? AppTheme.secondaryColor
-                : AppTheme.primaryColor,
+    final isVideo = _type == MemoryType.video;
+    final defaultLabel = isVideo ? 'Upload video' : 'Upload photo';
+    final hint = isVideo
+        ? 'Opens the gallery in video mode (MP4 recommended).'
+        : 'Opens the gallery in photo mode.';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppTheme.neutralMedium),
           ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: _mediaFile == null
-            ? null
-            : IconButton(
-                icon: const Icon(Icons.close, size: 18),
-                onPressed: _submitting
-                    ? null
-                    : () => setState(() {
-                          _mediaFile = null;
-                          _mediaFileName = null;
-                        }),
+          child: ListTile(
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            leading: Icon(
+              isVideo ? Icons.videocam_outlined : Icons.photo_outlined,
+              color: AppTheme.primaryColor,
+            ),
+            title: Text(
+              _mediaFileName ?? defaultLabel,
+              style: AppTheme.label.copyWith(
+                color: _mediaFileName == null
+                    ? AppTheme.secondaryColor
+                    : AppTheme.primaryColor,
               ),
-        onTap: _submitting ? null : _pickMedia,
-      ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: _mediaFile == null
+                ? null
+                : IconButton(
+                    icon: const Icon(Icons.close, size: 18),
+                    onPressed: _submitting
+                        ? null
+                        : () => setState(() {
+                              _mediaFile = null;
+                              _mediaFileName = null;
+                            }),
+                  ),
+            onTap: _submitting ? null : _pickMedia,
+          ),
+        ),
+        if (_mediaFile == null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 4),
+            child: Text(
+              hint,
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+          ),
+      ],
     );
   }
 }
