@@ -277,6 +277,7 @@ class _MemoryTrainingSheetState extends State<_MemoryTrainingSheet> {
   bool _loading = true;
   bool _enabled = false;
   bool _busy = false;
+  List<TimeOfDay> _times = const [];
 
   @override
   void initState() {
@@ -284,13 +285,28 @@ class _MemoryTrainingSheetState extends State<_MemoryTrainingSheet> {
     _refresh();
   }
 
+  List<MemoryItem> _allMemories() {
+    final state = context.read<MemoryCubit>().state;
+    if (state is MemoryLoaded) {
+      return [...state.photos, ...state.videos, ...state.texts];
+    }
+    return const [];
+  }
+
   Future<void> _refresh() async {
-    final value = await MemoryTrainingService.instance.isEnabled();
+    final enabled = await MemoryTrainingService.instance.isEnabled();
+    final times = await MemoryTrainingService.instance.getTimes();
     if (!mounted) return;
     setState(() {
-      _enabled = value;
+      _enabled = enabled;
+      _times = times;
       _loading = false;
     });
+  }
+
+  String _summary(BuildContext context) {
+    if (_times.isEmpty) return 'no times set';
+    return _times.map((t) => t.format(context)).join(', ');
   }
 
   Future<void> _onToggle(bool value) async {
@@ -312,10 +328,12 @@ class _MemoryTrainingSheetState extends State<_MemoryTrainingSheet> {
           setState(() => _enabled = false);
           return;
         }
+        await MemoryTrainingService.instance.applyForPatient(_allMemories());
+        if (!mounted) return;
         setState(() => _enabled = true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Brain training enabled — 9 AM, 2 PM, 7 PM.'),
+          SnackBar(
+            content: Text('Brain training enabled — ${_summary(context)}.'),
             backgroundColor: AppTheme.successColor,
           ),
         );
@@ -332,93 +350,247 @@ class _MemoryTrainingSheetState extends State<_MemoryTrainingSheet> {
     }
   }
 
+  int _toMinutes(TimeOfDay t) => t.hour * 60 + t.minute;
+
+  Future<void> _editTime(int index) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _times[index],
+    );
+    if (picked == null || !mounted) return;
+    final updated = [..._times]..[index] = picked;
+    updated.sort((a, b) => _toMinutes(a).compareTo(_toMinutes(b)));
+    await _saveTimes(updated);
+  }
+
+  Future<void> _addTime() async {
+    if (_times.length >= MemoryTrainingService.maxSlots) return;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: const TimeOfDay(hour: 12, minute: 0),
+    );
+    if (picked == null || !mounted) return;
+    final updated = [..._times, picked]
+      ..sort((a, b) => _toMinutes(a).compareTo(_toMinutes(b)));
+    await _saveTimes(updated);
+  }
+
+  Future<void> _removeTime(int index) async {
+    if (_times.length <= MemoryTrainingService.minSlots) return;
+    final updated = [..._times]..removeAt(index);
+    await _saveTimes(updated);
+  }
+
+  Future<void> _saveTimes(List<TimeOfDay> times) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await MemoryTrainingService.instance.setTimes(times);
+      if (_enabled) {
+        await MemoryTrainingService.instance.applyForPatient(_allMemories());
+      }
+      if (!mounted) return;
+      setState(() => _times = times);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Schedule updated')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not save schedule: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ),
-            const Text(
-              'Brain training reminders',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.secondaryColor,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Sends 3 daily notifications (9 AM, 2 PM, 7 PM) with a '
-              'random memory to the patient. Notifications appear on '
-              "the patient's device when they sign in.",
-              style: TextStyle(fontSize: 13, color: Colors.grey[700], height: 1.4),
-            ),
-            const SizedBox(height: 12),
-            if (_loading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: AppTheme.primaryColor,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
-              )
-            else
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text(
-                  'Enable brain training',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: AppTheme.secondaryColor,
-                  ),
+              ),
+              const Text(
+                'Brain training reminders',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.secondaryColor,
                 ),
-                value: _enabled,
-                activeThumbColor: AppTheme.primaryColor,
-                onChanged: _busy ? null : _onToggle,
               ),
-            const Divider(height: 24),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.notifications_active_outlined),
-              label: const Text('Send test notification now'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.primaryColor,
-                side: const BorderSide(color: AppTheme.primaryColor),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+              const SizedBox(height: 6),
+              Text(
+                _loading
+                    ? 'Loading…'
+                    : 'Sends ${_times.length} daily notification${_times.length == 1 ? '' : 's'} at '
+                        '${_summary(context)} with a random memory to the '
+                        "patient. Notifications appear on the patient's "
+                        'device when they sign in.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[700],
+                  height: 1.4,
+                ),
               ),
-              onPressed: _busy ? null : _onSendTest,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Bypasses scheduling — fires immediately. Use to verify '
-              'notifications work at all on this device.',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600], height: 1.4),
-            ),
-          ],
+              const SizedBox(height: 12),
+              if (_loading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                )
+              else ...[
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text(
+                    'Enable brain training',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.secondaryColor,
+                    ),
+                  ),
+                  value: _enabled,
+                  activeThumbColor: AppTheme.primaryColor,
+                  onChanged: _busy ? null : _onToggle,
+                ),
+                const SizedBox(height: 4),
+                _buildScheduleSection(context),
+              ],
+              const Divider(height: 24),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.notifications_active_outlined),
+                label: const Text('Send test notification now'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.primaryColor,
+                  side: const BorderSide(color: AppTheme.primaryColor),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: _busy ? null : _onSendTest,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Bypasses scheduling — fires immediately. Use to verify '
+                'notifications work at all on this device.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildScheduleSection(BuildContext context) {
+    final atMax = _times.length >= MemoryTrainingService.maxSlots;
+    final atMin = _times.length <= MemoryTrainingService.minSlots;
+    final canEdit = !_busy;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Text(
+            'Schedule (${_times.length}/${MemoryTrainingService.maxSlots})',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[800],
+            ),
+          ),
+        ),
+        ...List.generate(_times.length, (i) {
+          final t = _times[i];
+          return Container(
+            margin: const EdgeInsets.only(bottom: 6),
+            decoration: BoxDecoration(
+              color: AppTheme.neutralLight,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: ListTile(
+              dense: true,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+              leading: const Icon(
+                Icons.schedule,
+                color: AppTheme.primaryColor,
+              ),
+              title: Text(
+                t.format(context),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.secondaryColor,
+                ),
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: 'Edit time',
+                    icon: const Icon(Icons.edit_outlined, size: 20),
+                    color: AppTheme.primaryColor,
+                    onPressed: canEdit ? () => _editTime(i) : null,
+                  ),
+                  IconButton(
+                    tooltip: atMin
+                        ? 'At least $atMin slot required'
+                        : 'Remove time',
+                    icon: const Icon(Icons.delete_outline, size: 20),
+                    color: atMin ? Colors.grey : AppTheme.errorColor,
+                    onPressed: (canEdit && !atMin)
+                        ? () => _removeTime(i)
+                        : null,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+        const SizedBox(height: 4),
+        OutlinedButton.icon(
+          icon: const Icon(Icons.add),
+          label: Text(atMax ? 'Maximum reached' : 'Add time'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppTheme.primaryColor,
+            side: const BorderSide(color: AppTheme.primaryColor),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+          ),
+          onPressed: (canEdit && !atMax) ? _addTime : null,
+        ),
+      ],
     );
   }
 
   Future<void> _onSendTest() async {
     setState(() => _busy = true);
     try {
-      await MemoryTrainingService.instance.showTestNotification();
+      await MemoryTrainingService.instance.showTestNotification(
+        memoriesForPicture: _allMemories(),
+      );
       final pending = await MemoryTrainingService.instance.debugPending();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
