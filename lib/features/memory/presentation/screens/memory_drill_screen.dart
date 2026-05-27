@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:video_player/video_player.dart';
 
+import 'package:mindmate/core/navigation/app_bottom_nav.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/memory/data/models/memory_item.dart';
 import 'package:mindmate/features/memory/data/services/memory_training_service.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_cubit.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_state.dart';
+import 'package:mindmate/features/memory/presentation/screens/add_memory_screen.dart';
 
 class MemoryDrillScreen extends StatefulWidget {
   const MemoryDrillScreen({super.key});
@@ -73,26 +77,125 @@ class _MemoryDrillScreenState extends State<MemoryDrillScreen> {
     });
   }
 
+  Future<void> _onEdit() async {
+    final picked = _picked;
+    if (picked == null) return;
+    final updated = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => AddMemoryScreen(initial: picked),
+      ),
+    );
+    if (updated == true && mounted) {
+      // Refresh the local view of this memory after a successful edit.
+      final cubit = context.read<MemoryCubit>();
+      final state = cubit.state;
+      if (state is MemoryLoaded) {
+        final all = [...state.photos, ...state.videos, ...state.texts];
+        for (final m in all) {
+          if (m.id == picked.id) {
+            setState(() => _picked = m);
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  Future<void> _onDelete() async {
+    final picked = _picked;
+    if (picked == null || picked.id == null || picked.id!.isEmpty) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete memory?'),
+        content: const Text(
+          'This permanently removes the memory and its media. '
+          'This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: AppTheme.errorColor),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    await context.read<MemoryCubit>().deleteMemory(picked.id!);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.neutralWhite,
-      appBar: AppBar(
-        backgroundColor: AppTheme.primaryColor,
-        title: const Text(
-          'Memory Training',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
+    return BlocListener<MemoryCubit, MemoryState>(
+      listenWhen: (_, s) =>
+          s is MemoryDeleted || s is MemoryDeleteError,
+      listener: (context, state) {
+        if (state is MemoryDeleted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Memory deleted'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+          Navigator.of(context).maybePop();
+        } else if (state is MemoryDeleteError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.neutralWhite,
+        appBar: AppBar(
+          backgroundColor: AppTheme.primaryColor,
+          title: const Text(
+            'Memory Training',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
           ),
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.close, color: Colors.white),
+            onPressed: () => Navigator.maybePop(context),
+          ),
+          actions: [
+            BlocBuilder<AuthCubit, AuthState>(
+              builder: (context, authState) {
+                if (!AppBottomNav.isCaregiver(authState) || _picked == null) {
+                  return const SizedBox.shrink();
+                }
+                return Row(
+                  children: [
+                    IconButton(
+                      tooltip: 'Edit memory',
+                      icon: const Icon(Icons.edit_outlined,
+                          color: Colors.white),
+                      onPressed: _onEdit,
+                    ),
+                    IconButton(
+                      tooltip: 'Delete memory',
+                      icon: const Icon(Icons.delete_outline,
+                          color: Colors.white),
+                      onPressed: _onDelete,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
         ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
-          onPressed: () => Navigator.maybePop(context),
-        ),
+        body: SafeArea(child: _buildBody()),
       ),
-      body: SafeArea(child: _buildBody()),
     );
   }
 

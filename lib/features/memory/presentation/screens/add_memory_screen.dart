@@ -10,12 +10,14 @@ import 'package:mindmate/features/memory/data/models/memory_item.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_cubit.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_state.dart';
 
-/// Caregiver-facing form to add a new memory for the active patient.
-/// Matches the "Add New Memory" screen in the Figma: Type radio
-/// (Photo/Video/Text), Title, Content, Tags, Relation (Photo/Video only),
-/// Upload Media, Save/Cancel.
+/// Caregiver-facing form to add a new memory — or edit an existing one when
+/// [initial] is provided. In edit mode the type pills are locked and the
+/// upload tile is hidden because the backend's PUT /api/memories/:id only
+/// accepts text fields (title, caption, relation, tags).
 class AddMemoryScreen extends StatefulWidget {
-  const AddMemoryScreen({super.key});
+  const AddMemoryScreen({super.key, this.initial});
+
+  final MemoryItem? initial;
 
   @override
   State<AddMemoryScreen> createState() => _AddMemoryScreenState();
@@ -34,6 +36,24 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
   String? _mediaFileName;
   bool _submitting = false;
 
+  bool get _isEdit => widget.initial != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initial;
+    if (initial != null) {
+      _type = initial.type;
+      _titleCtrl.text = initial.title;
+      _contentCtrl.text = initial.description ?? '';
+      _relationCtrl.text = initial.subtitle ?? '';
+      // Tags aren't carried on the model today; leave the field blank in edit
+      // mode so a save with an empty tags field doesn't accidentally wipe
+      // them (the cubit only sends non-null fields, and we pass null when
+      // empty below).
+    }
+  }
+
   @override
   void dispose() {
     _titleCtrl.dispose();
@@ -43,7 +63,7 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
     super.dispose();
   }
 
-  bool get _needsMedia => _type != MemoryType.text;
+  bool get _needsMedia => !_isEdit && _type != MemoryType.text;
   bool get _needsRelation => _type != MemoryType.text;
 
   String? _required(String? v) =>
@@ -71,7 +91,7 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
   }
 
   void _onTypeChanged(MemoryType? v) {
-    if (v == null || _submitting) return;
+    if (v == null || _submitting || _isEdit) return;
     setState(() {
       _type = v;
       // Reset media if switching away from media types or between them.
@@ -100,14 +120,24 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
 
     setState(() => _submitting = true);
     try {
-      await context.read<MemoryCubit>().createMemory(
-            type: _type,
-            title: _titleCtrl.text,
-            content: _contentCtrl.text,
-            relation: _needsRelation ? _relationCtrl.text : null,
-            tags: tags.isEmpty ? null : tags,
-            mediaFile: _mediaFile,
-          );
+      if (_isEdit) {
+        await context.read<MemoryCubit>().updateMemory(
+              id: widget.initial!.id!,
+              title: _titleCtrl.text,
+              caption: _contentCtrl.text,
+              relation: _needsRelation ? _relationCtrl.text : null,
+              tags: tags.isEmpty ? null : tags,
+            );
+      } else {
+        await context.read<MemoryCubit>().createMemory(
+              type: _type,
+              title: _titleCtrl.text,
+              content: _contentCtrl.text,
+              relation: _needsRelation ? _relationCtrl.text : null,
+              tags: tags.isEmpty ? null : tags,
+              mediaFile: _mediaFile,
+            );
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -117,7 +147,7 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
   Widget build(BuildContext context) {
     return BlocListener<MemoryCubit, MemoryState>(
       listener: (context, state) {
-        if (state is MemoryCreated) {
+        if (state is MemoryCreated || state is MemoryUpdated) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Memory saved'),
@@ -132,11 +162,20 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
               backgroundColor: AppTheme.errorColor,
             ),
           );
+        } else if (state is MemoryUpdateError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
         }
       },
       child: Scaffold(
         backgroundColor: AppTheme.neutralWhite,
-        appBar: const ProfileAppBar(title: 'Add New Memory'),
+        appBar: ProfileAppBar(
+          title: _isEdit ? 'Edit Memory' : 'Add New Memory',
+        ),
         body: Form(
           key: _formKey,
           child: ListView(
@@ -225,9 +264,13 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
                 const SizedBox(height: AppTheme.spacingL),
               ],
 
-              // Upload media (only for photo/video)
+              // Upload media (create mode only — backend can't replace media on edit)
               if (_needsMedia) ...[
                 _buildUploadButton(),
+                const SizedBox(height: AppTheme.spacingXXL),
+              ],
+              if (_isEdit && widget.initial!.type != MemoryType.text) ...[
+                _buildLockedMediaInfo(),
                 const SizedBox(height: AppTheme.spacingXXL),
               ],
 
@@ -280,10 +323,11 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
 
   Widget _typePill(MemoryType value, String label, IconData icon) {
     final selected = _type == value;
+    final locked = _isEdit;
     return Expanded(
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        onTap: _submitting ? null : () => _onTypeChanged(value),
+        onTap: (_submitting || locked) ? null : () => _onTypeChanged(value),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -374,6 +418,53 @@ class _AddMemoryScreenState extends State<AddMemoryScreen> {
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ),
+      ],
+    );
+  }
+
+  Widget _buildLockedMediaInfo() {
+    final initial = widget.initial!;
+    final isVideo = initial.type == MemoryType.video;
+    final url = isVideo ? initial.videoUrl : initial.imageUrl;
+    final fileName = (url == null || url.isEmpty)
+        ? '—'
+        : Uri.parse(url).pathSegments.isEmpty
+            ? url
+            : Uri.parse(url).pathSegments.last;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: AppTheme.neutralLight,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppTheme.neutralMedium),
+          ),
+          child: ListTile(
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            leading: Icon(
+              isVideo ? Icons.videocam_outlined : Icons.photo_outlined,
+              color: AppTheme.neutralDark,
+            ),
+            title: Text(
+              fileName,
+              style: AppTheme.label.copyWith(color: AppTheme.neutralDark),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: const Icon(Icons.lock_outline, size: 18),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 6, left: 4),
+          child: Text(
+            "Media can't be changed in edit mode. Delete the memory and "
+            're-create it to swap the file.',
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          ),
+        ),
       ],
     );
   }

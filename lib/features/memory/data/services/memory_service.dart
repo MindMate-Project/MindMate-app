@@ -179,4 +179,102 @@ class MemoryService {
       throw Exception(msg ?? e.message ?? 'Failed to create memory');
     }
   }
+
+  /// Update text fields of an existing memory.
+  ///
+  /// Endpoint: PUT /api/memories/:id  (application/json)
+  /// The backend only accepts text fields — title, caption, relation, date,
+  /// tags — and rejects requests with no fields. Media replacement is not
+  /// supported (the route lacks the upload middleware). Pass `null` for any
+  /// field you don't want to change.
+  Future<MemoryItem> updateMemory({
+    required String id,
+    String? title,
+    String? caption,
+    String? relation,
+    List<String>? tags,
+  }) async {
+    if (id.isEmpty) {
+      throw Exception('Missing memory id.');
+    }
+    final body = <String, dynamic>{
+      if (title != null) 'title': title.trim(),
+      if (caption != null) 'caption': caption.trim(),
+      if (relation != null) 'relation': relation.trim(),
+      if (tags != null) 'tags': tags.join(','),
+    };
+    if (body.isEmpty) {
+      throw Exception('At least one field is required to update.');
+    }
+
+    try {
+      final response = await _dio.put(
+        ApiConfig.updateMemoryEndpoint(id),
+        data: body,
+        options: (await _authOptions()).copyWith(
+          contentType: 'application/json',
+        ),
+      );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        Map<String, dynamic> updated;
+        if (data is Map<String, dynamic>) {
+          final inner = data['data'] ?? data['memory'] ?? data['result'];
+          updated = inner is Map<String, dynamic> ? inner : data;
+        } else {
+          throw Exception('Unexpected update response shape');
+        }
+        return MemoryItem.fromJson(updated);
+      }
+      throw Exception('Failed to update memory (${response.statusCode})');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw Exception('Session expired. Please log in again.');
+      }
+      if (e.response?.statusCode == 404) {
+        throw Exception('Memory not found.');
+      }
+      if (e.response?.statusCode == 501 || e.response?.statusCode == 405) {
+        throw Exception(
+          'Backend does not yet support memory editing '
+          '(${e.response?.statusCode}).',
+        );
+      }
+      final msg = ApiHttpClient.messageFromResponseData(e.response?.data);
+      throw Exception(msg ?? e.message ?? 'Failed to update memory');
+    }
+  }
+
+  /// Delete a memory. Backend also destroys the Cloudinary asset.
+  /// Endpoint: DELETE /api/memories/:id
+  Future<void> deleteMemory(String id) async {
+    if (id.isEmpty) {
+      throw Exception('Missing memory id.');
+    }
+    try {
+      final response = await _dio.delete(
+        ApiConfig.deleteMemoryEndpoint(id),
+        options: await _authOptions(),
+      );
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return;
+      }
+      throw Exception('Failed to delete memory (${response.statusCode})');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw Exception('Session expired. Please log in again.');
+      }
+      if (e.response?.statusCode == 404) {
+        throw Exception('Memory not found.');
+      }
+      if (e.response?.statusCode == 501 || e.response?.statusCode == 405) {
+        throw Exception(
+          'Backend does not yet support memory deletion '
+          '(${e.response?.statusCode}).',
+        );
+      }
+      final msg = ApiHttpClient.messageFromResponseData(e.response?.data);
+      throw Exception(msg ?? e.message ?? 'Failed to delete memory');
+    }
+  }
 }

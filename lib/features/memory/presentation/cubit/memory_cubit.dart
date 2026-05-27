@@ -63,4 +63,41 @@ class MemoryCubit extends Cubit<MemoryState> {
       emit(MemoryCreateError(e.toString().replaceFirst('Exception: ', '')));
     }
   }
+
+  /// Caregiver-initiated edit. The backend only accepts text fields — media
+  /// cannot be replaced.
+  Future<void> updateMemory({
+    required String id,
+    String? title,
+    String? caption,
+    String? relation,
+    List<String>? tags,
+  }) async {
+    emit(MemoryUpdating());
+    try {
+      final updated = await memoryService.updateMemory(
+        id: id,
+        title: title,
+        caption: caption,
+        relation: relation,
+        tags: tags,
+      );
+      emit(MemoryUpdated(updated));
+      await loadMemories();
+    } catch (e) {
+      emit(MemoryUpdateError(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
+  /// Caregiver-initiated delete. Backend also clears the Cloudinary asset.
+  Future<void> deleteMemory(String id) async {
+    emit(MemoryDeleting());
+    try {
+      await memoryService.deleteMemory(id);
+      emit(MemoryDeleted(id));
+      await loadMemories();
+    } catch (e) {
+      emit(MemoryDeleteError(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
 }

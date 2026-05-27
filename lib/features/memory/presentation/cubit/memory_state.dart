@@ -40,3 +40,29 @@ class MemoryCreateError extends MemoryState {
   final String message;
   MemoryCreateError(this.message);
 }
+
+/// Emitted while a caregiver-initiated PUT is in flight.
+class MemoryUpdating extends MemoryState {}
+
+class MemoryUpdated extends MemoryState {
+  final MemoryItem item;
+  MemoryUpdated(this.item);
+}
+
+class MemoryUpdateError extends MemoryState {
+  final String message;
+  MemoryUpdateError(this.message);
+}
+
+/// Emitted while a caregiver-initiated DELETE is in flight.
+class MemoryDeleting extends MemoryState {}
+
+class MemoryDeleted extends MemoryState {
+  final String id;
+  MemoryDeleted(this.id);
+}
+
+class MemoryDeleteError extends MemoryState {
+  final String message;
+  MemoryDeleteError(this.message);
+}
