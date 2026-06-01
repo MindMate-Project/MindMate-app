@@ -4,16 +4,16 @@ import 'package:mindmate/core/themes/app_theme.dart';
 class PatientCard extends StatelessWidget {
   final String name;
   final String relation;
-  final String imageUrl;
   final VoidCallback onTap;
+  final bool isSelected;
 
   const PatientCard({
-    Key? key,
+    super.key,
     required this.name,
     required this.relation,
-    required this.imageUrl,
     required this.onTap,
-  }) : super(key: key);
+    this.isSelected = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,21 +25,21 @@ class PatientCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppTheme.neutralLight,
           borderRadius: BorderRadius.circular(16),
+          border: isSelected
+              ? Border.all(color: AppTheme.primaryColor, width: 1.5)
+              : null,
         ),
         child: Row(
           children: [
             // Patient avatar
             Container(
-              width: 56,
-              height: 56,
+              width: 50,
+              height: 50,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.neutralWhite,
-                image: DecorationImage(
-                  image: NetworkImage(imageUrl),
-                  fit: BoxFit.cover,
-                ),
+                color: Colors.grey[300],
               ),
+              child: const Icon(Icons.person),
             ),
             const SizedBox(width: 12),
             // Patient info

@@ -19,4 +19,13 @@ class ApiConfig {
 
   // Memory endpoints
   static const String memoryBase = '$baseUrl/api/memories';
+  // GET    /api/memories/patient/:patientId  — list a patient's memories
+  // POST   /api/memories                     — create a new memory (multipart for media)
+  // PUT    /api/memories/:id                 — update text fields only (caregiver/admin)
+  // DELETE /api/memories/:id                 — delete memory + Cloudinary asset (caregiver/admin)
+  static const String createMemoryEndpoint = '/api/memories';
+  static String memoriesForPatientEndpoint(String patientId) =>
+      '/api/memories/patient/$patientId';
+  static String updateMemoryEndpoint(String id) => '/api/memories/$id';
+  static String deleteMemoryEndpoint(String id) => '/api/memories/$id';
 }

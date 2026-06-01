@@ -37,17 +37,35 @@ class MemoryItem {
     }
   }
 
-  /// Create a MemoryItem from a JSON map returned by the API
+  /// Create a MemoryItem from a JSON map returned by the API.
+  ///
+  /// Backend (MindMate-Project/Backend, src/models/MemoryItem.ts) stores the
+  /// Cloudinary URL under `file_url` for both photo and video types — the
+  /// distinction comes from the `type` field. We parse `type` first, then
+  /// route the URL into the right slot so the existing PhotoTab / VideoTab
+  /// widgets pick it up. The text body lives under `caption` on the backend
+  /// (we keep `description` / `content` / `text` as fallbacks).
   factory MemoryItem.fromJson(Map<String, dynamic> json) {
+    final parsedType = _parseType(json['type'] ?? json['memoryType']);
+    final fileUrl = (json['file_url'] ??
+            json['imageUrl'] ??
+            json['image'] ??
+            json['photoUrl'] ??
+            json['videoUrl'] ??
+            json['video'])
+        ?.toString();
     return MemoryItem(
       id: json['_id']?.toString() ?? json['id']?.toString(),
       title: json['title'] ?? json['name'] ?? 'Untitled',
       subtitle: json['subtitle'] ?? json['relation'],
       date: json['date'] ?? json['createdAt']?.toString().substring(0, 10),
-      imageUrl: json['imageUrl'] ?? json['image'] ?? json['photoUrl'],
-      videoUrl: json['videoUrl'] ?? json['video'],
-      description: json['description'] ?? json['content'] ?? json['text'],
-      type: _parseType(json['type'] ?? json['memoryType']),
+      imageUrl: parsedType == MemoryType.photo ? fileUrl : null,
+      videoUrl: parsedType == MemoryType.video ? fileUrl : null,
+      description: json['description'] ??
+          json['content'] ??
+          json['caption'] ??
+          json['text'],
+      type: parsedType,
     );
   }
 

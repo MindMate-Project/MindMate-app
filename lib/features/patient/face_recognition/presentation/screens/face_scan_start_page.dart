@@ -3,7 +3,7 @@ import 'package:mindmate/core/themes/app_theme.dart';
 import 'face_camera_page.dart';
 
 class FaceScanStartPage extends StatelessWidget {
-  const FaceScanStartPage({Key? key}) : super(key: key);
+  const FaceScanStartPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +62,7 @@ class FaceScanStartPage extends StatelessWidget {
                         child: Icon(
                           Icons.face_retouching_natural,
                           size: 100,
-                          color: AppTheme.primaryColor.withOpacity(0.5),
+                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
                         ),
                       );
                     },

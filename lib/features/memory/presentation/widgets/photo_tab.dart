@@ -41,51 +41,59 @@ class _PersonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.grey[200],
-              image: item.imageUrl != null
-                  ? DecorationImage(
-                      image: NetworkImage(item.imageUrl!),
-                      fit: BoxFit.cover,
-                    )
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () => Navigator.pushNamed(
+        context,
+        '/memory/drill',
+        arguments: {'memoryId': item.id},
+      ),
+      child: Column(
+        children: [
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.grey[200],
+                image: item.imageUrl != null
+                    ? DecorationImage(
+                        image: NetworkImage(item.imageUrl!),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: item.imageUrl == null
+                  ? Icon(Icons.person, size: 60, color: Colors.grey[400])
                   : null,
             ),
-            child: item.imageUrl == null
-                ? Icon(Icons.person, size: 60, color: Colors.grey[400])
-                : null,
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          item.title,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF2D3142),
-          ),
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 2),
-        if (item.subtitle != null)
+          const SizedBox(height: 8),
           Text(
-            'Relation: ${item.subtitle}',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
+            item.title,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2D3142),
             ),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-      ],
+          const SizedBox(height: 2),
+          if (item.subtitle != null)
+            Text(
+              'Relation: ${item.subtitle}',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+        ],
+      ),
     );
   }
 }

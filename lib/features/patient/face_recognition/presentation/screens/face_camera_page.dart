@@ -17,7 +17,7 @@ Future<String> fixImageRotation(String imagePath) async {
 }
 
 class FaceCameraPage extends StatefulWidget {
-  const FaceCameraPage({Key? key}) : super(key: key);
+  const FaceCameraPage({super.key});
 
   @override
   State<FaceCameraPage> createState() => _FaceCameraPageState();
@@ -305,7 +305,7 @@ class _FaceCameraPageState extends State<FaceCameraPage> with WidgetsBindingObse
           child: Image.file(_capturedImage!, fit: BoxFit.cover),
         ),
         Positioned.fill(
-          child: Container(color: Colors.black.withOpacity(0.3)),
+          child: Container(color: Colors.black.withValues(alpha: 0.3)),
         ),
         _buildTopBar(showCameraControls: false),
         Positioned(
@@ -318,7 +318,7 @@ class _FaceCameraPageState extends State<FaceCameraPage> with WidgetsBindingObse
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
+                colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)],
               ),
             ),
             child: Row(
@@ -377,7 +377,7 @@ class _FaceCameraPageState extends State<FaceCameraPage> with WidgetsBindingObse
             width: 250,
             height: 300,
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.white.withOpacity(0.5), width: 3),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 3),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
@@ -386,13 +386,13 @@ class _FaceCameraPageState extends State<FaceCameraPage> with WidgetsBindingObse
                 Icon(
                   Icons.face,
                   size: 80,
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 10),
                 Text(
                   'Position face here',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.white.withValues(alpha: 0.7),
                     fontSize: 14,
                   ),
                 ),
@@ -411,7 +411,7 @@ class _FaceCameraPageState extends State<FaceCameraPage> with WidgetsBindingObse
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
+                colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)],
               ),
             ),
             child: Row(
@@ -432,7 +432,7 @@ class _FaceCameraPageState extends State<FaceCameraPage> with WidgetsBindingObse
                       border: Border.all(color: Colors.white, width: 5),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primaryColor.withOpacity(0.5),
+                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
                           blurRadius: 20,
                           spreadRadius: 2,
                         ),
@@ -474,7 +474,7 @@ class _FaceCameraPageState extends State<FaceCameraPage> with WidgetsBindingObse
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Colors.black.withOpacity(0.6), Colors.transparent],
+              colors: [Colors.black.withValues(alpha: 0.6), Colors.transparent],
             ),
           ),
           child: Row(
@@ -482,7 +482,7 @@ class _FaceCameraPageState extends State<FaceCameraPage> with WidgetsBindingObse
             children: [
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
@@ -501,7 +501,7 @@ class _FaceCameraPageState extends State<FaceCameraPage> with WidgetsBindingObse
               if (showCameraControls)
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
@@ -535,7 +535,7 @@ class _FaceCameraPageState extends State<FaceCameraPage> with WidgetsBindingObse
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: Colors.white, size: 28),

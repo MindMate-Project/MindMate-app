@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/widgets.dart';
 
 class Responsive {
@@ -36,15 +35,15 @@ class Responsive {
 
 extension SizeExtension on num {
   // Get responsive width
-  double get w => Responsive.w(this.toDouble());
+  double get w => Responsive.w(toDouble());
 
-  // Get responsive height 
-  double get h => Responsive.h(this.toDouble());
+  // Get responsive height
+  double get h => Responsive.h(toDouble());
 
   // Get responsive font size
-  double get sp => Responsive.sp(this.toDouble());
+  double get sp => Responsive.sp(toDouble());
 
   // Use this for things that MUST stay square (like icons or circular avatars)
   // It uses the width scale for both dimensions.
-  double get r => this.toDouble() * Responsive.scaleFactor;
+  double get r => toDouble() * Responsive.scaleFactor;
 }

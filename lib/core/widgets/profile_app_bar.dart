@@ -3,7 +3,13 @@ import '../themes/app_theme.dart';
 
 /// App bar used for profile section screens (Edit Profile, Notifications, etc.).
 class ProfileAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const ProfileAppBar({super.key, required this.title, this.centerTitle, this.showBackButton, this.actions});
+  const ProfileAppBar({
+    super.key,
+    required this.title,
+    this.centerTitle,
+    this.showBackButton,
+    this.actions,
+  });
 
   final String title;
   final bool? centerTitle;
@@ -17,17 +23,19 @@ class ProfileAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       centerTitle: centerTitle ?? false,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-      ),
-      leading: showBackButton ?? true ? IconButton(
-        icon: Icon(
-          Icons.arrow_back_ios,
-          size: 30,
-          color: AppTheme.neutralWhite,
-        ),
-        onPressed: () => Navigator.maybePop(context),
-      ) : null,
+      // shape: RoundedRectangleBorder(
+      //   borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+      // ),
+      leading: showBackButton ?? true
+          ? IconButton(
+              icon: Icon(
+                Icons.arrow_back_ios,
+                size: 30,
+                color: AppTheme.neutralWhite,
+              ),
+              onPressed: () => Navigator.maybePop(context),
+            )
+          : null,
       title: Text(
         title,
         style: TextStyle(

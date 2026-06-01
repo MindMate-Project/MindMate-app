@@ -1,23 +1,12 @@
 import 'package:dio/dio.dart';
+import 'package:mindmate/core/network/api_http_client.dart';
 import '../../domain/models/auth_response_model.dart';
-import '../../domain/models/user_model.dart';
-import 'package:mindmate/core/config/api_config.dart';
+import '../../domain/models/register_request.dart';
 
 class AuthService {
   final Dio _dio;
 
-  AuthService()
-    : _dio = Dio(
-        BaseOptions(
-          baseUrl: ApiConfig.baseUrl,
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          connectTimeout: const Duration(seconds: 30),
-          receiveTimeout: const Duration(seconds: 30),
-        ),
-      );
+  AuthService() : _dio = ApiHttpClient.dio;
 
   /// Helper method to handle errors and parse responses
   dynamic _handleResponse(Response response) {
@@ -87,29 +76,12 @@ class AuthService {
 
   /// Register a new user
   /// Returns AuthResponse with user data (no token on registration)
-  Future<AuthResponse> register(User user, String password) async {
+  Future<AuthResponse> register(RegisterRequest request) async {
     try {
-      final Map<String, dynamic> body = {
-        'name': user.name,
-        'email': user.email,
-        'password': password,
-        'role': user.role,
-        'phoneNumber' :user.phoneNumber,
-      };
-
-      // Add optional fields for caregiver
-      if (user.patients != null && user.patients!.isNotEmpty) {
-        body['patients'] = user.patients!.map((p) => p.toString()).toList();
-      }
-
-      print('Registering user: ${body.toString()}');
-      print('URL: ${ApiConfig.baseUrl}/api/auth/register');
-
-      final response = await _dio.post('/api/auth/register', data: body);
-
-      print('Response status: ${response.statusCode}');
-      print('Response data type: ${response.data.runtimeType}');
-      print('Response data: ${response.data}');
+      final response = await _dio.post(
+        '/api/auth/register',
+        data: request.toJson(),
+      );
 
       final responseBody = _handleResponse(response);
 
@@ -124,12 +96,8 @@ class AuthService {
         throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      print('DioException: ${e.type}');
-      print('Response: ${e.response?.data}');
-      print('Status: ${e.response?.statusCode}');
       throw Exception(_extractErrorMessage(e, 'Registration failed'));
     } catch (e) {
-      print('General error: $e');
       throw Exception('Registration error: ${e.toString()}');
     }
   }
@@ -138,17 +106,10 @@ class AuthService {
   /// Returns AuthResponse with user data and token
   Future<AuthResponse> login(String email, String password) async {
     try {
-      print('Logging in: email=$email');
-      print('URL: ${ApiConfig.baseUrl}/api/auth/login');
-
       final response = await _dio.post(
         '/api/auth/login',
         data: {'email': email, 'password': password},
       );
-
-      print('Response status: ${response.statusCode}');
-      print('Response data type: ${response.data.runtimeType}');
-      print('Response data: ${response.data}');
 
       final responseBody = _handleResponse(response);
 
@@ -161,12 +122,8 @@ class AuthService {
         throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      print('DioException: ${e.type}');
-      print('Response: ${e.response?.data}');
-      print('Status: ${e.response?.statusCode}');
       throw Exception(_extractErrorMessage(e, 'Login failed'));
     } catch (e) {
-      print('General error: $e');
       throw Exception('Login error: ${e.toString()}');
     }
   }

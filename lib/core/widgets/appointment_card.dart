@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:mindmate/core/widgets/info_pill_card.dart';
+import 'package:mindmate/core/widgets/info_card.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 
 class AppointmentCard extends StatelessWidget {
   final String doctorName, specialty, location, date, time, type;
+  final VoidCallback? onTap;
 
   const AppointmentCard({
     super.key,
@@ -13,11 +14,15 @@ class AppointmentCard extends StatelessWidget {
     required this.date,
     required this.time,
     required this.type,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InfoPillCard(
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: InfoCard(
       tag: type,
       children: [
         Text(doctorName, style: _titleStyle),
@@ -63,6 +68,7 @@ class AppointmentCard extends StatelessWidget {
           ],
         ),
       ],
+      ),
     );
   }
 

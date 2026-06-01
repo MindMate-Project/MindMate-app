@@ -39,7 +39,6 @@ class AppTheme {
     color: primaryColor,
     letterSpacing: -0.017,
     height: 1.5,
-    fontFamily: 'Poppins',
   );
 
   static const TextStyle heading2 = TextStyle(
@@ -109,8 +108,8 @@ class AppTheme {
   static const TextStyle elevatedButtonText = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.w500,
-    color: textWhite,
-    letterSpacing: 0,
+    height: 1.2,
+    color: neutralWhite,
   );
 
   // Border Radius

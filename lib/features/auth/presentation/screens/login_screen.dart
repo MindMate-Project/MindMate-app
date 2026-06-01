@@ -18,6 +18,18 @@ class _LoginState extends State<Login> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _rememberMe = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRememberMe();
+  }
+
+  Future<void> _loadRememberMe() async {
+    final rememberMe = await context.read<AuthCubit>().getRememberMe();
+    if (mounted) setState(() => _rememberMe = rememberMe);
+  }
 
   @override
   void dispose() {
@@ -29,8 +41,9 @@ class _LoginState extends State<Login> {
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
       context.read<AuthCubit>().login(
-        _emailController.text,
+        _emailController.text.trim(),
         _passwordController.text,
+        rememberMe: _rememberMe,
       );
     }
   }
@@ -102,28 +115,47 @@ class _LoginState extends State<Login> {
 
                 SizedBox(height: AppTheme.spacingL),
 
-                // Forgot password
-                Align(
-                  // heightFactor: 0.5,
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pushNamed('/forgot_password');
-                    },
-                    style: ButtonStyle(
-                      padding: WidgetStateProperty.all<EdgeInsets>(
-                        EdgeInsets.zero,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: Checkbox(
+                            value: _rememberMe,
+                            activeColor: AppTheme.primaryColor,
+                            side: BorderSide(color: Colors.grey.shade400),
+                            onChanged: (value) {
+                              setState(() => _rememberMe = value ?? false);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text('Remember me', style: AppTheme.caption),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pushNamed('/forgot_password');
+                      },
+                      style: ButtonStyle(
+                        padding: WidgetStateProperty.all(EdgeInsets.zero),
+                        minimumSize: WidgetStateProperty.all(Size.zero),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'Forgot Password?',
+                        style: TextStyle(
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
-                    child: Text(
-                      'Forgot Password?',
-                      style: TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
+                  ],
                 ),
 
                 SizedBox(height: AppTheme.spacingL),
@@ -171,64 +203,7 @@ class _LoginState extends State<Login> {
                   },
                 ),
 
-                SizedBox(height: AppTheme.spacingL),
-
-                Column(
-                  children: <Widget>[
-                    Row(
-                      spacing: AppTheme.spacingL,
-                      children: <Widget>[
-                        Expanded(
-                          child: Divider(color: Color(0xFFEDF1F3), height: 18),
-                        ),
-                        Text("OR", style: AppTheme.bodyXSmall),
-                        Expanded(
-                          child: Divider(color: Color(0xFFEDF1F3), height: 18),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-
-                SizedBox(height: AppTheme.spacingM),
-                SizedBox(
-                  width: double.infinity,
-                  height: 45,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // log in with google
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.backgroundWhite,
-                      foregroundColor: Color(0xFF1A1C1E),
-
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(color: Color(0xffEFF0F6)),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Wrap(
-                      spacing: 10,
-                      children: [
-                        Image.asset(
-                          'assets/images/google_icon.png',
-                          width: 18,
-                          height: 18,
-                        ),
-                        Text(
-                          'Continue with Google',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(height: 107),
+                SizedBox(height: 50),
                 // Sign up link
                 Center(
                   child: Wrap(
