@@ -51,7 +51,10 @@ class MemoryTrainingService {
     responseType: ResponseType.bytes,
   ));
 
-  Future<void> init({required void Function(String? memoryId) onTap}) async {
+  Future<void> init({
+    required void Function(String? memoryId) onTap,
+    void Function(String reminderId)? onReminderTap,
+  }) async {
     try {
       final tzName = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(tzName));
@@ -81,6 +84,9 @@ class MemoryTrainingService {
         } else if (payload.startsWith('$_payloadPrefix:')) {
           final id = payload.substring(_payloadPrefix.length + 1);
           onTap(id.isEmpty ? null : id);
+        } else if (payload.startsWith('reminder:')) {
+          final id = payload.substring('reminder:'.length);
+          if (id.isNotEmpty) onReminderTap?.call(id);
         }
       },
     );

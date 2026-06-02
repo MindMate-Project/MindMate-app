@@ -62,8 +62,8 @@ class MemoryService {
       if (e.response?.statusCode == 404) {
         return [];
       }
-      throw Exception(
-          e.response?.data?['message'] ?? 'Failed to fetch memories');
+      final msg = ApiHttpClient.messageFromResponseData(e.response?.data);
+      throw Exception(msg ?? 'Failed to fetch memories');
     } catch (e) {
       throw Exception('Error loading memories: $e');
     }
