@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mindmate/core/network/api_http_client.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 
@@ -16,6 +17,9 @@ class _SplashState extends State<Splash> {
   @override
   void initState() {
     super.initState();
+    // Wake the free-tier backend during the splash delay so the first real
+    // request after login doesn't hit a cold-start timeout.
+    unawaited(ApiHttpClient.warmUp());
     _navigateWhenReady();
   }
 

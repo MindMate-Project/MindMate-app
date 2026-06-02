@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/core/network/patient_context_store.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/navigation/app_bottom_nav.dart';
+import 'package:mindmate/core/widgets/error_retry_view.dart';
+import 'package:mindmate/core/widgets/user_avatar.dart';
 import 'package:mindmate/features/assignments/data/models/assigned_patient_row.dart';
 import 'package:mindmate/features/assignments/data/services/assignment_service.dart';
 import '../widgets/patient_card.dart';
-import 'package:mindmate/core/widgets/appointment_card.dart';
-import 'package:mindmate/core/widgets/medication_card.dart';
 import 'package:mindmate/features/assignments/presentation/screens/assign_patient.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/caregiver/home/presentation/screens/caregiver_notifications_screen.dart';
 import 'package:mindmate/features/memory/data/services/memory_training_service.dart';
+import 'package:mindmate/features/patient/reminders/presentation/widgets/home_reminders_section.dart';
 
 class CaregiverHomePage extends StatefulWidget {
   const CaregiverHomePage({super.key});
@@ -78,6 +82,13 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
     );
   }
 
+  /// First word of a full name, or null when empty. Used for the greeting.
+  String? _firstName(String? full) {
+    final n = full?.trim() ?? '';
+    if (n.isEmpty) return null;
+    return n.split(RegExp(r'\s+')).first;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -92,21 +103,11 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
                 _buildGreetingSection(),
                 const SizedBox(height: 30),
                 _buildPatientsSection(),
-                AppointmentCard(
-                  doctorName: 'Doctor Name',
-                  specialty: 'Specialty',
-                  type: 'Type',
-                  date: '2024-06-01',
-                  time: '10:00 AM',
-                  location: 'Location',
-                ),
-                MedicationCard(
-                  name: 'Medication Name',
-                  dosage: '10mg',
-                  frequency: 'Daily',
-                  startDate: DateTime.now(),
-                  time: 'Morning',
-                ),
+                if (_activePatientId != null) ...[
+                  const SizedBox(height: 30),
+                  // Keyed by the active patient so switching patients reloads.
+                  HomeRemindersSection(key: ValueKey(_activePatientId)),
+                ],
               ],
             ),
           ),
@@ -117,50 +118,51 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
   }
 
   Widget _buildGreetingSection() {
-    return Row(
-      children: [
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.grey[300],
-          ),
-          child: const Icon(Icons.person),
-        ),
-        const SizedBox(width: 15),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Hello, Caregiver',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2D3142),
-                ),
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, state) {
+        final user = state is AuthSuccess ? state.user : null;
+        final name = _firstName(user?.name) ?? 'Caregiver';
+        return Row(
+          children: [
+            // Profile picture: photo when available, else initial/icon.
+            UserAvatar(photoUrl: user?.photoUrl, name: user?.name, radius: 30),
+            const SizedBox(width: 15),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Hello, $name',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2D3142),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Ready to take care of your patients today?',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Ready to take care of your patients today?',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              ),
-            ],
-          ),
-        ),
-        IconButton(
-          tooltip: 'Notifications',
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute<void>(builder: (_) => const CaregiverNotificationsScreen()),
-            );
-          },
-          icon: const Icon(Icons.notifications_outlined),
-          color: AppTheme.primaryColor,
-        ),
-      ],
+            ),
+            IconButton(
+              tooltip: 'Notifications',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (_) => const CaregiverNotificationsScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.notifications_outlined),
+              color: AppTheme.primaryColor,
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -208,9 +210,10 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
         else if (_patientsError != null)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              _patientsError!,
-              style: const TextStyle(color: AppTheme.errorColor),
+            child: ErrorRetryView(
+              message: _patientsError!,
+              onRetry: _loadPatients,
+              expand: false,
             ),
           )
         else if (_patients.isEmpty)

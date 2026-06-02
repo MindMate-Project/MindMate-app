@@ -25,9 +25,10 @@ class AssignmentService {
         throw Exception('Session expired. Please log in again.');
       }
       throw Exception(
-        ApiHttpClient.messageFromResponseData(e.response?.data) ??
-            e.message ??
-            'Could not send assignment request',
+        ApiHttpClient.friendlyError(
+          e,
+          fallback: 'Could not send assignment request',
+        ),
       );
     }
   }
@@ -56,9 +57,10 @@ class AssignmentService {
         throw Exception('Session expired. Please log in again.');
       }
       throw Exception(
-        ApiHttpClient.messageFromResponseData(e.response?.data) ??
-            e.message ??
-            'Could not load assignment requests',
+        ApiHttpClient.friendlyError(
+          e,
+          fallback: 'Could not load assignment requests',
+        ),
       );
     }
   }
@@ -82,9 +84,7 @@ class AssignmentService {
         throw Exception('Session expired. Please log in again.');
       }
       throw Exception(
-        ApiHttpClient.messageFromResponseData(e.response?.data) ??
-            e.message ??
-            'Could not update request',
+        ApiHttpClient.friendlyError(e, fallback: 'Could not update request'),
       );
     }
   }
@@ -109,9 +109,7 @@ class AssignmentService {
         throw Exception('Session expired. Please log in again.');
       }
       throw Exception(
-        ApiHttpClient.messageFromResponseData(e.response?.data) ??
-            e.message ??
-            'Could not load patients',
+        ApiHttpClient.friendlyError(e, fallback: 'Could not load patients'),
       );
     }
   }

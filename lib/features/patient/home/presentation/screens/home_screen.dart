@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/navigation/app_bottom_nav.dart';
-import 'package:mindmate/core/widgets/appointment_card.dart';
-import 'package:mindmate/core/widgets/medicine_card.dart';
+import 'package:mindmate/core/widgets/user_avatar.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/memory/data/models/memory_item.dart';
 import 'package:mindmate/features/memory/data/services/memory_training_service.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_cubit.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_state.dart';
 import 'package:mindmate/features/patient/face_recognition/face_recognition.dart';
+import 'package:mindmate/features/patient/reminders/data/services/reminder_notification_service.dart';
+import 'package:mindmate/features/patient/reminders/presentation/widgets/home_reminders_section.dart';
 
 class PatientHomePage extends StatefulWidget {
   const PatientHomePage({super.key});
@@ -21,7 +25,12 @@ class _PatientHomePageState extends State<PatientHomePage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _applyTrainingSchedule());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _applyTrainingSchedule();
+      // Patient device only: schedule local notifications for the patient's
+      // reminders (delivery used to rely on a push path that never fired).
+      ReminderNotificationService.instance.syncFromServer();
+    });
   }
 
   Future<void> _applyTrainingSchedule() async {
@@ -52,12 +61,9 @@ class _PatientHomePageState extends State<PatientHomePage> {
                 _buildGreetingSection(),
                 const SizedBox(height: 30),
 
-                // upcoming Appointment section
-                _buildUpcomingAppointment(),
-                const SizedBox(height: 30),
-
-                // today's Medicine section
-                _buildTodaysMedicine(),
+                // upcoming appointment + today's medicine, from the patient's
+                // real reminders
+                const HomeRemindersSection(),
                 const SizedBox(height: 30),
 
                 // quick Actions section
@@ -72,66 +78,43 @@ class _PatientHomePageState extends State<PatientHomePage> {
   }
 
   Widget _buildGreetingSection() {
-    return Row(
-      children: [
-        // Profile picture
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.grey[300],
-            image: const DecorationImage(
-              image: NetworkImage('https://i.pravatar.cc/150?img=12'),
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        const SizedBox(width: 15),
-        // Greeting text
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, state) {
+        final user = state is AuthSuccess ? state.user : null;
+        final fullName = user?.name.trim() ?? '';
+        final firstName =
+            fullName.isEmpty ? 'there' : fullName.split(RegExp(r'\s+')).first;
+        final today = DateFormat('EEEE, d MMM').format(DateTime.now());
+
+        return Row(
           children: [
-            const Text(
-              'Hello,',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2D3142),
+            // Profile picture: photo when available, else initial/icon.
+            UserAvatar(photoUrl: user?.photoUrl, name: fullName, radius: 30),
+            const SizedBox(width: 15),
+            // Greeting text
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Hello, $firstName',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2D3142),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    today,
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              DateTime.now().toString(),
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-            ),
           ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUpcomingAppointment() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Upcoming Appointment',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.primaryColor,
-          ),
-        ),
-        AppointmentCard(
-          doctorName: 'Dr. Khaled Ali',
-          specialty: 'Cardiologist',
-          location: 'Qasr El Einy Hospital',
-          date: '07-02-2026',
-          type: 'follow-up',
-          time: '09:00 AM',
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -225,27 +208,4 @@ class _PatientHomePageState extends State<PatientHomePage> {
     );
   }
 
-  Widget _buildTodaysMedicine() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Today's Medicine",
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.primaryColor,
-          ),
-        ),
-        const MedicineCard(
-          name: 'Metformin',
-          dosage: '2 Capsules',
-          frequency: 'Daily',
-          time: '12:00 PM',
-          startDate: '25 July',
-          endDate: '25 March',
-        ),
-      ],
-    );
-  }
 }

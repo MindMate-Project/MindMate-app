@@ -11,6 +11,7 @@ import 'package:mindmate/core/widgets/custom_text_form_field.dart';
 import 'package:mindmate/core/widgets/date_picker_field.dart';
 import 'package:mindmate/core/widgets/labeled_form_field.dart';
 import 'package:mindmate/core/widgets/profile_app_bar.dart';
+import 'package:mindmate/core/widgets/user_avatar.dart';
 import 'package:mindmate/core/utils/validation.utils.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -311,29 +312,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       child: ValueListenableBuilder<TextEditingValue>(
         valueListenable: _firstNameController,
         builder: (context, value, _) {
-          final initial = value.text.trim().isNotEmpty
-              ? value.text.trim()[0].toUpperCase()
-              : '?';
           return Stack(
             clipBehavior: Clip.none,
             children: [
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.grey[300],
-                ),
-                child: Center(
-                  child: Text(
-                    initial,
-                    style: const TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                ),
+              UserAvatar(
+                photoUrl: _getLoggedInUser()?.photoUrl,
+                name: value.text,
+                radius: 50,
               ),
               Positioned(
                 bottom: 0,

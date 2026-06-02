@@ -36,4 +36,41 @@ abstract final class ReminderFilters {
 
   /// Date/time shown on cards and detail
   static DateTime displayDateTime(ReminderItem r) => _local(r.scheduledTime);
+
+  static DateTime _dateOnly(DateTime value) {
+    final local = _local(value);
+    return DateTime(local.year, local.month, local.day);
+  }
+
+  /// Soonest appointment strictly after [now] (defaults to current time), or
+  /// null when there is none. Used for the home "Upcoming Appointment" card.
+  static ReminderItem? nextAppointment(
+    List<ReminderItem> items, {
+    DateTime? now,
+  }) {
+    final ref = now ?? DateTime.now();
+    final upcoming =
+        items.where(isAppointment).where((r) => displayDateTime(r).isAfter(ref)).toList()
+          ..sort((a, b) => displayDateTime(a).compareTo(displayDateTime(b)));
+    return upcoming.isEmpty ? null : upcoming.first;
+  }
+
+  /// Medications active on [day] — i.e. startDate <= day <= endDate (an open
+  /// endDate means ongoing). Used for the home "Today's Medicine" card.
+  static List<ReminderItem> medicationsForDay(
+    List<ReminderItem> items,
+    DateTime day,
+  ) {
+    final target = DateTime(day.year, day.month, day.day);
+    bool activeOn(ReminderItem r) {
+      final startDay = _dateOnly(r.startDate ?? r.scheduledTime);
+      if (target.isBefore(startDay)) return false;
+      final end = r.endDate;
+      if (end != null && target.isAfter(_dateOnly(end))) return false;
+      return true;
+    }
+
+    return items.where(isMedication).where(activeOn).toList()
+      ..sort((a, b) => displayDateTime(a).compareTo(displayDateTime(b)));
+  }
 }

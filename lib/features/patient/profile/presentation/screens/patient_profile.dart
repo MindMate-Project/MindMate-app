@@ -7,6 +7,7 @@ import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/navigation/app_bottom_nav.dart';
 import 'package:mindmate/core/widgets/profile_app_bar.dart';
+import 'package:mindmate/core/widgets/user_avatar.dart';
 
 class PatientProfileScreen extends StatefulWidget {
   const PatientProfileScreen({super.key});
@@ -63,7 +64,6 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     final name = user?.name ?? '—';
     final email = user?.email ?? '—';
     final phone = user?.phoneNumber ?? '';
-    final initial = name.isNotEmpty && name != '—' ? name[0].toUpperCase() : '?';
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24),
@@ -72,24 +72,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
           Stack(
             clipBehavior: Clip.none,
             children: [
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.grey[300],
-                ),
-                child: Center(
-                  child: Text(
-                    initial,
-                    style: const TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                ),
-              ),
+              UserAvatar(photoUrl: user?.photoUrl, name: user?.name, radius: 60),
               Positioned(
                 bottom: 0,
                 right: 0,
@@ -176,10 +159,8 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
         title: 'Notifications',
         onTap: () => _navigateTo('/notifications'),
       ),
-      _ProfileOption(
-        title: 'Medical Information',
-        onTap: () => _navigateTo('/medical_information'),
-      ),
+      // 'Medical Information' is intentionally omitted until its screen exists
+      // (the /medical_information route is not registered).
       _ProfileOption(
         title: 'Privacy Policy',
         onTap: () => _navigateTo('/privacy_policy'),

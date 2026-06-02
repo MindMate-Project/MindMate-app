@@ -18,6 +18,7 @@ import 'package:mindmate/features/onboarding/presentation/screens/onboarding/com
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_screen.dart';
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_item.dart';
 import 'package:mindmate/features/patient/reminders/presentation/screens/reminders_screen.dart';
+import 'package:mindmate/features/patient/reminders/presentation/screens/reminder_detail_screen.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/patient_profile.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/notifications_screen.dart';
@@ -48,6 +49,13 @@ void main() async {
       rootNavigatorKey.currentState?.pushNamed(
         '/memory/drill',
         arguments: memoryId == null ? null : {'memoryId': memoryId},
+      );
+    },
+    onReminderTap: (reminderId) {
+      rootNavigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (_) => ReminderDetailScreen(reminderId: reminderId),
+        ),
       );
     },
   );
@@ -112,15 +120,38 @@ void main() async {
                 );
               }
               if (settings.name == '/reset-password') {
-                final email = settings.arguments is String
-                    ? settings.arguments as String
-                    : (settings.arguments as Map<String, String>?)?['email'];
+                final args = settings.arguments;
+                String? email;
+                String? code;
+                if (args is String) {
+                  email = args;
+                } else if (args is Map) {
+                  email = args['email'] as String?;
+                  code = args['code'] as String?;
+                }
                 return MaterialPageRoute(
-                  builder: (context) => ResetPasswordScreen(email: email),
+                  builder: (context) =>
+                      ResetPasswordScreen(email: email, code: code),
                 );
               }
               return null;
             },
+            // Fallback so an unregistered route degrades gracefully instead of
+            // throwing (e.g. features whose screens don't exist yet).
+            onUnknownRoute: (settings) => MaterialPageRoute<void>(
+              builder: (_) => Scaffold(
+                appBar: AppBar(title: const Text('Coming soon')),
+                body: const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text(
+                      'This feature is coming soon.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           );
         },
       ),
