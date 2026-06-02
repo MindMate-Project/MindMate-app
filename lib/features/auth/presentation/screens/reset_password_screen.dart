@@ -7,8 +7,9 @@ import 'package:mindmate/core/widgets/password_form_field.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String? email;
+  final String? code;
 
-  const ResetPasswordScreen({super.key, this.email});
+  const ResetPasswordScreen({super.key, this.email, this.code});
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -58,7 +59,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         final authCubit = context.read<AuthCubit>();
         await authCubit.resetPassword(
           email,
-          '',
+          widget.code ?? '',
           _passwordController.text,
         );
         final currentState = authCubit.state;

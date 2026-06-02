@@ -117,11 +117,11 @@ class AuthCubit extends Cubit<AuthState> {
 
   /// Reset password 
   Future<void> resetPassword(String email, String code, String newPassword) async {
-    final _ = code;
     emit(ResetPasswordLoading());
     try {
       final response = await authService.resetPassword(
         email,
+        code,
         newPassword,
         newPassword,
       );

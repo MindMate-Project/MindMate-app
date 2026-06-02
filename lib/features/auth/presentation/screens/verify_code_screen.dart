@@ -76,9 +76,13 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       setState(() => _isLoading = false);
 
       if (result['success'] == true) {
-        Navigator.of(
-          context,
-        ).pushNamed('/reset-password', arguments: widget.email);
+        Navigator.of(context).pushNamed(
+          '/reset-password',
+          arguments: {
+            'email': widget.email,
+            'code': _codeController.text.trim(),
+          },
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
