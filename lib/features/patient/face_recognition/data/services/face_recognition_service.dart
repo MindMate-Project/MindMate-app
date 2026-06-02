@@ -19,9 +19,10 @@ class FaceRecognitionService {
         'file': await MultipartFile.fromFile(imagePath, filename: 'face.jpg'),
       });
       
+      // The backend authenticates this endpoint with the Bearer token below
+      // (protect middleware); it does not check X-API-Key.
       Map<String, dynamic> headers = {
         'Accept': 'application/json',
-        'X-API-Key': ApiConfig.apiKey,
       };
 
       if (token != null) {
