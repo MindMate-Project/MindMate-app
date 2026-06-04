@@ -93,4 +93,34 @@ class User {
       if (photoUrl != null) 'photoUrl': photoUrl,
     };
   }
+
+  /// Returns a copy with the given fields replaced. Pass [clearPhotoUrl] to set
+  /// the photo back to null (since a null [photoUrl] argument keeps the current
+  /// value).
+  User copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? role,
+    String? phoneNumber,
+    List<String>? patients,
+    String? gender,
+    String? address,
+    DateTime? dateOfBirth,
+    String? photoUrl,
+    bool clearPhotoUrl = false,
+  }) {
+    return User(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      role: role ?? this.role,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      patients: patients ?? this.patients,
+      gender: gender ?? this.gender,
+      address: address ?? this.address,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      photoUrl: clearPhotoUrl ? null : (photoUrl ?? this.photoUrl),
+    );
+  }
 }

@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mindmate/core/network/patient_context_store.dart';
+import 'package:mindmate/features/patient/profile/data/services/profile_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/register_request.dart';
 import '../../domain/models/user_model.dart';
@@ -11,6 +13,7 @@ import 'auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final AuthService authService;
+  final ProfileService _profileService;
   final PatientContextStore _patientContextStore = PatientContextStore();
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   static const _tokenKey = 'auth_token';
@@ -18,7 +21,7 @@ class AuthCubit extends Cubit<AuthState> {
   static const _rememberMeKey = 'remember_me';
   static const _onboardingCompletedKey = 'onboarding_completed';
 
-  AuthCubit(this.authService) : super(AuthInitial());
+  AuthCubit(this.authService, this._profileService) : super(AuthInitial());
 
   /// Register a new user
   Future<void> register(RegisterRequest request) async {
@@ -49,6 +52,9 @@ class AuthCubit extends Cubit<AuthState> {
         final user = response.user!;
         await _persistSession(user, response.token!, rememberMe: rememberMe);
         emit(AuthSuccess(user, response.token));
+        // Login only returns {_id,name,email,role}; pull the full profile
+        // (photo, phone, gender, …) in the background.
+        unawaited(_hydrateProfile(user.role));
       } else {
         emit(AuthFailure('Login failed: Invalid response from server'));
       }
@@ -87,6 +93,7 @@ class AuthCubit extends Cubit<AuthState> {
           );
           await _applyPatientContext(user);
           emit(AuthSuccess(user, token));
+          unawaited(_hydrateProfile(user.role));
           return _homeRouteFor(user.role);
         } catch (_) {
           await _clearCredentials();
@@ -201,11 +208,47 @@ class AuthCubit extends Cubit<AuthState> {
     emit(AuthInitial());
   }
 
-  /// Update current user in-memory (e.g. after profile update)
+  /// Update current user in-memory (e.g. after profile update / photo change)
+  /// and persist it when the session is remembered.
   void updateUser(User user) {
     final s = state;
     if (s is AuthSuccess) {
       emit(AuthSuccess(user, s.token));
+      unawaited(_persistUserIfRemembered(user));
+    }
+  }
+
+  /// The login/reset response only carries {_id,name,email,role}. Fetch the
+  /// full profile (photo, phone, gender, dateOfBirth) and merge it into the
+  /// in-memory session user so avatars/profile show real data. Best-effort:
+  /// failures keep the existing user untouched.
+  Future<void> _hydrateProfile(String role) async {
+    try {
+      final full = await _profileService.getMyProfile(role: role);
+      final s = state;
+      if (s is! AuthSuccess) return;
+      final merged = s.user.copyWith(
+        name: full.name,
+        phoneNumber: full.phoneNumber,
+        gender: full.gender,
+        address: full.address,
+        dateOfBirth: full.dateOfBirth,
+        photoUrl: full.photoUrl,
+      );
+      emit(AuthSuccess(merged, s.token));
+      await _persistUserIfRemembered(merged);
+    } catch (_) {
+      // Keep the login user; the photo resolves on a later fetch.
+    }
+  }
+
+  Future<void> _persistUserIfRemembered(User user) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_rememberMeKey) ?? false) {
+      await _secureStorage.write(
+        key: _userJsonKey,
+        value: jsonEncode(user.toJson()),
+      );
     }
   }
 }

@@ -63,7 +63,7 @@ void main() async {
   runApp(
     MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => AuthCubit(AuthService())),
+        BlocProvider(create: (context) => AuthCubit(AuthService(), ProfileService())),
         BlocProvider(create: (context) => MemoryCubit(MemoryService())),
         BlocProvider(create: (context) => ProfileCubit(ProfileService())),
         BlocProvider(create: (context) => RemindersCubit(RemindersService())),
