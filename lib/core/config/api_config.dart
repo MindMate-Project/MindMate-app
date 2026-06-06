@@ -10,6 +10,8 @@ class ApiConfig {
   // Face Recognition endpoints
   static const String faceBase = '$baseUrl/api/face';
   static const String identifyFaceEndpoint = '$faceBase/patient/identify-face';
+  // Register a known person the patient should recognize (caregiver action).
+  static const String registerFaceEndpoint = '$faceBase/patient/register-face';
 
   // Memory endpoints
   static const String memoryBase = '$baseUrl/api/memories';

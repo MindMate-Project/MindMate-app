@@ -14,6 +14,7 @@ import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/caregiver/home/presentation/screens/caregiver_notifications_screen.dart';
 import 'package:mindmate/features/memory/data/services/memory_training_service.dart';
 import 'package:mindmate/features/patient/reminders/presentation/widgets/home_reminders_section.dart';
+import 'package:mindmate/features/caregiver/known_people/presentation/screens/register_known_person_screen.dart';
 
 class CaregiverHomePage extends StatefulWidget {
   const CaregiverHomePage({super.key});
@@ -89,6 +90,71 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
     return n.split(RegExp(r'\s+')).first;
   }
 
+  /// Full name of the active patient (for the "faces to recognize" entry).
+  String get _activePatientName {
+    final id = _activePatientId;
+    if (id == null) return 'your patient';
+    final match = _patients.where((p) => p.patientId == id);
+    return match.isNotEmpty ? match.first.name : 'your patient';
+  }
+
+  /// Entry point to register people the active patient should recognize.
+  Widget _buildKnownPeopleEntry(String patientId, String patientName) {
+    final shortName = _firstName(patientName) ?? patientName;
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute<bool>(
+          builder: (_) => RegisterKnownPersonScreen(
+            patientId: patientId,
+            patientName: shortName,
+          ),
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.neutralLight,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.15),
+              child: const Icon(
+                Icons.face_retouching_natural,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Faces to recognize',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2D3142),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Add a person $shortName should recognize',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.add, color: AppTheme.primaryColor),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,6 +170,8 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
                 const SizedBox(height: 30),
                 _buildPatientsSection(),
                 if (_activePatientId != null) ...[
+                  const SizedBox(height: 30),
+                  _buildKnownPeopleEntry(_activePatientId!, _activePatientName),
                   const SizedBox(height: 30),
                   // Keyed by the active patient so switching patients reloads.
                   HomeRemindersSection(key: ValueKey(_activePatientId)),
