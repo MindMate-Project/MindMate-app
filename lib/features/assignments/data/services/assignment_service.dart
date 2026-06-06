@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:mindmate/core/network/api_http_client.dart';
 import 'package:mindmate/features/assignments/data/models/assigned_patient_row.dart';
+import 'package:mindmate/features/assignments/data/models/connected_caregiver.dart';
 import 'package:mindmate/features/assignments/data/models/pending_caregiver_request.dart';
 
 class AssignmentService {
@@ -110,6 +111,32 @@ class AssignmentService {
       }
       throw Exception(
         ApiHttpClient.friendlyError(e, fallback: 'Could not load patients'),
+      );
+    }
+  }
+
+  /// GET /api/patient/caregivers — the signed-in patient's connected
+  /// caregivers (with phone numbers), e.g. so the patient can call one for help.
+  Future<List<ConnectedCaregiver>> fetchMyCaregivers() async {
+    try {
+      final response = await ApiHttpClient.dio.get(
+        '/api/patient/caregivers',
+        options: await ApiHttpClient.authorizedOptions(),
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Failed to load caregivers (${response.statusCode})');
+      }
+      return _extractList(response.data)
+          .whereType<Map>()
+          .map((m) => ConnectedCaregiver.fromJson(Map<String, dynamic>.from(m)))
+          .where((c) => c.id.isNotEmpty)
+          .toList();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw Exception('Session expired. Please log in again.');
+      }
+      throw Exception(
+        ApiHttpClient.friendlyError(e, fallback: 'Could not load caregivers'),
       );
     }
   }
