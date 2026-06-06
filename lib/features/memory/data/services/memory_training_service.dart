@@ -51,9 +51,15 @@ class MemoryTrainingService {
     responseType: ResponseType.bytes,
   ));
 
+  /// Set during [init] when the app was cold-launched by a reminder alarm's
+  /// full-screen intent. `main()` reads it after `runApp` to show the alarm
+  /// once the navigator exists. `(notificationId, reminderId)`.
+  (int, String)? pendingAlarmLaunch;
+
   Future<void> init({
     required void Function(String? memoryId) onTap,
     void Function(String reminderId)? onReminderTap,
+    void Function(int notificationId, String reminderId)? onReminderAlarm,
   }) async {
     try {
       final tzName = await FlutterTimezone.getLocalTimezone();
@@ -79,6 +85,11 @@ class MemoryTrainingService {
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         final payload = response.payload;
         if (payload == null) return;
+        final alarm = _parseAlarmPayload(payload);
+        if (alarm != null) {
+          onReminderAlarm?.call(alarm.$1, alarm.$2);
+          return;
+        }
         if (payload == _payloadPrefix) {
           onTap(null);
         } else if (payload.startsWith('$_payloadPrefix:')) {
@@ -90,6 +101,18 @@ class MemoryTrainingService {
         }
       },
     );
+
+    // Cold start: if a reminder alarm's full-screen intent launched the app,
+    // stash it so main() can show the alarm once the navigator is ready.
+    try {
+      final launch = await _plugin.getNotificationAppLaunchDetails();
+      if (launch?.didNotificationLaunchApp ?? false) {
+        pendingAlarmLaunch =
+            _parseAlarmPayload(launch!.notificationResponse?.payload);
+      }
+    } catch (e) {
+      debugPrint('[MemoryTraining] launch details failed: $e');
+    }
 
     final androidImpl = _plugin
         .resolvePlatformSpecificImplementation<
@@ -489,6 +512,20 @@ class MemoryTrainingService {
     if (h == null || m == null) return null;
     if (h < 0 || h > 23 || m < 0 || m > 59) return null;
     return TimeOfDay(hour: h, minute: m);
+  }
+
+  /// Parses a `reminder_alarm:<notificationId>:<reminderId>` payload into its
+  /// numeric notification id and reminder id, or null if it isn't one.
+  static (int, String)? _parseAlarmPayload(String? payload) {
+    const prefix = 'reminder_alarm:';
+    if (payload == null || !payload.startsWith(prefix)) return null;
+    final rest = payload.substring(prefix.length);
+    final sep = rest.indexOf(':');
+    if (sep <= 0) return null;
+    final notificationId = int.tryParse(rest.substring(0, sep));
+    final reminderId = rest.substring(sep + 1);
+    if (notificationId == null || reminderId.isEmpty) return null;
+    return (notificationId, reminderId);
   }
 
   @visibleForTesting

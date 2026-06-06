@@ -25,12 +25,12 @@ class ReminderNotificationService {
       FlutterLocalNotificationsPlugin();
   final RemindersService _service = RemindersService();
 
-  static const String _channelId = 'reminders';
-  static const String _channelName = 'Reminders';
+  static const String _channelId = 'reminder_alarms';
+  static const String _channelName = 'Reminder alarms';
   static const String _channelDesc =
-      'Appointment and medication reminders.';
+      'Full-screen medication and appointment alarms.';
 
-  static const String payloadPrefix = 'reminder';
+  static const String payloadPrefix = 'reminder_alarm';
 
   /// Distinct id range from MemoryTrainingService (9000s) to avoid collisions.
   static const int _baseId = 700000;
@@ -91,17 +91,27 @@ class ReminderNotificationService {
     ReminderItem r,
   ) async {
     final (title, body) = _content(r);
+    // Full-screen alarm: max importance + the alarm category make Android launch
+    // the app over the lock screen when this fires. ongoing/autoCancel:false keep
+    // it sticky so it can only be cleared by the in-app "Done" action.
     const androidDetails = AndroidNotificationDetails(
       _channelId,
       _channelName,
       channelDescription: _channelDesc,
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: Importance.max,
+      priority: Priority.max,
+      category: AndroidNotificationCategory.alarm,
+      fullScreenIntent: true,
+      ongoing: true,
+      autoCancel: false,
+      audioAttributesUsage: AudioAttributesUsage.alarm,
+      enableVibration: true,
     );
     const iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
     );
 
     await _plugin.zonedSchedule(
@@ -113,7 +123,9 @@ class ReminderNotificationService {
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
-      payload: '$payloadPrefix:${r.id}',
+      // notifId:reminderId — the alarm screen uses the numeric id to clear this
+      // ongoing notification, and the reminder id to load the reminder's details.
+      payload: '$payloadPrefix:$id:${r.id}',
     );
   }
 
@@ -142,6 +154,9 @@ class ReminderNotificationService {
       // Best-effort: ask for exact-alarm permission (Android 13+). The manifest
       // already declares SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM.
       await android.requestExactAlarmsPermission();
+      // Full-screen intent permission (Android 14+); the manifest declares
+      // USE_FULL_SCREEN_INTENT. Without it the alarm degrades to a heads-up only.
+      await android.requestFullScreenIntentPermission();
       if (ok == false) return false;
     }
 
@@ -162,7 +177,8 @@ class ReminderNotificationService {
         _channelId,
         _channelName,
         description: _channelDesc,
-        importance: Importance.high,
+        importance: Importance.max,
+        audioAttributesUsage: AudioAttributesUsage.alarm,
       ),
     );
   }

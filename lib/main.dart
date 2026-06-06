@@ -19,6 +19,7 @@ import 'package:mindmate/features/onboarding/presentation/screens/onboarding/com
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_item.dart';
 import 'package:mindmate/features/patient/reminders/presentation/screens/reminders_screen.dart';
 import 'package:mindmate/features/patient/reminders/presentation/screens/reminder_detail_screen.dart';
+import 'package:mindmate/core/navigation/app_navigation.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/patient_profile.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/notifications_screen.dart';
@@ -39,8 +40,6 @@ import 'package:mindmate/features/patient/profile/data/services/profile_service.
 import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_cubit.dart';
 import 'package:mindmate/features/patient/reminders/data/services/reminders_service.dart';
 
-final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   tz.initializeTimeZones();
@@ -58,6 +57,7 @@ void main() async {
         ),
       );
     },
+    onReminderAlarm: showReminderAlarm,
   );
 
   runApp(

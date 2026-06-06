@@ -154,3 +154,9 @@ lib/config/secrets.dart
 .history
 .svn/
 migrate_working_dir/
+
+# Claude Code local config / plans / memory
+.claude/
+
+# Flutter run screenshots
+flutter_*.png
