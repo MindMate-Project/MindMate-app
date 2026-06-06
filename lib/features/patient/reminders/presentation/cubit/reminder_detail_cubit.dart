@@ -8,11 +8,14 @@ class ReminderDetailCubit extends Cubit<ReminderDetailState> {
   final RemindersService _service;
 
   Future<void> load(String id) async {
+    if (isClosed) return;
     emit(ReminderDetailLoading());
     try {
       final item = await _service.getReminderById(id);
+      if (isClosed) return;
       emit(ReminderDetailLoaded(item));
     } catch (e) {
+      if (isClosed) return;
       emit(ReminderDetailError(e.toString().replaceFirst('Exception: ', '')));
     }
   }
@@ -26,6 +29,7 @@ class ReminderDetailCubit extends Cubit<ReminderDetailState> {
       await _service.deleteReminder(id);
       return true;
     } catch (e) {
+      if (isClosed) return false;
       emit(ReminderDetailLoaded(current.item));
       return false;
     }

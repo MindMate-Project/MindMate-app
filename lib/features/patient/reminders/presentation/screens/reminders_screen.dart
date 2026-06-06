@@ -217,22 +217,15 @@ class _RemindersScreenState extends State<RemindersScreen>
                                 ).compareTo(ReminderFilters.displayDateTime(b)),
                               );
 
-                        final medications =
-                            reminders
-                                .where(
-                                  (r) =>
-                                      ReminderFilters.isMedication(r) &&
-                                      DateUtils.isSameDay(
-                                        ReminderFilters.calendarDay(r),
-                                        _selectedDate,
-                                      ),
-                                )
-                                .toList()
-                              ..sort(
-                                (a, b) => ReminderFilters.displayDateTime(
-                                  a,
-                                ).compareTo(ReminderFilters.displayDateTime(b)),
-                              );
+                        // Show every medication active on the selected day
+                        // (start <= day <= end), matching the home "Today's
+                        // Medicine" card. Previously this matched only the med's
+                        // single scheduledTime day, so ongoing daily meds were
+                        // missing from the calendar on later days.
+                        final medications = ReminderFilters.medicationsForDay(
+                          reminders,
+                          _selectedDate,
+                        );
 
                         return TabBarView(
                           controller: _tabController,
