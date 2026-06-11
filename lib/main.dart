@@ -25,6 +25,7 @@ import 'package:mindmate/features/patient/profile/presentation/screens/edit_prof
 import 'package:mindmate/features/patient/profile/presentation/screens/notifications_screen.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/patient_assignment_inbox_screen.dart';
 import 'package:mindmate/features/caregiver/home/presentation/screens/caregiver_notifications_screen.dart';
+import 'package:mindmate/features/caregiver/location/presentation/screens/patient_location_screen.dart';
 import 'package:mindmate/features/assignments/data/services/assignment_service.dart';
 import 'package:mindmate/features/assignments/presentation/cubit/patient_assignment_requests_cubit.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/privacy_policy_screen.dart';
@@ -104,6 +105,7 @@ void main() async {
                     child: const PatientAssignmentInboxScreen(),
                   ),
               '/caregiver_notifications': (context) => const CaregiverNotificationsScreen(),
+              '/patient_location': (context) => const PatientLocationScreen(),
               '/privacy_policy': (context) => const PrivacyPolicyScreen(),
             },
             onGenerateRoute: (settings) {

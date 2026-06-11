@@ -21,6 +21,8 @@ class AppBottomNav extends StatelessWidget {
           Navigator.pushReplacementNamed(context, '/caregiver_home');
         case 1:
           Navigator.pushReplacementNamed(context, '/memory');
+        case 2:
+          Navigator.pushReplacementNamed(context, '/patient_location');
         case 3:
           Navigator.pushReplacementNamed(context, '/patient_reminders');
         case 4:
