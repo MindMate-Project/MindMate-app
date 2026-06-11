@@ -305,6 +305,9 @@ class RemindersService {
   }
 
   /// DELETE /api/reminders/:id
+  ///
+  /// A 404 is treated as success: the row is already gone, which is the
+  /// desired end state and makes [deleteReminderSeries] safely retryable.
   Future<void> deleteReminder(String id) async {
     try {
       final response = await _dio.delete(
@@ -316,11 +319,48 @@ class RemindersService {
         throw Exception('Failed to delete reminder (${response.statusCode})');
       }
     } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return; // already deleted
       if (e.response?.statusCode == 401) {
         throw Exception('Session expired. Please log in again.');
       }
       final msg = ApiHttpClient.messageFromResponseData(e.response?.data);
       throw Exception(msg ?? e.message ?? 'Failed to delete reminder');
+    }
+  }
+
+  /// Deletes [item] **and every sibling row of the same schedule**.
+  ///
+  /// The deployed backend stores one document per medication dose and per
+  /// appointment lead-time notification, so a single `DELETE /:id` would leave
+  /// the rest of the series behind (and it would reappear on the next refresh).
+  /// This resolves the siblings client-side and deletes them all. Siblings are
+  /// removed first and the tapped [item] last, so a mid-loop failure leaves the
+  /// detail screen's own row intact and the operation retryable.
+  Future<void> deleteReminderSeries(ReminderItem item) async {
+    final all = await _fetchPatientReminders();
+    final siblings = ReminderFilters.isMedication(item)
+        ? ReminderFilters.medicationSiblings(all, item)
+        : ReminderFilters.appointmentSiblings(all, item);
+
+    final ordered = <ReminderItem>[
+      ...siblings.where((r) => r.id != item.id),
+      item,
+    ];
+
+    var failures = 0;
+    for (final r in ordered) {
+      try {
+        await deleteReminder(r.id);
+      } on Exception {
+        failures++;
+      }
+    }
+
+    if (failures > 0) {
+      throw Exception(
+        'Could not remove $failures of ${ordered.length} reminders. '
+        'Please try again.',
+      );
     }
   }
 }

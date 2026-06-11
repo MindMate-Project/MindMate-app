@@ -20,13 +20,15 @@ class ReminderDetailCubit extends Cubit<ReminderDetailState> {
     }
   }
 
-  Future<bool> delete(String id) async {
+  /// Deletes the whole schedule this reminder belongs to (all medication doses,
+  /// or an appointment plus its advance-notification rows), not just one row.
+  Future<bool> deleteSeries() async {
     final current = state;
     if (current is! ReminderDetailLoaded) return false;
 
     emit(ReminderDetailDeleting(current.item));
     try {
-      await _service.deleteReminder(id);
+      await _service.deleteReminderSeries(current.item);
       return true;
     } catch (e) {
       if (isClosed) return false;
