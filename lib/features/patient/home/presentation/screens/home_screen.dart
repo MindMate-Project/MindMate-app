@@ -12,6 +12,7 @@ import 'package:mindmate/features/memory/presentation/cubit/memory_cubit.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_state.dart';
 import 'package:mindmate/features/patient/face_recognition/face_recognition.dart';
 import 'package:mindmate/features/patient/reminders/data/services/reminder_notification_service.dart';
+import 'package:mindmate/features/patient/reminders/presentation/screens/reminders_screen.dart';
 import 'package:mindmate/features/patient/reminders/presentation/widgets/home_reminders_section.dart';
 
 class PatientHomePage extends StatefulWidget {
@@ -167,7 +168,14 @@ class _PatientHomePageState extends State<PatientHomePage> {
             _buildActionCard(
               icon: Icons.medication,
               label: 'Medication',
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const RemindersScreen(initialTabIndex: 1),
+                  ),
+                );
+              },
             ),
           ],
         ),

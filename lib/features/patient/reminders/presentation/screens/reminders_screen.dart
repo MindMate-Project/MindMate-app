@@ -19,7 +19,10 @@ import 'package:mindmate/features/patient/reminders/presentation/utils/reminder_
 import 'package:mindmate/features/patient/reminders/presentation/widgets/week_calenddar.dart';
 
 class RemindersScreen extends StatefulWidget {
-  const RemindersScreen({super.key});
+  const RemindersScreen({super.key, this.initialTabIndex = 0});
+
+  /// Which tab to open first: 0 = Appointments, 1 = Medication.
+  final int initialTabIndex;
 
   @override
   State<RemindersScreen> createState() => _RemindersScreenState();
@@ -34,7 +37,11 @@ class _RemindersScreenState extends State<RemindersScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: widget.initialTabIndex.clamp(0, 1),
+    );
 
     _remindersCubit = RemindersCubit(RemindersService());
     _remindersCubit.loadPatientReminders();
@@ -118,7 +125,8 @@ class _RemindersScreenState extends State<RemindersScreen>
                   )
                 else
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () =>
+                        Navigator.pushNamed(context, '/notifications'),
                     icon: Icon(
                       Icons.notifications,
                       size: 24,
