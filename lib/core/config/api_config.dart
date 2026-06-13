@@ -4,18 +4,14 @@ class ApiConfig {
   static const String baseUrl = 'https://alzaheimer-backend.onrender.com';
   static const String apiKey = Secrets.apiKey;
 
-  // Auth endpoints
-  static const String authBase = '$baseUrl/api/auth';
-  static const String registerEndpoint = '$authBase/register';
-  static const String loginEndpoint = '$authBase/login';
-  static const String forgotPasswordEndpoint = '$authBase/forgot-password';
-  static const String resetPasswordEndpoint = '$authBase/reset-password';
-  static const String verifyResetPasswordEndpoint = '$authBase/verify-reset-password';
-  static const String verifyEndpoint = '$authBase/verify';
+  // Auth endpoints are called as relative paths by AuthService (e.g.
+  // '/api/auth/login'), so no per-endpoint constants are kept here.
 
   // Face Recognition endpoints
   static const String faceBase = '$baseUrl/api/face';
   static const String identifyFaceEndpoint = '$faceBase/patient/identify-face';
+  // Register a known person the patient should recognize (caregiver action).
+  static const String registerFaceEndpoint = '$faceBase/patient/register-face';
 
   // Memory endpoints
   static const String memoryBase = '$baseUrl/api/memories';

@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:mindmate/features/auth/domain/models/user_model.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
+import 'package:mindmate/features/patient/profile/data/services/profile_service.dart';
 import 'package:mindmate/features/patient/profile/presentation/cubit/profile_cubit.dart';
 import 'package:mindmate/features/patient/profile/presentation/cubit/profile_state.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
@@ -11,6 +15,7 @@ import 'package:mindmate/core/widgets/custom_text_form_field.dart';
 import 'package:mindmate/core/widgets/date_picker_field.dart';
 import 'package:mindmate/core/widgets/labeled_form_field.dart';
 import 'package:mindmate/core/widgets/profile_app_bar.dart';
+import 'package:mindmate/core/widgets/user_avatar.dart';
 import 'package:mindmate/core/utils/validation.utils.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -29,6 +34,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _genderController;
   DateTime? _selectedDate;
   bool _didPrefill = false;
+  final ProfileService _profileService = ProfileService();
+  bool _uploadingPhoto = false;
 
   @override
   void initState() {
@@ -52,6 +59,93 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   User? _getLoggedInUser() {
     final state = context.read<AuthCubit>().state;
     return state is AuthSuccess ? state.user : null;
+  }
+
+  Future<void> _onEditPhoto() async {
+    final hasPhoto = (_getLoggedInUser()?.photoUrl ?? '').isNotEmpty;
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Choose from gallery'),
+              onTap: () => Navigator.pop(ctx, 'gallery'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Take a photo'),
+              onTap: () => Navigator.pop(ctx, 'camera'),
+            ),
+            if (hasPhoto)
+              ListTile(
+                leading:
+                    const Icon(Icons.delete_outline, color: AppTheme.errorColor),
+                title: const Text('Remove photo'),
+                onTap: () => Navigator.pop(ctx, 'remove'),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (action == null || !mounted) return;
+    if (action == 'remove') {
+      await _removePhoto();
+      return;
+    }
+    final picked = await ImagePicker().pickImage(
+      source: action == 'camera' ? ImageSource.camera : ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1024,
+    );
+    if (picked == null) return;
+    await _uploadPhoto(File(picked.path));
+  }
+
+  Future<void> _uploadPhoto(File file) async {
+    setState(() => _uploadingPhoto = true);
+    try {
+      final url = await _profileService.uploadProfilePicture(file);
+      if (!mounted) return;
+      final user = _getLoggedInUser();
+      if (user != null) {
+        context.read<AuthCubit>().updateUser(user.copyWith(photoUrl: url));
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile picture updated')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _uploadingPhoto = false);
+    }
+  }
+
+  Future<void> _removePhoto() async {
+    setState(() => _uploadingPhoto = true);
+    try {
+      await _profileService.deleteProfilePicture();
+      if (!mounted) return;
+      final user = _getLoggedInUser();
+      if (user != null) {
+        context.read<AuthCubit>().updateUser(user.copyWith(clearPhotoUrl: true));
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile picture removed')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _uploadingPhoto = false);
+    }
   }
 
   String? _normalizeGender(String? g) {
@@ -311,37 +405,43 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       child: ValueListenableBuilder<TextEditingValue>(
         valueListenable: _firstNameController,
         builder: (context, value, _) {
-          final initial = value.text.trim().isNotEmpty
-              ? value.text.trim()[0].toUpperCase()
-              : '?';
           return Stack(
             clipBehavior: Clip.none,
             children: [
-              Container(
+              SizedBox(
                 width: 100,
                 height: 100,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.grey[300],
-                ),
-                child: Center(
-                  child: Text(
-                    initial,
-                    style: const TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryColor,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    UserAvatar(
+                      photoUrl: _getLoggedInUser()?.photoUrl,
+                      name: value.text,
+                      radius: 50,
                     ),
-                  ),
+                    if (_uploadingPhoto)
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0x66000000),
+                        ),
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
               Positioned(
                 bottom: 0,
                 right: 0,
                 child: GestureDetector(
-                  onTap: () {
-                    // TODO: pick image 
-                  },
+                  onTap: _uploadingPhoto ? null : _onEditPhoto,
                   child: Container(
                     width: 32,
                     height: 32,

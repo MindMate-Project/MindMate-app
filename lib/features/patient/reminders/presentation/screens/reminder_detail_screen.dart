@@ -45,8 +45,10 @@ class _ReminderDetailView extends StatelessWidget {
         title: Text('Delete $name?'),
         content: Text(
           _isAppointment(item)
-              ? 'All data related to this appointment will be lost.'
-              : 'All data related to this medication will be lost.',
+              ? 'This appointment and its advance notification reminders '
+                  'will be deleted.'
+              : 'This removes the whole schedule for $name — every scheduled '
+                  'dose will be deleted.',
         ),
         actions: [
           TextButton(
@@ -64,14 +66,14 @@ class _ReminderDetailView extends StatelessWidget {
 
     if (confirmed != true || !context.mounted) return;
 
-    final ok = await context.read<ReminderDetailCubit>().delete(item.id);
+    final ok = await context.read<ReminderDetailCubit>().deleteSeries();
     if (!context.mounted) return;
 
     if (ok) {
       Navigator.pop(context, true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not delete reminder')),
+        const SnackBar(content: Text('Could not delete all reminders. Please try again.')),
       );
     }
   }

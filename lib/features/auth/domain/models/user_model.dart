@@ -8,6 +8,7 @@ class User {
   final String? gender;
   final String? address;
   final DateTime? dateOfBirth;
+  final String? photoUrl;
 
   User({
     this.id,
@@ -19,6 +20,7 @@ class User {
     this.gender,
     this.address,
     this.dateOfBirth,
+    this.photoUrl,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -43,7 +45,30 @@ class User {
       gender: json['gender'],
       address: json['address']?.toString(),
       dateOfBirth: _parseDate(json['dateOfBirth']),
+      photoUrl: _firstNonEmpty(json, const [
+        'photoUrl',
+        'photo',
+        'avatar',
+        'avatarUrl',
+        'profileImage',
+        'profilePicture',
+        'image',
+        'picture',
+      ]),
     );
+  }
+
+  /// First non-empty string value among [keys] (backends name this field
+  /// inconsistently), or null when none is present.
+  static String? _firstNonEmpty(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final value = json[key];
+      if (value != null) {
+        final s = value.toString().trim();
+        if (s.isNotEmpty) return s;
+      }
+    }
+    return null;
   }
 
   static DateTime? _parseDate(dynamic value) {
@@ -65,6 +90,37 @@ class User {
       'gender': gender,
       if (address != null) 'address': address,
       if (dateOfBirth != null) 'dateOfBirth': dateOfBirth!.toIso8601String(),
+      if (photoUrl != null) 'photoUrl': photoUrl,
     };
+  }
+
+  /// Returns a copy with the given fields replaced. Pass [clearPhotoUrl] to set
+  /// the photo back to null (since a null [photoUrl] argument keeps the current
+  /// value).
+  User copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? role,
+    String? phoneNumber,
+    List<String>? patients,
+    String? gender,
+    String? address,
+    DateTime? dateOfBirth,
+    String? photoUrl,
+    bool clearPhotoUrl = false,
+  }) {
+    return User(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      role: role ?? this.role,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      patients: patients ?? this.patients,
+      gender: gender ?? this.gender,
+      address: address ?? this.address,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      photoUrl: clearPhotoUrl ? null : (photoUrl ?? this.photoUrl),
+    );
   }
 }

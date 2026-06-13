@@ -18,11 +18,14 @@ import 'package:mindmate/features/onboarding/presentation/screens/onboarding/com
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_screen.dart';
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_item.dart';
 import 'package:mindmate/features/patient/reminders/presentation/screens/reminders_screen.dart';
+import 'package:mindmate/features/patient/reminders/presentation/screens/reminder_detail_screen.dart';
+import 'package:mindmate/core/navigation/app_navigation.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/patient_profile.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/notifications_screen.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/patient_assignment_inbox_screen.dart';
 import 'package:mindmate/features/caregiver/home/presentation/screens/caregiver_notifications_screen.dart';
+import 'package:mindmate/features/caregiver/location/presentation/screens/patient_location_screen.dart';
 import 'package:mindmate/features/assignments/data/services/assignment_service.dart';
 import 'package:mindmate/features/assignments/presentation/cubit/patient_assignment_requests_cubit.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/privacy_policy_screen.dart';
@@ -38,8 +41,6 @@ import 'package:mindmate/features/patient/profile/data/services/profile_service.
 import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_cubit.dart';
 import 'package:mindmate/features/patient/reminders/data/services/reminders_service.dart';
 
-final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   tz.initializeTimeZones();
@@ -50,12 +51,20 @@ void main() async {
         arguments: memoryId == null ? null : {'memoryId': memoryId},
       );
     },
+    onReminderTap: (reminderId) {
+      rootNavigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (_) => ReminderDetailScreen(reminderId: reminderId),
+        ),
+      );
+    },
+    onReminderAlarm: showReminderAlarm,
   );
 
   runApp(
     MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => AuthCubit(AuthService())),
+        BlocProvider(create: (context) => AuthCubit(AuthService(), ProfileService())),
         BlocProvider(create: (context) => MemoryCubit(MemoryService())),
         BlocProvider(create: (context) => ProfileCubit(ProfileService())),
         BlocProvider(create: (context) => RemindersCubit(RemindersService())),
@@ -96,6 +105,7 @@ void main() async {
                     child: const PatientAssignmentInboxScreen(),
                   ),
               '/caregiver_notifications': (context) => const CaregiverNotificationsScreen(),
+              '/patient_location': (context) => const PatientLocationScreen(),
               '/privacy_policy': (context) => const PrivacyPolicyScreen(),
             },
             onGenerateRoute: (settings) {
@@ -112,15 +122,38 @@ void main() async {
                 );
               }
               if (settings.name == '/reset-password') {
-                final email = settings.arguments is String
-                    ? settings.arguments as String
-                    : (settings.arguments as Map<String, String>?)?['email'];
+                final args = settings.arguments;
+                String? email;
+                String? code;
+                if (args is String) {
+                  email = args;
+                } else if (args is Map) {
+                  email = args['email'] as String?;
+                  code = args['code'] as String?;
+                }
                 return MaterialPageRoute(
-                  builder: (context) => ResetPasswordScreen(email: email),
+                  builder: (context) =>
+                      ResetPasswordScreen(email: email, code: code),
                 );
               }
               return null;
             },
+            // Fallback so an unregistered route degrades gracefully instead of
+            // throwing (e.g. features whose screens don't exist yet).
+            onUnknownRoute: (settings) => MaterialPageRoute<void>(
+              builder: (_) => Scaffold(
+                appBar: AppBar(title: const Text('Coming soon')),
+                body: const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text(
+                      'This feature is coming soon.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           );
         },
       ),

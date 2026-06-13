@@ -1,12 +1,89 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
+import 'package:mindmate/features/assignments/data/models/connected_caregiver.dart';
+import 'package:mindmate/features/assignments/data/services/assignment_service.dart';
 import 'face_camera_page.dart';
 
-class FaceStrangerPage extends StatelessWidget {
+class FaceStrangerPage extends StatefulWidget {
   final String? capturedImagePath;
 
   const FaceStrangerPage({super.key, this.capturedImagePath});
+
+  @override
+  State<FaceStrangerPage> createState() => _FaceStrangerPageState();
+}
+
+class _FaceStrangerPageState extends State<FaceStrangerPage> {
+  final AssignmentService _assignmentService = AssignmentService();
+
+  ConnectedCaregiver? _caregiver;
+  bool _loadingCaregiver = true;
+  bool _calling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrimaryCaregiver();
+  }
+
+  Future<void> _loadPrimaryCaregiver() async {
+    try {
+      final caregivers = await _assignmentService.fetchMyCaregivers();
+      // Primary = the first connected caregiver that has a phone number,
+      // falling back to the first caregiver overall.
+      final primary = caregivers.firstWhere(
+        (c) => c.hasPhone,
+        orElse: () => caregivers.isNotEmpty
+            ? caregivers.first
+            : const ConnectedCaregiver(id: '', name: ''),
+      );
+      if (!mounted) return;
+      setState(() {
+        _caregiver = primary.id.isEmpty ? null : primary;
+        _loadingCaregiver = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingCaregiver = false);
+    }
+  }
+
+  Future<void> _callCaregiver() async {
+    final phone = _caregiver?.phoneNumber?.trim();
+    if (phone == null || phone.isEmpty) return;
+    setState(() => _calling = true);
+    try {
+      final ok = await launchUrl(
+        Uri(scheme: 'tel', path: phone),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!ok && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open the phone dialer.')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not start the call.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _calling = false);
+    }
+  }
+
+  bool get _canCall =>
+      !_loadingCaregiver && !_calling && (_caregiver?.hasPhone ?? false);
+
+  String get _callLabel {
+    if (_loadingCaregiver) return 'Call caregiver';
+    final c = _caregiver;
+    if (c == null || !c.hasPhone) return 'No caregiver to call';
+    return 'Call ${c.firstName}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +94,8 @@ class FaceStrangerPage extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.popUntil(context, ModalRoute.withName('/patient_home')),
+          onPressed: () =>
+              Navigator.popUntil(context, ModalRoute.withName('/patient_home')),
         ),
         title: const Text(
           'Face Recognition',
@@ -31,7 +109,7 @@ class FaceStrangerPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(),
-              
+
               const Text(
                 'Person Not Found',
                 textAlign: TextAlign.center,
@@ -41,9 +119,9 @@ class FaceStrangerPage extends StatelessWidget {
                   color: Colors.red,
                 ),
               ),
-              
+
               const SizedBox(height: 40),
-              
+
               // Display the captured image with not-found badge
               Stack(
                 alignment: Alignment.center,
@@ -58,17 +136,19 @@ class FaceStrangerPage extends StatelessWidget {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(17),
-                      child: capturedImagePath != null
+                      child: widget.capturedImagePath != null
                           ? Image.file(
-                              File(capturedImagePath!),
+                              File(widget.capturedImagePath!),
                               fit: BoxFit.cover,
                               width: 200,
                               height: 200,
                               errorBuilder: (context, error, stackTrace) {
-                                return const Icon(Icons.person, size: 100, color: Colors.grey);
+                                return const Icon(Icons.person,
+                                    size: 100, color: Colors.grey);
                               },
                             )
-                          : const Icon(Icons.person, size: 100, color: Colors.grey),
+                          : const Icon(Icons.person,
+                              size: 100, color: Colors.grey),
                     ),
                   ),
                   Positioned(
@@ -91,9 +171,9 @@ class FaceStrangerPage extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 30),
-              
+
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -128,7 +208,8 @@ class FaceStrangerPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'This person was not found in the system. Please verify their identity or add them to the database.',
+                      "If you're not sure who this is, call your caregiver for "
+                      'help — or try scanning again.',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey[700],
@@ -138,9 +219,9 @@ class FaceStrangerPage extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 40),
-              
+
               Row(
                 children: [
                   Expanded(
@@ -155,7 +236,8 @@ class FaceStrangerPage extends StatelessWidget {
                         );
                       },
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppTheme.primaryColor, width: 2),
+                        side: const BorderSide(
+                            color: AppTheme.primaryColor, width: 2),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -173,36 +255,44 @@ class FaceStrangerPage extends StatelessWidget {
                   ),
                   const SizedBox(width: 15),
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Add new patient feature coming soon...'),
-                            backgroundColor: AppTheme.primaryColor,
-                          ),
-                        );
-                      },
+                    // Call the patient's caregiver for help instead of the old
+                    // (non-functional) "Add Patient" action.
+                    child: ElevatedButton.icon(
+                      onPressed: _canCall ? _callCaregiver : null,
+                      icon: (_loadingCaregiver || _calling)
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.call,
+                              color: Colors.white, size: 20),
+                      label: Text(
+                        _callLabel,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
+                        backgroundColor: AppTheme.successColor,
+                        disabledBackgroundColor: AppTheme.neutralMedium,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Add Patient',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
                     ),
                   ),
                 ],
               ),
-              
+
               const Spacer(),
             ],
           ),

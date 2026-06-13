@@ -196,6 +196,7 @@ class AuthService {
 
   Future<AuthResponse> resetPassword(
     String email,
+    String code,
     String newPassword,
     String passwordConfirmation,
   ) async {
@@ -204,6 +205,7 @@ class AuthService {
         '/api/auth/reset-password',
         data: {
           'email': email,
+          'code': code,
           'password': newPassword,
           'passwordConfirmation': passwordConfirmation,
         },

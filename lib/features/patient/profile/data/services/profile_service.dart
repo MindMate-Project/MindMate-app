@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:mindmate/core/network/api_http_client.dart';
 import 'package:mindmate/features/auth/domain/models/user_model.dart';
@@ -80,6 +82,59 @@ class ProfileService {
       final msg =
           _extractMessage(e.response?.data) ?? 'Failed to update profile';
       throw Exception(msg);
+    }
+  }
+
+  /// Upload (or replace) the current user's profile picture.
+  /// POST /api/users/profile-picture — multipart, field name `profilePicture`
+  /// (image, max 5MB). Returns the new Cloudinary image URL.
+  Future<String> uploadProfilePicture(File image) async {
+    final fileName = image.path.split(RegExp(r'[\\/]')).last;
+    final formData = FormData.fromMap({
+      'profilePicture':
+          await MultipartFile.fromFile(image.path, filename: fileName),
+    });
+    try {
+      final response = await _dio.post(
+        '/api/users/profile-picture',
+        data: formData,
+        options: (await _authOptions())
+            .copyWith(contentType: 'multipart/form-data'),
+      );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        final inner = data is Map ? (data['data'] ?? data) : null;
+        final url = inner is Map ? inner['profilePicture']?.toString() : null;
+        if (url != null && url.isNotEmpty) return url;
+        throw Exception('Upload succeeded but no image URL was returned.');
+      }
+      throw Exception('Failed to upload photo (${response.statusCode})');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw Exception('Session expired. Please log in again.');
+      }
+      throw Exception(
+        _extractMessage(e.response?.data) ?? 'Failed to upload photo',
+      );
+    }
+  }
+
+  /// DELETE /api/users/profile-picture — remove the current photo.
+  Future<void> deleteProfilePicture() async {
+    try {
+      final response = await _dio.delete(
+        '/api/users/profile-picture',
+        options: await _authOptions(),
+      );
+      if (response.statusCode == 200) return;
+      throw Exception('Failed to remove photo (${response.statusCode})');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw Exception('Session expired. Please log in again.');
+      }
+      throw Exception(
+        _extractMessage(e.response?.data) ?? 'Failed to remove photo',
+      );
     }
   }
 
