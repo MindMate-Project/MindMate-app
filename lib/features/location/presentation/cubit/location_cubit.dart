@@ -18,6 +18,7 @@ class LocationCubit extends Cubit<LocationState> {
   bool _useDeviceLocation = false;
   _LoadMode _loadMode = _LoadMode.initial;
   Timer? _refreshTimer;
+  int _loadSeq = 0;
 
   Future<void> _init() async {
     _useDeviceLocation = await _locationService.getUseDeviceLocation();
@@ -27,6 +28,10 @@ class LocationCubit extends Cubit<LocationState> {
     String? patientId,
     String? patientName,
   }) async {
+    if (isClosed) return;
+
+    final seq = ++_loadSeq;
+
     _refreshTimer?.cancel();
     _refreshTimer = null;
 
@@ -39,12 +44,18 @@ class LocationCubit extends Cubit<LocationState> {
     final hasPatient = _patientId != null && _patientId!.isNotEmpty;
 
     if (!hasPatient && !_useDeviceLocation) {
-      emit(LocationNoPatient(useDeviceLocation: _useDeviceLocation));
+      _emit(
+        seq,
+        LocationNoPatient(useDeviceLocation: _useDeviceLocation),
+      );
       return;
     }
 
     if (_loadMode != _LoadMode.silent) {
-      emit(LocationLoading(useDeviceLocation: _useDeviceLocation));
+      _emit(
+        seq,
+        LocationLoading(useDeviceLocation: _useDeviceLocation),
+      );
     }
 
     try {
@@ -53,23 +64,35 @@ class LocationCubit extends Cubit<LocationState> {
         patientName: _patientName,
         useDeviceLocation: _useDeviceLocation,
       );
-      emit(LocationLoaded(
-        location: location,
-        useDeviceLocation: _useDeviceLocation,
-      ));
+      if (!_isCurrentLoad(seq)) return;
+      _emit(
+        seq,
+        LocationLoaded(
+          location: location,
+          useDeviceLocation: _useDeviceLocation,
+        ),
+      );
       _loadMode = _LoadMode.explicit;
       _startRefreshTimer();
     } on LocationException catch (e) {
-      emit(LocationError(
-        message: e.message,
-        useDeviceLocation: _useDeviceLocation,
-        isRecoverable: e.isRecoverable,
-      ));
+      if (!_isCurrentLoad(seq)) return;
+      _emit(
+        seq,
+        LocationError(
+          message: e.message,
+          useDeviceLocation: _useDeviceLocation,
+          isRecoverable: e.isRecoverable,
+        ),
+      );
     } catch (e) {
-      emit(LocationError(
-        message: e.toString().replaceFirst('Exception: ', ''),
-        useDeviceLocation: _useDeviceLocation,
-      ));
+      if (!_isCurrentLoad(seq)) return;
+      _emit(
+        seq,
+        LocationError(
+          message: e.toString().replaceFirst('Exception: ', ''),
+          useDeviceLocation: _useDeviceLocation,
+        ),
+      );
     }
   }
 
@@ -90,16 +113,28 @@ class LocationCubit extends Cubit<LocationState> {
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(
       const Duration(seconds: 45),
-      (_) {
-        _loadMode = _LoadMode.silent;
-        load();
-      },
+      (_) => unawaited(_pollSilently()),
     );
+  }
+
+  Future<void> _pollSilently() async {
+    if (isClosed) return;
+    _loadMode = _LoadMode.silent;
+    await load();
+  }
+
+  bool _isCurrentLoad(int seq) => !isClosed && seq == _loadSeq;
+
+  void _emit(int seq, LocationState state) {
+    if (!_isCurrentLoad(seq)) return;
+    emit(state);
   }
 
   @override
   Future<void> close() {
+    _loadSeq++;
     _refreshTimer?.cancel();
+    _refreshTimer = null;
     return super.close();
   }
 }
