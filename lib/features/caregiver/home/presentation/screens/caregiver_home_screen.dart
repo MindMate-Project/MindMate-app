@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/core/network/patient_context_store.dart';
-import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/navigation/app_bottom_nav.dart';
+import 'package:mindmate/core/themes/app_theme.dart';
+import 'package:mindmate/core/utils/name_utils.dart';
 import 'package:mindmate/core/widgets/error_retry_view.dart';
+import 'package:mindmate/core/widgets/info_message_box.dart';
 import 'package:mindmate/core/widgets/user_avatar.dart';
 import 'package:mindmate/features/assignments/data/models/assigned_patient_row.dart';
 import 'package:mindmate/features/assignments/data/services/assignment_service.dart';
-import '../widgets/patient_card.dart';
 import 'package:mindmate/features/assignments/presentation/screens/assign_patient.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
+import 'package:mindmate/features/caregiver/home/presentation/models/active_patient.dart';
 import 'package:mindmate/features/caregiver/home/presentation/screens/caregiver_notifications_screen.dart';
+import 'package:mindmate/features/caregiver/home/presentation/widgets/active_patient_sections.dart';
+import 'package:mindmate/features/caregiver/home/presentation/widgets/patient_card.dart';
 import 'package:mindmate/features/memory/data/services/memory_training_service.dart';
-import 'package:mindmate/features/patient/reminders/presentation/widgets/home_reminders_section.dart';
-import 'package:mindmate/features/caregiver/known_people/presentation/screens/register_known_person_screen.dart';
 
 class CaregiverHomePage extends StatefulWidget {
   const CaregiverHomePage({super.key});
@@ -30,7 +32,7 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
   bool _loadingPatients = true;
   String? _patientsError;
   List<AssignedPatientRow> _patients = const [];
-  String? _activePatientId;
+  ActivePatient? _activePatient;
 
   @override
   void initState() {
@@ -47,22 +49,21 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
 
     try {
       final patients = await _assignmentService.fetchCaregiverPatients();
-      final stored = await _patientContextStore.getActivePatientId();
-      String? nextActiveId;
+      final storedId = await _patientContextStore.getActivePatientId();
+      ActivePatient? nextActive;
 
       if (patients.isEmpty) {
         await _patientContextStore.clearActivePatientId();
       } else {
-        final stillValid = stored != null &&
-            patients.any((p) => p.patientId == stored);
-        nextActiveId = stillValid ? stored : patients.first.patientId;
-        await _patientContextStore.setActivePatientId(nextActiveId);
+        final match = _findPatient(storedId, patients);
+        nextActive = ActivePatient.fromRow(match ?? patients.first);
+        await _patientContextStore.setActivePatientId(nextActive.id);
       }
 
       if (!mounted) return;
       setState(() {
         _patients = patients;
-        _activePatientId = nextActiveId;
+        _activePatient = nextActive;
         _loadingPatients = false;
       });
     } catch (e) {
@@ -74,85 +75,24 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
     }
   }
 
-  Future<void> _selectPatient(String patientId) async {
-    await _patientContextStore.setActivePatientId(patientId);
+  Future<void> _selectPatient(AssignedPatientRow patient) async {
+    await _patientContextStore.setActivePatientId(patient.patientId);
     if (!mounted) return;
-    setState(() => _activePatientId = patientId);
+    setState(() => _activePatient = ActivePatient.fromRow(patient));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Patient selected for caregiver features')),
     );
   }
 
-  /// First word of a full name, or null when empty. Used for the greeting.
-  String? _firstName(String? full) {
-    final n = full?.trim() ?? '';
-    if (n.isEmpty) return null;
-    return n.split(RegExp(r'\s+')).first;
-  }
-
-  /// Full name of the active patient (for the "faces to recognize" entry).
-  String get _activePatientName {
-    final id = _activePatientId;
-    if (id == null) return 'your patient';
-    final match = _patients.where((p) => p.patientId == id);
-    return match.isNotEmpty ? match.first.name : 'your patient';
-  }
-
-  /// Entry point to register people the active patient should recognize.
-  Widget _buildKnownPeopleEntry(String patientId, String patientName) {
-    final shortName = _firstName(patientName) ?? patientName;
-    return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute<bool>(
-          builder: (_) => RegisterKnownPersonScreen(
-            patientId: patientId,
-            patientName: shortName,
-          ),
-        ),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppTheme.neutralLight,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 22,
-              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.15),
-              child: const Icon(
-                Icons.face_retouching_natural,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Faces to recognize',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF2D3142),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Add a person $shortName should recognize',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.add, color: AppTheme.primaryColor),
-          ],
-        ),
-      ),
-    );
+  AssignedPatientRow? _findPatient(
+    String? patientId,
+    List<AssignedPatientRow> patients,
+  ) {
+    if (patientId == null) return null;
+    for (final patient in patients) {
+      if (patient.patientId == patientId) return patient;
+    }
+    return null;
   }
 
   @override
@@ -162,19 +102,42 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildGreetingSection(),
+                _GreetingSection(
+                  onNotificationsTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (_) => const CaregiverNotificationsScreen(),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 30),
-                _buildPatientsSection(),
-                if (_activePatientId != null) ...[
+                _PatientsSection(
+                  loading: _loadingPatients,
+                  error: _patientsError,
+                  patients: _patients,
+                  activePatientId: _activePatient?.id,
+                  onRetry: _loadPatients,
+                  onAddPatient: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) => const AddPatient(),
+                      ),
+                    );
+                    await _loadPatients();
+                  },
+                  onSelectPatient: _selectPatient,
+                ),
+                if (_activePatient case final patient?) ...[
                   const SizedBox(height: 30),
-                  _buildKnownPeopleEntry(_activePatientId!, _activePatientName),
-                  const SizedBox(height: 30),
-                  // Keyed by the active patient so switching patients reloads.
-                  HomeRemindersSection(key: ValueKey(_activePatientId)),
+                  ActivePatientSections(
+                    key: ValueKey(patient.id),
+                    patient: patient,
+                  ),
                 ],
               ],
             ),
@@ -184,15 +147,22 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
       bottomNavigationBar: const AppBottomNav(selectedIndex: 0),
     );
   }
+}
 
-  Widget _buildGreetingSection() {
+class _GreetingSection extends StatelessWidget {
+  final VoidCallback onNotificationsTap;
+
+  const _GreetingSection({required this.onNotificationsTap});
+
+  @override
+  Widget build(BuildContext context) {
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, state) {
         final user = state is AuthSuccess ? state.user : null;
-        final name = _firstName(user?.name) ?? 'Caregiver';
+        final name = firstNameOf(user?.name) ?? 'Caregiver';
+
         return Row(
           children: [
-            // Profile picture: photo when available, else initial/icon.
             UserAvatar(photoUrl: user?.photoUrl, name: user?.name, radius: 30),
             const SizedBox(width: 15),
             Expanded(
@@ -217,14 +187,7 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
             ),
             IconButton(
               tooltip: 'Notifications',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (_) => const CaregiverNotificationsScreen(),
-                  ),
-                );
-              },
+              onPressed: onNotificationsTap,
               icon: const Icon(Icons.notifications_outlined),
               color: AppTheme.primaryColor,
             ),
@@ -233,8 +196,29 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
       },
     );
   }
+}
 
-  Widget _buildPatientsSection() {
+class _PatientsSection extends StatelessWidget {
+  final bool loading;
+  final String? error;
+  final List<AssignedPatientRow> patients;
+  final String? activePatientId;
+  final VoidCallback onRetry;
+  final Future<void> Function() onAddPatient;
+  final ValueChanged<AssignedPatientRow> onSelectPatient;
+
+  const _PatientsSection({
+    required this.loading,
+    required this.error,
+    required this.patients,
+    required this.activePatientId,
+    required this.onRetry,
+    required this.onAddPatient,
+    required this.onSelectPatient,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -250,14 +234,7 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
               ),
             ),
             ElevatedButton.icon(
-              onPressed: () async {
-                // Handle add patient
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(builder: (context) => const AddPatient()),
-                );
-                _loadPatients();
-              },
+              onPressed: onAddPatient,
               icon: const Icon(Icons.add),
               label: const Text('Add'),
               style: ElevatedButton.styleFrom(
@@ -268,49 +245,43 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
           ],
         ),
         const SizedBox(height: 15),
-        if (_loadingPatients)
+        if (loading)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Center(
               child: CircularProgressIndicator(color: AppTheme.primaryColor),
             ),
           )
-        else if (_patientsError != null)
+        else if (error != null)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: ErrorRetryView(
-              message: _patientsError!,
-              onRetry: _loadPatients,
+              message: error!,
+              onRetry: onRetry,
               expand: false,
             ),
           )
-        else if (_patients.isEmpty)
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.only(top: 8, bottom: 16),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppTheme.neutralLight,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Text(
-              'No connected patient yet. Add a patient first. '
-              'Features that need a patient ID will stay unavailable.',
-              style: TextStyle(color: AppTheme.neutralDark),
+        else if (patients.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(top: 8, bottom: 16),
+            child: InfoMessageBox(
+              message:
+                  'No connected patient yet. Add a patient first. '
+                  'Features that need a patient ID will stay unavailable.',
             ),
           )
         else
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: _patients.length,
+            itemCount: patients.length,
             itemBuilder: (context, index) {
-              final patient = _patients[index];
+              final patient = patients[index];
               return PatientCard(
                 name: patient.name,
                 relation: patient.relationship ?? '—',
-                isSelected: _activePatientId == patient.patientId,
-                onTap: () => _selectPatient(patient.patientId),
+                isSelected: activePatientId == patient.patientId,
+                onTap: () => onSelectPatient(patient),
               );
             },
           ),
