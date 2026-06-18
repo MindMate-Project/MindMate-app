@@ -3,6 +3,7 @@ import 'package:mindmate/core/network/api_http_client.dart';
 import 'package:mindmate/features/assignments/data/models/assigned_patient_row.dart';
 import 'package:mindmate/features/assignments/data/models/connected_caregiver.dart';
 import 'package:mindmate/features/assignments/data/models/pending_caregiver_request.dart';
+import 'package:mindmate/features/caregiver/patients/data/models/caregiver_patient_detail.dart';
 
 class AssignmentService {
   Future<void> sendAssignmentRequest({
@@ -115,6 +116,99 @@ class AssignmentService {
     }
   }
 
+  /// GET /api/caregiver/patients/:patientId — full profile for an assigned
+  /// patient (caregiver role).
+  Future<CaregiverPatientDetail> fetchPatientDetail(String patientId) async {
+    try {
+      final response = await ApiHttpClient.dio.get(
+        '/api/caregiver/patients/$patientId',
+        options: await ApiHttpClient.authorizedOptions(),
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Failed to load patient (${response.statusCode})');
+      }
+      final json = _extractPatientJson(response.data);
+      final detail = CaregiverPatientDetail.fromJson(json);
+      if (detail.id.isEmpty) {
+        throw Exception('Patient not found');
+      }
+      return detail;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw Exception('Session expired. Please log in again.');
+      }
+      if (e.response?.statusCode == 404) {
+        throw Exception('Patient not found or no longer assigned to you.');
+      }
+      throw Exception(
+        ApiHttpClient.friendlyError(e, fallback: 'Could not load patient'),
+      );
+    }
+  }
+
+  /// PATCH /api/caregiver/patients/update/:patientId
+  Future<CaregiverPatientDetail> updatePatient({
+    required String patientId,
+    required String name,
+    DateTime? dateOfBirth,
+    required PatientMedicalNotes medicalNotes,
+  }) async {
+    final body = <String, dynamic>{
+      'name': name.trim(),
+      'medicalNotes': medicalNotes.toJson(),
+    };
+    if (dateOfBirth != null) {
+      body['dateOfBirth'] =
+          '${dateOfBirth.year.toString().padLeft(4, '0')}-'
+          '${dateOfBirth.month.toString().padLeft(2, '0')}-'
+          '${dateOfBirth.day.toString().padLeft(2, '0')}';
+    }
+
+    try {
+      final response = await ApiHttpClient.dio.patch(
+        '/api/caregiver/patients/update/$patientId',
+        data: body,
+        options: await ApiHttpClient.authorizedOptions(),
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update patient (${response.statusCode})');
+      }
+      final json = _extractPatientJson(response.data);
+      final detail = CaregiverPatientDetail.fromJson(json);
+      if (detail.id.isEmpty) {
+        return fetchPatientDetail(patientId);
+      }
+      return detail;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw Exception('Session expired. Please log in again.');
+      }
+      throw Exception(
+        ApiHttpClient.friendlyError(e, fallback: 'Could not update patient'),
+      );
+    }
+  }
+
+  /// DELETE /api/caregiver/patients/remove/:patientId
+  Future<void> removePatient(String patientId) async {
+    try {
+      final response = await ApiHttpClient.dio.delete(
+        '/api/caregiver/patients/remove/$patientId',
+        options: await ApiHttpClient.authorizedOptions(),
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Failed to remove patient (${response.statusCode})');
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw Exception('Session expired. Please log in again.');
+      }
+      throw Exception(
+        ApiHttpClient.friendlyError(e, fallback: 'Could not remove patient'),
+      );
+    }
+  }
+
   /// GET /api/patient/caregivers — the signed-in patient's connected
   /// caregivers (with phone numbers), e.g. so the patient can call one for help.
   Future<List<ConnectedCaregiver>> fetchMyCaregivers() async {
@@ -147,5 +241,14 @@ class AssignmentService {
     }
     if (data is List) return data;
     return const [];
+  }
+
+  Map<String, dynamic> _extractPatientJson(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      final nested = data['data'] ?? data['patient'] ?? data['user'];
+      if (nested is Map<String, dynamic>) return nested;
+      return data;
+    }
+    throw Exception('Unexpected server response.');
   }
 }
