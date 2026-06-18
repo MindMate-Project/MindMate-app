@@ -39,6 +39,7 @@ import 'package:mindmate/features/patient/profile/presentation/cubit/profile_cub
 import 'package:mindmate/features/patient/profile/data/services/profile_service.dart';
 import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_cubit.dart';
 import 'package:mindmate/features/patient/reminders/data/services/reminders_service.dart';
+import 'package:mindmate/features/caregiver/patients/presentation/screens/caregiver_patients_screen.dart';
 import 'package:mindmate/features/location/presentation/screens/location_tracking_screen.dart';
 import 'package:mindmate/features/location/presentation/cubit/location_cubit.dart';
 import 'package:mindmate/features/location/data/services/location_service.dart';
@@ -113,6 +114,8 @@ void main() async {
               ),
               '/caregiver_notifications': (context) =>
                   const CaregiverNotificationsScreen(),
+              '/caregiver_patients': (context) =>
+                  const CaregiverPatientsScreen(),
               '/location': (context) => const LocationTrackingScreen(),
               '/privacy_policy': (context) => const PrivacyPolicyScreen(),
             },

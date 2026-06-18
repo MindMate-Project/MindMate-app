@@ -5,6 +5,7 @@ class PatientCard extends StatelessWidget {
   final String name;
   final String relation;
   final VoidCallback onTap;
+  final VoidCallback? onDetailsTap;
   final bool isSelected;
 
   const PatientCard({
@@ -12,6 +13,7 @@ class PatientCard extends StatelessWidget {
     required this.name,
     required this.relation,
     required this.onTap,
+    this.onDetailsTap,
     this.isSelected = false,
   });
 
@@ -60,30 +62,14 @@ class PatientCard extends StatelessWidget {
                     relation,
                     style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                  ),
                 ],
               ),
             ),
-            // Action button
             IconButton(
               icon: const Icon(Icons.arrow_forward_ios),
               color: AppTheme.primaryColor,
               iconSize: 16,
-              onPressed: onTap,
+              onPressed: onDetailsTap ?? onTap,
             ),
           ],
         ),

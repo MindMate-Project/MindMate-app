@@ -9,13 +9,13 @@ import 'package:mindmate/core/widgets/info_message_box.dart';
 import 'package:mindmate/core/widgets/user_avatar.dart';
 import 'package:mindmate/features/assignments/data/models/assigned_patient_row.dart';
 import 'package:mindmate/features/assignments/data/services/assignment_service.dart';
-import 'package:mindmate/features/assignments/presentation/screens/assign_patient.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/caregiver/home/presentation/models/active_patient.dart';
 import 'package:mindmate/features/caregiver/home/presentation/screens/caregiver_notifications_screen.dart';
 import 'package:mindmate/features/caregiver/home/presentation/widgets/active_patient_sections.dart';
 import 'package:mindmate/features/caregiver/home/presentation/widgets/patient_card.dart';
+import 'package:mindmate/features/caregiver/patients/presentation/screens/patient_detail_screen.dart';
 import 'package:mindmate/features/memory/data/services/memory_training_service.dart';
 
 class CaregiverHomePage extends StatefulWidget {
@@ -31,8 +31,8 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
 
   bool _loadingPatients = true;
   String? _patientsError;
-  List<AssignedPatientRow> _patients = const [];
   ActivePatient? _activePatient;
+  String? _activeRelation;
 
   @override
   void initState() {
@@ -51,19 +51,22 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
       final patients = await _assignmentService.fetchCaregiverPatients();
       final storedId = await _patientContextStore.getActivePatientId();
       ActivePatient? nextActive;
+      String? relation;
 
       if (patients.isEmpty) {
         await _patientContextStore.clearActivePatientId();
       } else {
         final match = _findPatient(storedId, patients);
-        nextActive = ActivePatient.fromRow(match ?? patients.first);
+        final row = match ?? patients.first;
+        nextActive = ActivePatient.fromRow(row);
+        relation = row.relationship;
         await _patientContextStore.setActivePatientId(nextActive.id);
       }
 
       if (!mounted) return;
       setState(() {
-        _patients = patients;
         _activePatient = nextActive;
+        _activeRelation = relation;
         _loadingPatients = false;
       });
     } catch (e) {
@@ -75,13 +78,20 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
     }
   }
 
-  Future<void> _selectPatient(AssignedPatientRow patient) async {
-    await _patientContextStore.setActivePatientId(patient.patientId);
-    if (!mounted) return;
-    setState(() => _activePatient = ActivePatient.fromRow(patient));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Patient selected for caregiver features')),
+  Future<void> _openPatientDetails() async {
+    final patient = _activePatient;
+    if (patient == null) return;
+
+    final removed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute<bool>(
+        builder: (_) => PatientDetailScreen(patientId: patient.id),
+      ),
     );
+    if (removed == true) {
+      await _patientContextStore.clearActivePatientId();
+      await _loadPatients();
+    }
   }
 
   AssignedPatientRow? _findPatient(
@@ -115,22 +125,13 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                _PatientsSection(
+                _ActivePatientSection(
                   loading: _loadingPatients,
                   error: _patientsError,
-                  patients: _patients,
-                  activePatientId: _activePatient?.id,
+                  patient: _activePatient,
+                  relation: _activeRelation,
                   onRetry: _loadPatients,
-                  onAddPatient: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute<void>(
-                        builder: (_) => const AddPatient(),
-                      ),
-                    );
-                    await _loadPatients();
-                  },
-                  onSelectPatient: _selectPatient,
+                  onTap: _openPatientDetails,
                 ),
                 if (_activePatient case final patient?) ...[
                   const SizedBox(height: 30),
@@ -198,23 +199,21 @@ class _GreetingSection extends StatelessWidget {
   }
 }
 
-class _PatientsSection extends StatelessWidget {
+class _ActivePatientSection extends StatelessWidget {
   final bool loading;
   final String? error;
-  final List<AssignedPatientRow> patients;
-  final String? activePatientId;
+  final ActivePatient? patient;
+  final String? relation;
   final VoidCallback onRetry;
-  final Future<void> Function() onAddPatient;
-  final ValueChanged<AssignedPatientRow> onSelectPatient;
+  final VoidCallback onTap;
 
-  const _PatientsSection({
+  const _ActivePatientSection({
     required this.loading,
     required this.error,
-    required this.patients,
-    required this.activePatientId,
+    required this.patient,
+    required this.relation,
     required this.onRetry,
-    required this.onAddPatient,
-    required this.onSelectPatient,
+    required this.onTap,
   });
 
   @override
@@ -222,27 +221,13 @@ class _PatientsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Current Patients',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            ElevatedButton.icon(
-              onPressed: onAddPatient,
-              icon: const Icon(Icons.add),
-              label: const Text('Add'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
+        const Text(
+          'Active Patient',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.primaryColor,
+          ),
         ),
         const SizedBox(height: 15),
         if (loading)
@@ -261,29 +246,17 @@ class _PatientsSection extends StatelessWidget {
               expand: false,
             ),
           )
-        else if (patients.isEmpty)
-          const Padding(
-            padding: EdgeInsets.only(top: 8, bottom: 16),
-            child: InfoMessageBox(
-              message:
-                  'No connected patient yet. Add a patient first. '
-                  'Features that need a patient ID will stay unavailable.',
-            ),
+        else if (patient == null)
+          const InfoMessageBox(
+            message:
+                'No connected patient yet. Add a patient from Profile → Patients.',
           )
         else
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: patients.length,
-            itemBuilder: (context, index) {
-              final patient = patients[index];
-              return PatientCard(
-                name: patient.name,
-                relation: patient.relationship ?? '—',
-                isSelected: activePatientId == patient.patientId,
-                onTap: () => onSelectPatient(patient),
-              );
-            },
+          PatientCard(
+            name: patient!.name,
+            relation: relation ?? '—',
+            isSelected: true,
+            onTap: onTap,
           ),
       ],
     );

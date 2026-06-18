@@ -39,7 +39,11 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
           body: SafeArea(
             child: Column(
               children: [
-                const ProfileAppBar(title: 'Profile', centerTitle: true, showBackButton: false),
+                const ProfileAppBar(
+                  title: 'Profile',
+                  centerTitle: true,
+                  showBackButton: false,
+                ),
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
@@ -59,7 +63,6 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     );
   }
 
-
   Widget _buildProfileSection(User? user) {
     final name = user?.name ?? '—';
     final email = user?.email ?? '—';
@@ -72,7 +75,11 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
           Stack(
             clipBehavior: Clip.none,
             children: [
-              UserAvatar(photoUrl: user?.photoUrl, name: user?.name, radius: 60),
+              UserAvatar(
+                photoUrl: user?.photoUrl,
+                name: user?.name,
+                radius: 60,
+              ),
               Positioned(
                 bottom: 0,
                 right: 0,
@@ -112,8 +119,8 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
             children: [
               Text(
                 email,
@@ -145,11 +152,17 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
 
   Widget _buildMenuOptions(BuildContext context, User? user) {
     final isPatient = user?.role == 'patient';
+    final isCaregiver = user?.isCaregiver == true;
     final options = [
       _ProfileOption(
         title: 'Edit Profile Information',
         onTap: () => _navigateTo('/edit_profile'),
       ),
+      if (isCaregiver)
+        _ProfileOption(
+          title: 'Patients',
+          onTap: () => _navigateTo('/caregiver_patients'),
+        ),
       if (isPatient)
         _ProfileOption(
           title: 'Caregiver requests',
