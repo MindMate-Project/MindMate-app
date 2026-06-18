@@ -24,4 +24,8 @@ class ApiConfig {
       '/api/memories/patient/$patientId';
   static String updateMemoryEndpoint(String id) => '/api/memories/$id';
   static String deleteMemoryEndpoint(String id) => '/api/memories/$id';
+
+  // Location endpoints
+  static String deviceLocationEndpoint(String patientId) =>
+      '/api/device/location/$patientId';
 }
