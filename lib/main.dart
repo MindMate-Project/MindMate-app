@@ -25,7 +25,6 @@ import 'package:mindmate/features/patient/profile/presentation/screens/edit_prof
 import 'package:mindmate/features/patient/profile/presentation/screens/notifications_screen.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/patient_assignment_inbox_screen.dart';
 import 'package:mindmate/features/caregiver/home/presentation/screens/caregiver_notifications_screen.dart';
-import 'package:mindmate/features/caregiver/location/presentation/screens/patient_location_screen.dart';
 import 'package:mindmate/features/assignments/data/services/assignment_service.dart';
 import 'package:mindmate/features/assignments/presentation/cubit/patient_assignment_requests_cubit.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/privacy_policy_screen.dart';
@@ -40,6 +39,9 @@ import 'package:mindmate/features/patient/profile/presentation/cubit/profile_cub
 import 'package:mindmate/features/patient/profile/data/services/profile_service.dart';
 import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_cubit.dart';
 import 'package:mindmate/features/patient/reminders/data/services/reminders_service.dart';
+import 'package:mindmate/features/location/presentation/screens/location_tracking_screen.dart';
+import 'package:mindmate/features/location/presentation/cubit/location_cubit.dart';
+import 'package:mindmate/features/location/data/services/location_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -64,10 +66,13 @@ void main() async {
   runApp(
     MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => AuthCubit(AuthService(), ProfileService())),
+        BlocProvider(
+          create: (context) => AuthCubit(AuthService(), ProfileService()),
+        ),
         BlocProvider(create: (context) => MemoryCubit(MemoryService())),
         BlocProvider(create: (context) => ProfileCubit(ProfileService())),
         BlocProvider(create: (context) => RemindersCubit(RemindersService())),
+        BlocProvider(create: (context) => LocationCubit(LocationService())),
       ],
 
       child: Builder(
@@ -79,8 +84,9 @@ void main() async {
             navigatorKey: rootNavigatorKey,
             theme: baseTheme.copyWith(
               textTheme: GoogleFonts.cairoTextTheme(baseTheme.textTheme),
-              primaryTextTheme:
-                  GoogleFonts.cairoTextTheme(baseTheme.primaryTextTheme),
+              primaryTextTheme: GoogleFonts.cairoTextTheme(
+                baseTheme.primaryTextTheme,
+              ),
             ),
             initialRoute: '/splash',
             routes: {
@@ -101,11 +107,13 @@ void main() async {
               '/edit_profile': (context) => const EditProfileScreen(),
               '/notifications': (context) => const NotificationsScreen(),
               '/patient_assignment_inbox': (context) => BlocProvider(
-                    create: (_) => PatientAssignmentRequestsCubit(AssignmentService()),
-                    child: const PatientAssignmentInboxScreen(),
-                  ),
-              '/caregiver_notifications': (context) => const CaregiverNotificationsScreen(),
-              '/patient_location': (context) => const PatientLocationScreen(),
+                create: (_) =>
+                    PatientAssignmentRequestsCubit(AssignmentService()),
+                child: const PatientAssignmentInboxScreen(),
+              ),
+              '/caregiver_notifications': (context) =>
+                  const CaregiverNotificationsScreen(),
+              '/location': (context) => const LocationTrackingScreen(),
               '/privacy_policy': (context) => const PrivacyPolicyScreen(),
             },
             onGenerateRoute: (settings) {

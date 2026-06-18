@@ -16,8 +16,8 @@ import 'package:mindmate/features/patient/reminders/presentation/utils/reminder_
 /// upcoming appointment and the medications due today. Shared by the patient
 /// and caregiver home screens (both resolve the patient via PatientContextStore).
 ///
-/// Pass a [ValueKey] of the active patient id from the caregiver home so that
-/// switching patients rebuilds the section and reloads its data.
+/// When used on the caregiver home, place inside [ActivePatientSections] so
+/// switching patients resets the cubit created in [initState].
 class HomeRemindersSection extends StatefulWidget {
   const HomeRemindersSection({super.key});
 
