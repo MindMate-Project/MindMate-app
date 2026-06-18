@@ -3,6 +3,8 @@ class User {
   final String name;
   final String email;
   final String role;
+  bool get isCaregiver => role == 'caregiver';
+  bool get isPatient => role == 'patient';
   final String? phoneNumber;
   final List<String>? patients;
   final String? gender;

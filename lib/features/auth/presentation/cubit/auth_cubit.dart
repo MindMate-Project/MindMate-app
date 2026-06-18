@@ -94,7 +94,7 @@ class AuthCubit extends Cubit<AuthState> {
           await _applyPatientContext(user);
           emit(AuthSuccess(user, token));
           unawaited(_hydrateProfile(user.role));
-          return _homeRouteFor(user.role);
+          return _homeRouteFor(user);
         } catch (_) {
           await _clearCredentials();
         }
@@ -169,9 +169,9 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> _applyPatientContext(User user) async {
-    if (user.role == 'patient' && user.id != null) {
+    if (user.isPatient && user.id != null) {
       await _patientContextStore.setActivePatientId(user.id!);
-    } else if (user.role == 'caregiver' &&
+    } else if (user.isCaregiver &&
         user.patients != null &&
         user.patients!.isNotEmpty) {
       await _patientContextStore.setActivePatientId(user.patients!.first);
@@ -180,8 +180,8 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  String _homeRouteFor(String role) =>
-      role == 'caregiver' ? '/caregiver_home' : '/patient_home';
+  String _homeRouteFor(User user) =>
+      user.isCaregiver ? '/caregiver_home' : '/patient_home';
 
   Future<String?> getToken() async => _secureStorage.read(key: _tokenKey);
 
