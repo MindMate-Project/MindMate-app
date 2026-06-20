@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mindmate/features/auth/domain/models/user_model.dart';
-import 'package:mindmate/features/patient/profile/data/services/profile_service.dart';
+import 'package:mindmate/features/profile/data/services/profile_service.dart';
 import 'profile_state.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
@@ -49,4 +49,3 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 }
-

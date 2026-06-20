@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mindmate/core/network/patient_context_store.dart';
-import 'package:mindmate/features/patient/profile/data/services/profile_service.dart';
+import 'package:mindmate/features/profile/data/services/profile_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/register_request.dart';
 import '../../domain/models/user_model.dart';
