@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/features/assignments/data/models/connected_caregiver.dart';
 import 'package:mindmate/features/assignments/data/services/assignment_service.dart';
@@ -95,7 +97,7 @@ class _FaceStrangerPageState extends State<FaceStrangerPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () =>
-              Navigator.popUntil(context, ModalRoute.withName('/patient_home')),
+              context.go(AppRoutes.patientHome),
         ),
         title: const Text(
           'Face Recognition',

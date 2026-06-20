@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'face_camera_page.dart';
 
@@ -32,7 +34,7 @@ class FaceIdentifiedPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             // Pop back to the patient home screen (past FaceScanStartPage)
-            Navigator.popUntil(context, ModalRoute.withName('/patient_home'));
+            context.go(AppRoutes.patientHome);
           },
         ),
         title: const Text(

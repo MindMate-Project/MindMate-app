@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mindmate/core/navigation/app_bottom_nav.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/widgets/profile_app_bar.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
@@ -51,7 +53,7 @@ class _CaregiverProfileScreenState extends State<CaregiverProfileScreen> {
                         ProfileHeader(
                           user: user,
                           onEditTap: () =>
-                              Navigator.pushNamed(context, '/edit_profile'),
+                              context.push(AppRoutes.editProfile),
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -59,31 +61,19 @@ class _CaregiverProfileScreenState extends State<CaregiverProfileScreen> {
                             options: [
                               ProfileMenuOption(
                                 title: 'Edit Profile Information',
-                                onTap: () => Navigator.pushNamed(
-                                  context,
-                                  '/edit_profile',
-                                ),
+                                onTap: () => context.push(AppRoutes.editProfile),
                               ),
                               ProfileMenuOption(
                                 title: 'Patients',
-                                onTap: () => Navigator.pushNamed(
-                                  context,
-                                  '/caregiver_patients',
-                                ),
+                                onTap: () => context.push(AppRoutes.caregiverPatients),
                               ),
                               ProfileMenuOption(
                                 title: 'Notifications',
-                                onTap: () => Navigator.pushNamed(
-                                  context,
-                                  '/notifications',
-                                ),
+                                onTap: () => context.push(AppRoutes.notifications),
                               ),
                               ProfileMenuOption(
                                 title: 'Privacy Policy',
-                                onTap: () => Navigator.pushNamed(
-                                  context,
-                                  '/privacy_policy',
-                                ),
+                                onTap: () => context.push(AppRoutes.privacyPolicy),
                               ),
                               ProfileMenuOption(
                                 title: 'Log out',
@@ -125,11 +115,7 @@ class _CaregiverProfileScreenState extends State<CaregiverProfileScreen> {
             onPressed: () {
               Navigator.pop(dialogContext);
               context.read<AuthCubit>().logout();
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/login',
-                (route) => false,
-              );
+              context.go(AppRoutes.login);
             },
             child: const Text('Log out'),
           ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
@@ -74,9 +76,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 backgroundColor: AppTheme.successColor,
               ),
             );
-            final navigator = Navigator.of(context);
             Future.delayed(const Duration(milliseconds: 500), () {
-              navigator.pushNamedAndRemoveUntil('/login', (route) => false);
+              if (context.mounted) context.go(AppRoutes.login);
             });
           } else if (currentState is AuthFailure) {
             ScaffoldMessenger.of(context).showSnackBar(

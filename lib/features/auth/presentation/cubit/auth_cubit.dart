@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/network/patient_context_store.dart';
 import 'package:mindmate/features/profile/data/services/profile_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -104,7 +105,7 @@ class AuthCubit extends Cubit<AuthState> {
     }
 
     final onboardingDone = prefs.getBool(_onboardingCompletedKey) ?? false;
-    return onboardingDone ? '/login' : '/roleSelection';
+    return onboardingDone ? AppRoutes.login : AppRoutes.roleSelection;
   }
 
   /// Send password reset code to email
@@ -181,7 +182,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   String _homeRouteFor(User user) =>
-      user.isCaregiver ? '/caregiver_home' : '/patient_home';
+      user.isCaregiver ? AppRoutes.caregiverHome : AppRoutes.patientHome;
 
   Future<String?> getToken() async => _secureStorage.read(key: _tokenKey);
 

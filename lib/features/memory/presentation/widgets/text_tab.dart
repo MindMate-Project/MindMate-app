@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/features/memory/data/models/memory_item.dart';
 
 class TextTab extends StatelessWidget {
@@ -42,10 +44,9 @@ class _TextMemoryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () => Navigator.pushNamed(
-            context,
-            '/memory/drill',
-            arguments: {'memoryId': item.id},
+          onTap: () => context.push(
+            AppRoutes.memoryDrill,
+            extra: {'memoryId': item.id},
           ),
           child: Container(
             padding: const EdgeInsets.all(16),

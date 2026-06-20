@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
@@ -139,7 +141,7 @@ class _LoginState extends State<Login> {
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.of(context).pushNamed('/forgot_password');
+                        context.push(AppRoutes.forgotPassword);
                       },
                       style: ButtonStyle(
                         padding: WidgetStateProperty.all(EdgeInsets.zero),
@@ -165,9 +167,9 @@ class _LoginState extends State<Login> {
                   listener: (context, state) {
                     if (state is AuthSuccess) {
                       final route = state.user.role == 'caregiver'
-                          ? '/caregiver_home'
-                          : '/patient_home';
-                      Navigator.of(context).pushReplacementNamed(route);
+                          ? AppRoutes.caregiverHome
+                          : AppRoutes.patientHome;
+                      context.go(route);
                     } else if (state is AuthFailure) {
                       ScaffoldMessenger.of(
                         context,
@@ -215,7 +217,7 @@ class _LoginState extends State<Login> {
 
                       TextButton(
                         onPressed: () {
-                          Navigator.of(context).pushReplacementNamed('/signup');
+                          context.go(AppRoutes.signup);
                         },
                         child: Text(
                           'Sign Up',

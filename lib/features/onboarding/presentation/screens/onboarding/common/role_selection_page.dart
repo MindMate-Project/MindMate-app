@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_data.dart';
 
@@ -65,9 +67,7 @@ class RoleSelectionPage extends StatelessWidget {
 
             ElevatedButton(
               onPressed: () {
-                Navigator.of(
-                  context,
-                ).pushNamed('/onboarding', arguments: caregiverOnboardingData);
+                context.push(AppRoutes.onboarding, extra: caregiverOnboardingData);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
@@ -90,9 +90,7 @@ class RoleSelectionPage extends StatelessWidget {
 
             ElevatedButton(
               onPressed: () {
-                Navigator.of(
-                  context,
-                ).pushNamed('/onboarding', arguments: patientOnboardingData);
+                context.push(AppRoutes.onboarding, extra: patientOnboardingData);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,

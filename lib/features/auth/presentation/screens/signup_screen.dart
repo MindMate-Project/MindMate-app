@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/features/auth/domain/models/register_request.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
@@ -257,7 +259,7 @@ class _SignupState extends State<Signup> {
                           ),
                         ),
                       );
-                      Navigator.of(context).pushReplacementNamed('/login');
+                      context.go(AppRoutes.login);
                     } else if (state is AuthFailure) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(state.error)),
@@ -304,7 +306,7 @@ class _SignupState extends State<Signup> {
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.of(context).pushReplacementNamed('/login');
+                          context.go(AppRoutes.login);
                         },
                         child: Text(
                           'Log In',

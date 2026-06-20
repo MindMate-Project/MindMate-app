@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/navigation/app_bottom_nav.dart';
 import 'package:mindmate/core/widgets/user_avatar.dart';
@@ -155,14 +157,14 @@ class _PatientHomePageState extends State<PatientHomePage> {
               icon: Icons.psychology,
               label: 'Memory Bank',
               onTap: () {
-                Navigator.pushNamed(context, '/memory');
+                context.push(AppRoutes.memory);
               },
             ),
             _buildActionCard(
               icon: Icons.access_time,
               label: 'Reminder',
               onTap: () {
-                Navigator.pushNamed(context, '/patient_reminders');
+                context.push(AppRoutes.patientReminders);
               },
             ),
             _buildActionCard(

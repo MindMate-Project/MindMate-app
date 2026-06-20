@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_item.dart';
 import 'package:mindmate/features/onboarding/presentation/screens/onboarding/common/onboarding_page.dart';
@@ -56,7 +58,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _goToAuth() async {
     await context.read<AuthCubit>().markOnboardingComplete();
     if (!mounted) return;
-    Navigator.pushReplacementNamed(context, '/signup');
+    context.go(AppRoutes.signup);
   }
 
   @override

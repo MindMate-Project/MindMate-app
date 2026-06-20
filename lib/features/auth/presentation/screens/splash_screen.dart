@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mindmate/core/navigation/app_navigation.dart';
 import 'package:mindmate/core/network/api_http_client.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
@@ -32,7 +33,7 @@ class _SplashState extends State<Splash> {
     final route = await context.read<AuthCubit>().resolveStartRoute();
     if (!mounted) return;
 
-    Navigator.of(context).pushReplacementNamed(route);
+    context.go(route);
 
     // If a reminder alarm cold-launched the app, ring it now — but let the
     // splash->home replacement transition fully settle first, otherwise

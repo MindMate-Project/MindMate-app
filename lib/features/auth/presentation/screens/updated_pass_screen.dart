@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 
 class UpdatedPass extends StatefulWidget {
@@ -51,7 +53,7 @@ class _UpdatedPassState extends State<UpdatedPass> {
                   width: 342,
                   height: 45,
                   child: ElevatedButton(
-                    onPressed: () => Navigator.of(context).pushNamed('/login'),
+                    onPressed: () => context.go(AppRoutes.login),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
                       foregroundColor: Colors.white,

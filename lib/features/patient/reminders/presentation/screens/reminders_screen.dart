@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/utils/responsive.dart';
 import 'package:mindmate/core/widgets/appointment_card.dart';
@@ -80,10 +82,7 @@ class _RemindersScreenState extends State<RemindersScreen>
   }
 
   void _onRemindersBackPressed(BuildContext context, bool isCaregiver) {
-    Navigator.pushReplacementNamed(
-      context,
-      isCaregiver ? '/caregiver_home' : '/patient_home',
-    );
+    context.go(isCaregiver ? AppRoutes.caregiverHome : AppRoutes.patientHome);
   }
 
   @override
@@ -126,7 +125,7 @@ class _RemindersScreenState extends State<RemindersScreen>
                 else
                   IconButton(
                     onPressed: () =>
-                        Navigator.pushNamed(context, '/notifications'),
+                        context.push(AppRoutes.notifications),
                     icon: Icon(
                       Icons.notifications,
                       size: 24,

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/features/memory/data/models/memory_item.dart';
 
 class PhotoTab extends StatelessWidget {
@@ -43,10 +45,9 @@ class _PersonCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(12),
-      onTap: () => Navigator.pushNamed(
-        context,
-        '/memory/drill',
-        arguments: {'memoryId': item.id},
+      onTap: () => context.push(
+        AppRoutes.memoryDrill,
+        extra: {'memoryId': item.id},
       ),
       child: Column(
         children: [

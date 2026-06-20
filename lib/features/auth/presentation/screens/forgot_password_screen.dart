@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
@@ -41,10 +43,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 backgroundColor: AppTheme.successColor,
               ),
             );
-            Navigator.of(context).pushNamed(
-              '/verify-code',
-              arguments: _emailController.text.trim(),
-            );
+            context.push(AppRoutes.verifyCode, extra: _emailController.text.trim());
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/widgets/info_message_box.dart';
 import 'package:mindmate/features/caregiver/home/presentation/models/active_patient.dart';
@@ -74,7 +76,7 @@ class _LocationSectionState extends State<LocationSection> {
 
             if (state is LocationLoaded) {
               return InkWell(
-                onTap: () => Navigator.pushNamed(context, '/location'),
+                onTap: () => context.push(AppRoutes.location),
                 borderRadius: BorderRadius.circular(16),
                 child: LocationInfoCard(location: state.location),
               );

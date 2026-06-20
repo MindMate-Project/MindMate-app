@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/features/auth/data/services/auth_service.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
@@ -76,9 +78,9 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       setState(() => _isLoading = false);
 
       if (result['success'] == true) {
-        Navigator.of(context).pushNamed(
-          '/reset-password',
-          arguments: {
+        context.push(
+          AppRoutes.resetPassword,
+          extra: {
             'email': widget.email,
             'code': _codeController.text.trim(),
           },

@@ -14,7 +14,9 @@ import 'package:mindmate/features/memory/presentation/cubit/memory_state.dart';
 import 'package:mindmate/features/memory/presentation/screens/add_memory_screen.dart';
 
 class MemoryDrillScreen extends StatefulWidget {
-  const MemoryDrillScreen({super.key});
+  const MemoryDrillScreen({super.key, this.memoryId});
+
+  final String? memoryId;
 
   @override
   State<MemoryDrillScreen> createState() => _MemoryDrillScreenState();
@@ -32,8 +34,7 @@ class _MemoryDrillScreenState extends State<MemoryDrillScreen> {
   }
 
   Future<void> _ensureAndPick() async {
-    final args = ModalRoute.of(context)?.settings.arguments;
-    final requestedId = args is Map ? args['memoryId'] as String? : null;
+    final requestedId = widget.memoryId;
 
     final cubit = context.read<MemoryCubit>();
     final state = cubit.state;
