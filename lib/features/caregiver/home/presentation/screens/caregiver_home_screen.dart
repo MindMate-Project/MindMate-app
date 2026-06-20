@@ -12,7 +12,7 @@ import 'package:mindmate/features/assignments/data/services/assignment_service.d
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/caregiver/home/presentation/models/active_patient.dart';
-import 'package:mindmate/features/caregiver/home/presentation/screens/caregiver_notifications_screen.dart';
+import 'package:mindmate/features/caregiver/profile/presentation/screens/caregiver_notifications_screen.dart';
 import 'package:mindmate/features/caregiver/home/presentation/widgets/active_patient_sections.dart';
 import 'package:mindmate/features/caregiver/home/presentation/widgets/patient_card.dart';
 import 'package:mindmate/features/caregiver/patients/presentation/screens/patient_detail_screen.dart';
