@@ -42,10 +42,10 @@ class _PatientDetailView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFB),
+      appBar: const ProfileAppBar(title: 'Patient Details'),
       body: SafeArea(
         child: Column(
           children: [
-            const ProfileAppBar(title: 'Patient Details'),
             Expanded(
               child: BlocBuilder<PatientDetailCubit, PatientDetailState>(
                 builder: (context, state) {

@@ -16,7 +16,8 @@ class CaregiverPatientsScreen extends StatefulWidget {
   const CaregiverPatientsScreen({super.key});
 
   @override
-  State<CaregiverPatientsScreen> createState() => _CaregiverPatientsScreenState();
+  State<CaregiverPatientsScreen> createState() =>
+      _CaregiverPatientsScreenState();
 }
 
 class _CaregiverPatientsScreenState extends State<CaregiverPatientsScreen> {
@@ -92,10 +93,10 @@ class _CaregiverPatientsScreenState extends State<CaregiverPatientsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: const ProfileAppBar(title: 'Patients'),
       body: SafeArea(
         child: Column(
           children: [
-            const ProfileAppBar(title: 'Patients'),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
@@ -158,8 +159,7 @@ class _CaregiverPatientsScreenState extends State<CaregiverPatientsScreen> {
                             relation: patient.relationship ?? '—',
                             isSelected: _activePatientId == patient.patientId,
                             onTap: () => _selectPatient(patient),
-                            onDetailsTap: () =>
-                                _openDetails(patient.patientId),
+                            onDetailsTap: () => _openDetails(patient.patientId),
                           );
                         },
                       ),

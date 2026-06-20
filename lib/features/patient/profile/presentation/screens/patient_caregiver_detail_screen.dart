@@ -41,10 +41,10 @@ class _PatientCaregiverDetailView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundWhite,
+      appBar: const ProfileAppBar(title: 'Caregiver Details'),
       body: SafeArea(
         child: Column(
           children: [
-            const ProfileAppBar(title: 'Caregiver Details'),
             Expanded(
               child:
                   BlocBuilder<

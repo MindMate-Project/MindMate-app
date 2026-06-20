@@ -38,22 +38,17 @@ class _CaregiverProfileScreenState extends State<CaregiverProfileScreen> {
         final user = state is AuthSuccess ? state.user : null;
         return Scaffold(
           backgroundColor: AppTheme.backgroundWhite,
+          appBar: const ProfileAppBar(title: 'Profile'),
           body: SafeArea(
             child: Column(
               children: [
-                const ProfileAppBar(
-                  title: 'Profile',
-                  centerTitle: true,
-                  // showBackButton: false,
-                ),
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
                         ProfileHeader(
                           user: user,
-                          onEditTap: () =>
-                              context.push(AppRoutes.editProfile),
+                          onEditTap: () => context.push(AppRoutes.editProfile),
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -61,19 +56,23 @@ class _CaregiverProfileScreenState extends State<CaregiverProfileScreen> {
                             options: [
                               ProfileMenuOption(
                                 title: 'Edit Profile Information',
-                                onTap: () => context.push(AppRoutes.editProfile),
+                                onTap: () =>
+                                    context.push(AppRoutes.editProfile),
                               ),
                               ProfileMenuOption(
                                 title: 'Patients',
-                                onTap: () => context.push(AppRoutes.caregiverPatients),
+                                onTap: () =>
+                                    context.push(AppRoutes.caregiverPatients),
                               ),
                               ProfileMenuOption(
                                 title: 'Notifications',
-                                onTap: () => context.push(AppRoutes.notifications),
+                                onTap: () =>
+                                    context.push(AppRoutes.notifications),
                               ),
                               ProfileMenuOption(
                                 title: 'Privacy Policy',
-                                onTap: () => context.push(AppRoutes.privacyPolicy),
+                                onTap: () =>
+                                    context.push(AppRoutes.privacyPolicy),
                               ),
                               ProfileMenuOption(
                                 title: 'Log out',

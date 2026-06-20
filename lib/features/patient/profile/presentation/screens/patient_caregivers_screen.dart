@@ -42,10 +42,10 @@ class _PatientCaregiversScreenState extends State<PatientCaregiversScreen> {
 
     try {
       final authState = context.read<AuthCubit>().state;
-      final patientId =
-          authState is AuthSuccess ? authState.user.id : null;
-      final caregivers =
-          await _assignmentService.fetchMyCaregivers(patientId: patientId);
+      final patientId = authState is AuthSuccess ? authState.user.id : null;
+      final caregivers = await _assignmentService.fetchMyCaregivers(
+        patientId: patientId,
+      );
       if (!mounted) return;
       setState(() {
         _caregivers = caregivers;
@@ -76,10 +76,10 @@ class _PatientCaregiversScreenState extends State<PatientCaregiversScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundWhite,
+      appBar: const ProfileAppBar(title: 'Caregivers'),
       body: SafeArea(
         child: Column(
           children: [
-            const ProfileAppBar(title: 'Caregivers'),
             Expanded(
               child: RefreshIndicator(
                 color: AppTheme.primaryColor,

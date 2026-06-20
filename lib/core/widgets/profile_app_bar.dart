@@ -23,9 +23,6 @@ class ProfileAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       centerTitle: centerTitle ?? false,
-      // shape: RoundedRectangleBorder(
-      //   borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-      // ),
       leading: showBackButton ?? true
           ? IconButton(
               icon: Icon(

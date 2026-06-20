@@ -38,22 +38,17 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
         final user = state is AuthSuccess ? state.user : null;
         return Scaffold(
           backgroundColor: AppTheme.backgroundWhite,
+          appBar: const ProfileAppBar(title: 'Profile'),
           body: SafeArea(
             child: Column(
               children: [
-                const ProfileAppBar(
-                  title: 'Profile',
-                  centerTitle: true,
-                  // showBackButton: true,
-                ),
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
                         ProfileHeader(
                           user: user,
-                          onEditTap: () =>
-                              context.push(AppRoutes.editProfile),
+                          onEditTap: () => context.push(AppRoutes.editProfile),
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -61,23 +56,29 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                             options: [
                               ProfileMenuOption(
                                 title: 'Edit Profile Information',
-                                onTap: () => context.push(AppRoutes.editProfile),
+                                onTap: () =>
+                                    context.push(AppRoutes.editProfile),
                               ),
                               ProfileMenuOption(
                                 title: 'Caregivers',
-                                onTap: () => context.push(AppRoutes.patientCaregivers),
+                                onTap: () =>
+                                    context.push(AppRoutes.patientCaregivers),
                               ),
                               ProfileMenuOption(
                                 title: 'Caregiver requests',
-                                onTap: () => context.push(AppRoutes.patientAssignmentInbox),
+                                onTap: () => context.push(
+                                  AppRoutes.patientAssignmentInbox,
+                                ),
                               ),
                               ProfileMenuOption(
                                 title: 'Notifications',
-                                onTap: () => context.push(AppRoutes.notifications),
+                                onTap: () =>
+                                    context.push(AppRoutes.notifications),
                               ),
                               ProfileMenuOption(
                                 title: 'Privacy Policy',
-                                onTap: () => context.push(AppRoutes.privacyPolicy),
+                                onTap: () =>
+                                    context.push(AppRoutes.privacyPolicy),
                               ),
                               ProfileMenuOption(
                                 title: 'Log out',
