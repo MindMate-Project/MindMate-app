@@ -210,8 +210,9 @@ class AssignmentService {
   }
 
   /// GET /api/patient/caregivers — the signed-in patient's connected
-  /// caregivers (with phone numbers), e.g. so the patient can call one for help.
-  Future<List<ConnectedCaregiver>> fetchMyCaregivers() async {
+  /// caregivers. Pass [patientId] to resolve relationship from `patients[]`
+  /// when the API returns full caregiver documents.
+  Future<List<ConnectedCaregiver>> fetchMyCaregivers({String? patientId}) async {
     try {
       final response = await ApiHttpClient.dio.get(
         '/api/patient/caregivers',
@@ -222,7 +223,12 @@ class AssignmentService {
       }
       return _extractList(response.data)
           .whereType<Map>()
-          .map((m) => ConnectedCaregiver.fromJson(Map<String, dynamic>.from(m)))
+          .map(
+            (m) => ConnectedCaregiver.fromJson(
+              Map<String, dynamic>.from(m),
+              patientId: patientId,
+            ),
+          )
           .where((c) => c.id.isNotEmpty)
           .toList();
     } on DioException catch (e) {
@@ -231,6 +237,63 @@ class AssignmentService {
       }
       throw Exception(
         ApiHttpClient.friendlyError(e, fallback: 'Could not load caregivers'),
+      );
+    }
+  }
+
+  /// GET /api/patient/caregivers/:caregiverId — full info for one connected
+  /// caregiver (patient role). [patientId] resolves relationship/connectedAt
+  /// from the caregiver's `patients[]` link entry.
+  Future<ConnectedCaregiver> fetchCaregiverDetail(
+    String caregiverId, {
+    required String patientId,
+  }) async {
+    try {
+      final response = await ApiHttpClient.dio.get(
+        '/api/patient/caregivers/$caregiverId',
+        options: await ApiHttpClient.authorizedOptions(),
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Failed to load caregiver (${response.statusCode})');
+      }
+      final json = _extractCaregiverJson(response.data);
+      final detail = ConnectedCaregiver.fromDetailJson(
+        json,
+        patientId: patientId,
+      );
+      if (detail.id.isEmpty) {
+        throw Exception('Caregiver not found');
+      }
+      return detail;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw Exception('Session expired. Please log in again.');
+      }
+      if (e.response?.statusCode == 404) {
+        throw Exception('Caregiver not found or no longer connected to you.');
+      }
+      throw Exception(
+        ApiHttpClient.friendlyError(e, fallback: 'Could not load caregiver'),
+      );
+    }
+  }
+
+  /// DELETE /api/patient/caregivers/remove/:caregiverId
+  Future<void> removeCaregiverFromPatient(String caregiverId) async {
+    try {
+      final response = await ApiHttpClient.dio.delete(
+        '/api/patient/caregivers/remove/$caregiverId',
+        options: await ApiHttpClient.authorizedOptions(),
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Failed to remove caregiver (${response.statusCode})');
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw Exception('Session expired. Please log in again.');
+      }
+      throw Exception(
+        ApiHttpClient.friendlyError(e, fallback: 'Could not remove caregiver'),
       );
     }
   }
@@ -246,6 +309,15 @@ class AssignmentService {
   Map<String, dynamic> _extractPatientJson(dynamic data) {
     if (data is Map<String, dynamic>) {
       final nested = data['data'] ?? data['patient'] ?? data['user'];
+      if (nested is Map<String, dynamic>) return nested;
+      return data;
+    }
+    throw Exception('Unexpected server response.');
+  }
+
+  Map<String, dynamic> _extractCaregiverJson(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      final nested = data['data'] ?? data['caregiver'] ?? data['user'];
       if (nested is Map<String, dynamic>) return nested;
       return data;
     }

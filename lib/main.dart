@@ -20,14 +20,17 @@ import 'package:mindmate/features/onboarding/presentation/screens/onboarding/com
 import 'package:mindmate/features/patient/reminders/presentation/screens/reminders_screen.dart';
 import 'package:mindmate/features/patient/reminders/presentation/screens/reminder_detail_screen.dart';
 import 'package:mindmate/core/navigation/app_navigation.dart';
-import 'package:mindmate/features/patient/profile/presentation/screens/patient_profile.dart';
-import 'package:mindmate/features/patient/profile/presentation/screens/edit_profile_screen.dart';
-import 'package:mindmate/features/patient/profile/presentation/screens/notifications_screen.dart';
+import 'package:mindmate/features/patient/profile/presentation/screens/patient_profile_screen.dart';
+import 'package:mindmate/features/profile/presentation/screens/edit_profile_screen.dart';
+import 'package:mindmate/features/patient/profile/presentation/screens/patient_notifications_screen.dart';
+import 'package:mindmate/features/patient/profile/presentation/screens/patient_caregivers_screen.dart';
 import 'package:mindmate/features/patient/profile/presentation/screens/patient_assignment_inbox_screen.dart';
-import 'package:mindmate/features/caregiver/home/presentation/screens/caregiver_notifications_screen.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
+import 'package:mindmate/features/caregiver/profile/presentation/screens/caregiver_profile_screen.dart';
+import 'package:mindmate/features/caregiver/profile/presentation/screens/caregiver_notifications_screen.dart';
 import 'package:mindmate/features/assignments/data/services/assignment_service.dart';
 import 'package:mindmate/features/assignments/presentation/cubit/patient_assignment_requests_cubit.dart';
-import 'package:mindmate/features/patient/profile/presentation/screens/privacy_policy_screen.dart';
+import 'package:mindmate/features/profile/presentation/screens/privacy_policy_screen.dart';
 import 'package:mindmate/core/utils/responsive.dart';
 import 'package:mindmate/features/memory/presentation/screens/memory_screen.dart';
 import 'package:mindmate/features/memory/presentation/screens/add_memory_screen.dart';
@@ -35,8 +38,8 @@ import 'package:mindmate/features/memory/presentation/screens/memory_drill_scree
 import 'package:mindmate/features/memory/presentation/cubit/memory_cubit.dart';
 import 'package:mindmate/features/memory/data/services/memory_service.dart';
 import 'package:mindmate/features/memory/data/services/memory_training_service.dart';
-import 'package:mindmate/features/patient/profile/presentation/cubit/profile_cubit.dart';
-import 'package:mindmate/features/patient/profile/data/services/profile_service.dart';
+import 'package:mindmate/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:mindmate/features/profile/data/services/profile_service.dart';
 import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_cubit.dart';
 import 'package:mindmate/features/patient/reminders/data/services/reminders_service.dart';
 import 'package:mindmate/features/caregiver/patients/presentation/screens/caregiver_patients_screen.dart';
@@ -104,9 +107,27 @@ void main() async {
               '/memory/add': (context) => const AddMemoryScreen(),
               '/memory/drill': (context) => const MemoryDrillScreen(),
               '/patient_reminders': (context) => const RemindersScreen(),
-              '/profile': (context) => const PatientProfileScreen(),
+              '/profile': (context) => BlocBuilder<AuthCubit, AuthState>(
+                builder: (context, state) {
+                  final isCaregiver =
+                      state is AuthSuccess && state.user.isCaregiver;
+                  return isCaregiver
+                      ? const CaregiverProfileScreen()
+                      : const PatientProfileScreen();
+                },
+              ),
               '/edit_profile': (context) => const EditProfileScreen(),
-              '/notifications': (context) => const NotificationsScreen(),
+              '/notifications': (context) => BlocBuilder<AuthCubit, AuthState>(
+                builder: (context, state) {
+                  final isCaregiver =
+                      state is AuthSuccess && state.user.isCaregiver;
+                  return isCaregiver
+                      ? const CaregiverNotificationsScreen()
+                      : const PatientNotificationsScreen();
+                },
+              ),
+              '/patient_caregivers': (context) =>
+                  const PatientCaregiversScreen(),
               '/patient_assignment_inbox': (context) => BlocProvider(
                 create: (_) =>
                     PatientAssignmentRequestsCubit(AssignmentService()),
