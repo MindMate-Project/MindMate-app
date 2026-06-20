@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/widgets/bottom_nav_bar_widget.dart';
 import 'package:mindmate/core/widgets/caregiver_bottom_nav.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
@@ -18,27 +20,27 @@ class AppBottomNav extends StatelessWidget {
     if (caregiver) {
       switch (index) {
         case 0:
-          Navigator.pushReplacementNamed(context, '/caregiver_home');
+          context.go(AppRoutes.caregiverHome);
         case 1:
-          Navigator.pushReplacementNamed(context, '/memory');
+          context.go(AppRoutes.memory);
         case 2:
-          Navigator.pushReplacementNamed(context, '/location');
+          context.go(AppRoutes.location);
         case 3:
-          Navigator.pushReplacementNamed(context, '/patient_reminders');
+          context.go(AppRoutes.patientReminders);
         case 4:
-          Navigator.pushReplacementNamed(context, '/profile');
+          context.go(AppRoutes.profile);
       }
       return;
     }
     switch (index) {
       case 0:
-        Navigator.pushReplacementNamed(context, '/patient_home');
+        context.go(AppRoutes.patientHome);
       case 1:
-        Navigator.pushNamed(context, '/memory');
+        context.push(AppRoutes.memory);
       case 3:
-        Navigator.pushReplacementNamed(context, '/patient_reminders');
+        context.go(AppRoutes.patientReminders);
       case 4:
-        Navigator.pushReplacementNamed(context, '/profile');
+        context.go(AppRoutes.profile);
     }
   }
 
