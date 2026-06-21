@@ -28,4 +28,10 @@ class ApiConfig {
   // Location endpoints
   static String deviceLocationEndpoint(String patientId) =>
       '/api/device/location/$patientId';
+
+  // Alert endpoints
+  static const String createAlertEndpoint = '/api/alerts';
+  static String patientAlertsEndpoint(String patientId) =>
+      '/api/alerts/patient/$patientId';
+  static String alertByIdEndpoint(String alertId) => '/api/alerts/$alertId';
 }

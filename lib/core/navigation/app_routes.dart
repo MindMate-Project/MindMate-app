@@ -23,6 +23,7 @@ abstract final class AppRoutes {
   static const caregiverNotifications = '/caregiver_notifications';
   static const caregiverPatients = '/caregiver_patients';
   static const location = '/location';
+  static const safeZones = '/location/safe-zones';
   static const privacyPolicy = '/privacy_policy';
 
   static String reminderDetail(String reminderId) => '/reminder/$reminderId';

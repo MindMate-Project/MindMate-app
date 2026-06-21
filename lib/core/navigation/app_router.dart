@@ -20,6 +20,7 @@ import 'package:mindmate/features/caregiver/patients/presentation/screens/caregi
 import 'package:mindmate/features/caregiver/profile/presentation/screens/caregiver_notifications_screen.dart';
 import 'package:mindmate/features/caregiver/profile/presentation/screens/caregiver_profile_screen.dart';
 import 'package:mindmate/features/location/presentation/screens/location_tracking_screen.dart';
+import 'package:mindmate/features/location/presentation/screens/safe_zones_screen.dart';
 import 'package:mindmate/features/memory/presentation/screens/add_memory_screen.dart';
 import 'package:mindmate/features/memory/presentation/screens/memory_drill_screen.dart';
 import 'package:mindmate/features/memory/presentation/screens/memory_screen.dart';
@@ -197,6 +198,13 @@ abstract final class AppRouter {
       GoRoute(
         path: AppRoutes.location,
         builder: (context, state) => const LocationTrackingScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.safeZones,
+        builder: (context, state) {
+          final tabIndex = state.extra is int ? state.extra as int : 0;
+          return SafeZonesScreen(initialTabIndex: tabIndex);
+        },
       ),
       GoRoute(
         path: AppRoutes.privacyPolicy,
