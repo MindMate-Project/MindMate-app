@@ -1,48 +1,64 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/widgets/info_card.dart';
 import 'package:mindmate/core/widgets/profile_app_bar.dart';
-import 'package:mindmate/features/assignments/data/services/assignment_service.dart';
-import 'package:mindmate/features/assignments/data/models/assigned_patient_row.dart';
-import 'package:mindmate/features/assignments/data/models/caregiver_relationship.dart';
+import 'package:mindmate/features/alerts/data/models/alert_list_item.dart';
+import 'package:mindmate/features/alerts/data/models/patient_alert.dart';
+import 'package:mindmate/features/alerts/presentation/cubit/alert_cubit.dart';
+import 'package:mindmate/features/alerts/presentation/cubit/alert_state.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 
-/// Caregiver-focused activity: connected patients from the API and guidance on pending requests.
-class CaregiverNotificationsScreen extends StatefulWidget {
+/// Caregiver activity: patient alerts from the API.
+class CaregiverNotificationsScreen extends StatelessWidget {
   const CaregiverNotificationsScreen({super.key});
 
   @override
-  State<CaregiverNotificationsScreen> createState() => _CaregiverNotificationsScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => AlertCubit()..loadAlerts(),
+      child: const _CaregiverNotificationsView(),
+    );
+  }
 }
 
-class _CaregiverNotificationsScreenState extends State<CaregiverNotificationsScreen> {
-  final _service = AssignmentService();
-  List<AssignedPatientRow> _patients = [];
-  bool _loading = true;
-  String? _error;
+class _CaregiverNotificationsView extends StatefulWidget {
+  const _CaregiverNotificationsView();
 
   @override
-  void initState() {
-    super.initState();
-    _load();
-  }
+  State<_CaregiverNotificationsView> createState() =>
+      _CaregiverNotificationsViewState();
+}
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+class _CaregiverNotificationsViewState
+    extends State<_CaregiverNotificationsView> {
+  String? _acknowledgingId;
+
+  Future<void> _acknowledge(String alertId) async {
+    final authState = context.read<AuthCubit>().state;
+    final caregiverId = authState is AuthSuccess ? authState.user.id : null;
+    if (caregiverId == null || caregiverId.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not identify caregiver account.')),
+        );
+      }
+      return;
+    }
+
+    setState(() => _acknowledgingId = alertId);
     try {
-      final list = await _service.fetchCaregiverPatients();
-      setState(() {
-        _patients = list;
-        _loading = false;
-      });
+      await context.read<AlertCubit>().acknowledgeAlert(alertId, caregiverId);
     } catch (e) {
-      setState(() {
-        _error = e.toString().replaceFirst('Exception: ', '');
-        _loading = false;
-      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _acknowledgingId = null);
     }
   }
 
@@ -51,96 +67,192 @@ class _CaregiverNotificationsScreenState extends State<CaregiverNotificationsScr
     return Scaffold(
       backgroundColor: AppTheme.backgroundWhite,
       appBar: const ProfileAppBar(title: 'Notifications'),
-      body: RefreshIndicator(
-        color: AppTheme.primaryColor,
-        onRefresh: _load,
-        child: _loading && _patients.isEmpty
-            ? ListView(
-                children: const [
-                  SizedBox(height: 120),
-                  Center(child: CircularProgressIndicator(color: AppTheme.primaryColor)),
-                ],
-              )
-            : ListView(
-                padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXL, vertical: AppTheme.spacingM),
+      body: BlocConsumer<AlertCubit, AlertState>(
+        listener: (context, state) {
+          if (state is AlertError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state is AlertLoading || state is AlertInitial) {
+            return ListView(
+              children: const [
+                SizedBox(height: 120),
+                Center(
+                  child: CircularProgressIndicator(color: AppTheme.primaryColor),
+                ),
+              ],
+            );
+          }
+
+          if (state is AlertError) {
+            return RefreshIndicator(
+              color: AppTheme.primaryColor,
+              onRefresh: () => context.read<AlertCubit>().loadAlerts(),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spacingXL,
+                  vertical: AppTheme.spacingM,
+                ),
                 children: [
-              InfoCard(
+                  const SizedBox(height: 120),
+                  Text(
+                    state.message,
+                    textAlign: TextAlign.center,
+                    style: AppTheme.bodyMedium.copyWith(
+                      color: AppTheme.errorColor,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (state is AlertLoaded) {
+            final pendingAlerts = state.alerts
+                .where((entry) => !entry.alert.isAcknowledged)
+                .toList();
+            final acknowledgedAlerts = state.alerts
+                .where((entry) => entry.alert.isAcknowledged)
+                .toList();
+
+            return RefreshIndicator(
+              color: AppTheme.primaryColor,
+              onRefresh: () => context.read<AlertCubit>().loadAlerts(),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spacingXL,
+                  vertical: AppTheme.spacingM,
+                ),
+                children: [
+                  InfoCard(
                     tag: 'Info',
                     tagColor: AppTheme.infoColor,
                     children: [
                       Text(
-                        'When you send an assignment request from Add patient, the patient must accept it '
-                        'before they appear in your list below.',
+                        'Safe zone and SOS alerts appear here. Set safe zones on '
+                        'the Location tab to get notified when a patient leaves.',
                         style: AppTheme.bodyMedium,
                       ),
                     ],
                   ),
                   const SizedBox(height: AppTheme.spacingL),
-                  Text('Connected patients', style: AppTheme.heading3.copyWith(fontSize: 18)),
-                  const SizedBox(height: AppTheme.spacingS),
-                  if (_error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(_error!, style: AppTheme.bodyMedium.copyWith(color: AppTheme.errorColor)),
+                  if (pendingAlerts.isNotEmpty) ...[
+                    Text(
+                      'Active alerts',
+                      style: AppTheme.heading3.copyWith(fontSize: 18),
                     ),
-                  if (_patients.isEmpty && !_loading)
+                    const SizedBox(height: AppTheme.spacingS),
+                    ...pendingAlerts.map(
+                      (entry) => _AlertCard(
+                        entry: entry,
+                        acknowledging: _acknowledgingId == entry.alert.id,
+                        onAcknowledge: () => _acknowledge(entry.alert.id),
+                      ),
+                    ),
+                    const SizedBox(height: AppTheme.spacingL),
+                  ],
+                  if (acknowledgedAlerts.isNotEmpty) ...[
+                    Text(
+                      'Past alerts',
+                      style: AppTheme.heading3.copyWith(fontSize: 18),
+                    ),
+                    const SizedBox(height: AppTheme.spacingS),
+                    ...acknowledgedAlerts.map(
+                      (entry) => _AlertCard(
+                        entry: entry,
+                        acknowledging: false,
+                      ),
+                    ),
+                  ],
+                  if (state.alerts.isEmpty)
                     Padding(
-                      padding: const EdgeInsets.only(top: 24),
+                      padding: const EdgeInsets.only(top: 48),
                       child: Center(
                         child: Text(
-                          'No connected patients yet',
-                          style: AppTheme.bodyMedium.copyWith(color: AppTheme.textTertiary),
+                          'No alerts yet.',
+                          style: AppTheme.bodyMedium.copyWith(
+                            color: AppTheme.textTertiary,
+                          ),
                         ),
                       ),
-                    )
-                  else
-                    ..._patients.map((p) => _PatientNoticeCard(row: p)),
+                    ),
                 ],
               ),
+            );
+          }
+
+          return const SizedBox.shrink();
+        },
       ),
     );
   }
 }
 
-class _PatientNoticeCard extends StatelessWidget {
-  final AssignedPatientRow row;
+class _AlertCard extends StatelessWidget {
+  final AlertListItem entry;
+  final bool acknowledging;
+  final VoidCallback? onAcknowledge;
 
-  const _PatientNoticeCard({required this.row});
+  const _AlertCard({
+    required this.entry,
+    required this.acknowledging,
+    this.onAcknowledge,
+  });
+
+  Color get _tagColor {
+    if (entry.alert.isAcknowledged) return AppTheme.neutralMedium;
+    switch (entry.alert.type) {
+      case AlertType.geofence:
+        return AppTheme.warningColor;
+      case AlertType.sos:
+        return AppTheme.errorColor;
+      case AlertType.unknown:
+        return AppTheme.infoColor;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final relEnum = CaregiverRelationship.tryParseApi(row.relationship);
-    final rel = relEnum?.label ?? row.relationship ?? '—';
-    final connected = row.connectedAt != null
-        ? DateFormat.yMMMd().format(row.connectedAt!.toLocal())
-        : null;
+    final when = DateFormat.yMMMd().add_jm().format(entry.alert.timestamp);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
-      elevation: 0,
-      color: AppTheme.neutralLight,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMedium)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingL, vertical: 8),
-        title: Text(row.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(row.email, style: AppTheme.bodySmall),
-            const SizedBox(height: 4),
-            Text('Relationship: $rel', style: AppTheme.bodySmall),
-            if (connected != null) Text('Connected $connected', style: AppTheme.bodySmall),
-          ],
-        ),
-        leading: CircleAvatar(
-          backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.2),
-          child: Text(
-            row.name.isNotEmpty ? row.name[0].toUpperCase() : '?',
-            style: const TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.w600),
+    return InfoCard(
+      tag: entry.alert.isAcknowledged ? 'Acknowledged' : 'New',
+      tagColor: _tagColor,
+      children: [
+        Text(
+          entry.alert.displayTitle,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.secondaryColor,
           ),
         ),
-      ),
+        const SizedBox(height: 6),
+        Text('Patient: ${entry.patientName}', style: AppTheme.bodyMedium),
+        const SizedBox(height: 4),
+        Text(when, style: AppTheme.bodySmall),
+        if (!entry.alert.isAcknowledged && onAcknowledge != null) ...[
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: acknowledging ? null : onAcknowledge,
+              child: acknowledging
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Acknowledge'),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
