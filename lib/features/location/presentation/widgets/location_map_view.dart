@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
+import 'package:mindmate/features/location/data/models/safe_zone.dart';
 
 class LocationMapView extends StatefulWidget {
   final double latitude;
   final double longitude;
   final bool isFallback;
+  final List<SafeZone> safeZones;
 
   const LocationMapView({
     super.key,
     required this.latitude,
     required this.longitude,
     required this.isFallback,
+    this.safeZones = const [],
   });
 
   @override
@@ -64,6 +67,21 @@ class _LocationMapViewState extends State<LocationMapView> {
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: 'com.mindmate.app',
         ),
+        if (widget.safeZones.isNotEmpty)
+          CircleLayer(
+            circles: widget.safeZones
+                .map(
+                  (zone) => CircleMarker(
+                    point: LatLng(zone.latitude, zone.longitude),
+                    radius: zone.radiusMeters,
+                    useRadiusInMeter: true,
+                    color: AppTheme.successColor.withValues(alpha: 0.15),
+                    borderColor: AppTheme.successColor,
+                    borderStrokeWidth: 2,
+                  ),
+                )
+                .toList(),
+          ),
         MarkerLayer(
           markers: [
             Marker(

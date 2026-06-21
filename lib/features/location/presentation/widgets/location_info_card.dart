@@ -7,17 +7,21 @@ import 'package:mindmate/features/location/data/models/patient_location.dart';
 /// Info card shown on the map screen and caregiver home (patient location summary).
 class LocationInfoCard extends StatelessWidget {
   final PatientLocation location;
+  final bool hasSafeZones;
 
-  const LocationInfoCard({super.key, required this.location});
+  const LocationInfoCard({
+    super.key,
+    required this.location,
+    this.hasSafeZones = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = location.inSafeZone
-        ? AppTheme.successColor
-        : AppTheme.warningColor;
+    final statusColor = _tagColor;
+    final tag = _tag;
 
     return InfoCard(
-      tag: location.statusLabel,
+      tag: tag,
       tagColor: statusColor,
       children: [
         Row(
@@ -75,6 +79,19 @@ class LocationInfoCard extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  String get _tag {
+    if (!hasSafeZones) return 'Live Location';
+    if (location.inSafeZone) {
+      return location.zoneLabel ?? 'In Safe Zone';
+    }
+    return 'Outside Zone';
+  }
+
+  Color get _tagColor {
+    if (!hasSafeZones) return AppTheme.infoColor;
+    return location.inSafeZone ? AppTheme.successColor : AppTheme.warningColor;
   }
 
   static String _formatTime(DateTime? time) {

@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mindmate/core/navigation/app_bottom_nav.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/widgets/error_retry_view.dart';
+// import 'package:mindmate/core/widgets/info_message_box.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/caregiver/home/data/active_patient_resolver.dart';
 import 'package:mindmate/features/location/presentation/cubit/location_cubit.dart';
 import 'package:mindmate/features/location/presentation/cubit/location_state.dart';
+// import 'package:mindmate/features/location/presentation/widgets/geofence_alert_banner.dart';
 import 'package:mindmate/features/location/presentation/widgets/location_info_card.dart';
 import 'package:mindmate/features/location/presentation/widgets/location_map_view.dart';
 
@@ -31,12 +35,15 @@ class _LocationTrackingScreenState extends State<LocationTrackingScreen> {
     final cubit = context.read<LocationCubit>();
     final state = cubit.state;
 
-    if (state is LocationLoaded) return;
+    if (state is LocationLoaded) {
+      await cubit.ensureMonitoring();
+      return;
+    }
 
     if (state is LocationInitial || state is LocationNoPatient) {
       final patient = await _resolver.resolve();
       if (!mounted) return;
-      await cubit.load(
+      await cubit.startMonitoring(
         patientId: patient?.id,
         patientName: patient?.name ?? 'Patient',
       );
@@ -72,10 +79,10 @@ class _LocationTrackingScreenState extends State<LocationTrackingScreen> {
                         color: AppTheme.secondaryColor,
                       ),
                     ),
-                    subtitle: Text(
-                      'Falls back to this phone\'s GPS when patient data is unavailable',
-                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-                    ),
+                    // subtitle: Text(
+                    //   'Falls back to this phone\'s GPS when patient data is unavailable',
+                    //   style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                    // ),
                     value: state.useDeviceLocation,
                     activeThumbColor: AppTheme.primaryColor,
                     onChanged: (value) => context
@@ -89,8 +96,7 @@ class _LocationTrackingScreenState extends State<LocationTrackingScreen> {
               child: BlocBuilder<LocationCubit, LocationState>(
                 builder: (context, state) => RefreshIndicator(
                   color: AppTheme.primaryColor,
-                  onRefresh: () =>
-                      context.read<LocationCubit>().refresh(),
+                  onRefresh: () => context.read<LocationCubit>().refresh(),
                   child: LayoutBuilder(
                     builder: (context, constraints) => SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
@@ -136,17 +142,73 @@ class _LocationTrackingScreenState extends State<LocationTrackingScreen> {
 
     if (state is LocationLoaded) {
       final loc = state.location;
-      return Column(
-        children: [
-          Expanded(
-            child: LocationMapView(
-              latitude: loc.latitude,
-              longitude: loc.longitude,
-              isFallback: loc.isFallback,
-            ),
-          ),
-          LocationInfoCard(location: loc),
-        ],
+      return BlocBuilder<AuthCubit, AuthState>(
+        builder: (context, authState) {
+          final caregiver = _isCaregiver(authState);
+          // final outside = state.hasSafeZones && !loc.inSafeZone;
+          return Column(
+            children: [
+              // if (outside && state.geofenceAlert != null)
+              //   GeofenceAlertBanner(
+              //     alert: state.geofenceAlert!,
+              //     onDismiss: () =>
+              //         context.read<LocationCubit>().dismissGeofenceAlert(),
+              //   )
+              // else if (outside)
+              //   const InfoMessageBox(
+              //     message:
+              //         'Patient is outside all safe zones. Monitoring active.',
+              //   ),
+              if (caregiver)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          state.hasSafeZones
+                              ? '${state.safeZones.length} safe zone'
+                                    '${state.safeZones.length == 1 ? '' : 's'}'
+                              : 'No safe zones set',
+                          style: AppTheme.bodyMedium.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.secondaryColor,
+                          ),
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => context.push(
+                          AppRoutes.safeZones,
+                          extra: state.hasSafeZones ? 0 : 1,
+                        ),
+                        icon: const Icon(Icons.add, size: 20),
+                        label: const Text('Manage'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppTheme.primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              Expanded(
+                flex: 3,
+                child: LocationMapView(
+                  latitude: loc.latitude,
+                  longitude: loc.longitude,
+                  isFallback: loc.isFallback,
+                  safeZones: state.safeZones,
+                ),
+              ),
+              Flexible(
+                flex: 3,
+                child: LocationInfoCard(
+                  location: loc,
+                  hasSafeZones: state.hasSafeZones,
+                ),
+              ),
+            ],
+          );
+        },
       );
     }
 

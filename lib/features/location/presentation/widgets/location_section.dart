@@ -7,6 +7,7 @@ import 'package:mindmate/core/widgets/info_message_box.dart';
 import 'package:mindmate/features/caregiver/home/presentation/models/active_patient.dart';
 import 'package:mindmate/features/location/presentation/cubit/location_cubit.dart';
 import 'package:mindmate/features/location/presentation/cubit/location_state.dart';
+import 'package:mindmate/features/location/presentation/widgets/geofence_alert_banner.dart';
 import 'package:mindmate/features/location/presentation/widgets/location_info_card.dart';
 
 /// Caregiver home location preview; shares [LocationCubit] with the map screen.
@@ -33,7 +34,7 @@ class _LocationSectionState extends State<LocationSection> {
   }
 
   void _load() {
-    context.read<LocationCubit>().load(
+    context.read<LocationCubit>().startMonitoring(
           patientId: widget.patient.id,
           patientName: widget.patient.name,
         );
@@ -75,10 +76,32 @@ class _LocationSectionState extends State<LocationSection> {
             }
 
             if (state is LocationLoaded) {
-              return InkWell(
-                onTap: () => context.push(AppRoutes.location),
-                borderRadius: BorderRadius.circular(16),
-                child: LocationInfoCard(location: state.location),
+              final outside =
+                  state.hasSafeZones && !state.location.inSafeZone;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (outside && state.geofenceAlert != null)
+                    GeofenceAlertBanner(
+                      alert: state.geofenceAlert!,
+                      onDismiss: () => context
+                          .read<LocationCubit>()
+                          .dismissGeofenceAlert(),
+                    )
+                  else if (outside)
+                    const InfoMessageBox(
+                      message:
+                          'Patient is outside all safe zones. Monitoring active.',
+                    ),
+                  InkWell(
+                    onTap: () => context.push(AppRoutes.location),
+                    borderRadius: BorderRadius.circular(16),
+                    child: LocationInfoCard(
+                      location: state.location,
+                      hasSafeZones: state.hasSafeZones,
+                    ),
+                  ),
+                ],
               );
             }
 
