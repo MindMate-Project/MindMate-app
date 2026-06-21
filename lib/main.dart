@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:mindmate/core/navigation/app_navigation.dart';
@@ -8,6 +9,7 @@ import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/utils/responsive.dart';
 import 'package:mindmate/features/auth/data/services/auth_service.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:mindmate/features/location/data/services/geofence_alert_service.dart';
 import 'package:mindmate/features/location/data/services/location_service.dart';
 import 'package:mindmate/features/location/presentation/cubit/location_cubit.dart';
 import 'package:mindmate/features/memory/data/services/memory_service.dart';
@@ -23,6 +25,8 @@ void main() async {
 
   tz.initializeTimeZones();
 
+  final notificationsPlugin = FlutterLocalNotificationsPlugin();
+
   await MemoryTrainingService.instance.init(
     onTap: (memoryId) {
       AppRouter.router.push(
@@ -35,6 +39,7 @@ void main() async {
       AppRouter.router.push(AppRoutes.reminderDetail(reminderId));
     },
     onReminderAlarm: showReminderAlarm,
+    notificationsPlugin: notificationsPlugin,
   );
 
   runApp(
@@ -50,7 +55,14 @@ void main() async {
 
         BlocProvider(create: (context) => RemindersCubit(RemindersService())),
 
-        BlocProvider(create: (context) => LocationCubit(LocationService())),
+        BlocProvider(
+          create: (context) => LocationCubit(
+            LocationService(),
+            geofenceAlertService: GeofenceAlertService(
+              notifications: notificationsPlugin,
+            ),
+          ),
+        ),
       ],
       child: const MindMateApp(),
     ),
