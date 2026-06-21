@@ -7,7 +7,7 @@ import 'package:mindmate/features/patient/reminders/presentation/widgets/home_re
 /// Patient-scoped dashboard blocks shown on the caregiver home screen.
 ///
 /// Keyed by [ActivePatient.id] at the call site so switching patients resets
-/// every section (including cubits created in [initState]).
+/// every section widget tree.
 class ActivePatientSections extends StatelessWidget {
   final ActivePatient patient;
 

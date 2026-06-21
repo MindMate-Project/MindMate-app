@@ -10,9 +10,13 @@ import 'package:mindmate/core/config/api_config.dart';
 
 class RemindersService {
   final Dio _dio;
-  final PatientContextStore _patientContextStore = PatientContextStore();
+  final PatientContextStore _patientContextStore;
 
-  RemindersService() : _dio = ApiHttpClient.dio;
+  RemindersService({
+    Dio? dio,
+    PatientContextStore? patientContextStore,
+  })  : _dio = dio ?? ApiHttpClient.dio,
+        _patientContextStore = patientContextStore ?? PatientContextStore();
 
   Future<String?> _getPatientId() => _patientContextStore.getActivePatientId();
 
