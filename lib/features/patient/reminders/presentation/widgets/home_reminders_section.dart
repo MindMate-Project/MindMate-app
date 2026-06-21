@@ -5,7 +5,6 @@ import 'package:mindmate/core/widgets/appointment_card.dart';
 import 'package:mindmate/core/widgets/error_retry_view.dart';
 import 'package:mindmate/core/widgets/medication_card.dart';
 import 'package:mindmate/features/patient/reminders/data/models/reminder_item.dart';
-import 'package:mindmate/features/patient/reminders/data/services/reminders_service.dart';
 import 'package:mindmate/features/patient/reminders/data/utils/reminder_filters.dart';
 import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_cubit.dart';
 import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_state.dart';
@@ -15,9 +14,6 @@ import 'package:mindmate/features/patient/reminders/presentation/utils/reminder_
 /// Home-screen summary of the active patient's real reminders: the next
 /// upcoming appointment and the medications due today. Shared by the patient
 /// and caregiver home screens (both resolve the patient via PatientContextStore).
-///
-/// When used on the caregiver home, place inside [ActivePatientSections] so
-/// switching patients resets the cubit created in [initState].
 class HomeRemindersSection extends StatefulWidget {
   const HomeRemindersSection({super.key});
 
@@ -26,19 +22,16 @@ class HomeRemindersSection extends StatefulWidget {
 }
 
 class _HomeRemindersSectionState extends State<HomeRemindersSection> {
-  late final RemindersCubit _cubit;
-
   @override
   void initState() {
     super.initState();
-    _cubit = RemindersCubit(RemindersService());
-    _cubit.loadPatientReminders();
-  }
-
-  @override
-  void dispose() {
-    _cubit.close();
-    super.dispose();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final cubit = context.read<RemindersCubit>();
+      if (cubit.state is RemindersInitial) {
+        cubit.loadPatientReminders();
+      }
+    });
   }
 
   Future<void> _openDetail(String reminderId) async {
@@ -48,70 +41,67 @@ class _HomeRemindersSectionState extends State<HomeRemindersSection> {
         builder: (_) => ReminderDetailScreen(reminderId: reminderId),
       ),
     );
-    if (mounted) _cubit.loadPatientReminders();
+    if (mounted) context.read<RemindersCubit>().loadPatientReminders();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _cubit,
-      child: BlocBuilder<RemindersCubit, RemindersState>(
-        builder: (context, state) {
-          if (state is RemindersInitial || state is RemindersLoading) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 32),
-              child: Center(
-                child: CircularProgressIndicator(color: AppTheme.primaryColor),
-              ),
-            );
-          }
+    return BlocBuilder<RemindersCubit, RemindersState>(
+      builder: (context, state) {
+        if (state is RemindersInitial || state is RemindersLoading) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 32),
+            child: Center(
+              child: CircularProgressIndicator(color: AppTheme.primaryColor),
+            ),
+          );
+        }
 
-          if (state is RemindersError) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _sectionTitle('Upcoming Appointment'),
-                const SizedBox(height: 12),
-                ErrorRetryView(
-                  message: state.message,
-                  onRetry: _cubit.loadPatientReminders,
-                  expand: false,
-                ),
-              ],
-            );
-          }
-
-          final reminders =
-              state is RemindersLoaded ? state.reminders : <ReminderItem>[];
-          final appointment = ReminderFilters.nextAppointment(reminders);
-          final medications =
-              ReminderFilters.medicationsForDay(reminders, DateTime.now());
-
+        if (state is RemindersError) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _sectionTitle('Upcoming Appointment'),
               const SizedBox(height: 12),
-              if (appointment != null)
-                _appointmentCard(appointment)
-              else
-                _emptyText('No upcoming appointment'),
-              const SizedBox(height: 30),
-              _sectionTitle("Today's Medicine"),
-              const SizedBox(height: 12),
-              if (medications.isEmpty)
-                _emptyText('No medication for today')
-              else
-                ...medications.map(
-                  (m) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _medicationCard(m),
-                  ),
-                ),
+              ErrorRetryView(
+                message: state.message,
+                onRetry: context.read<RemindersCubit>().loadPatientReminders,
+                expand: false,
+              ),
             ],
           );
-        },
-      ),
+        }
+
+        final reminders =
+            state is RemindersLoaded ? state.reminders : <ReminderItem>[];
+        final appointment = ReminderFilters.nextAppointment(reminders);
+        final medications =
+            ReminderFilters.medicationsForDay(reminders, DateTime.now());
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _sectionTitle('Upcoming Appointment'),
+            const SizedBox(height: 12),
+            if (appointment != null)
+              _appointmentCard(appointment)
+            else
+              _emptyText('No upcoming appointment'),
+            const SizedBox(height: 30),
+            _sectionTitle("Today's Medicine"),
+            const SizedBox(height: 12),
+            if (medications.isEmpty)
+              _emptyText('No medication for today')
+            else
+              ...medications.map(
+                (m) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _medicationCard(m),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 

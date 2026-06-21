@@ -6,6 +6,7 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:mindmate/core/navigation/app_navigation.dart';
 import 'package:mindmate/core/navigation/app_router.dart';
 import 'package:mindmate/core/navigation/app_routes.dart';
+import 'package:mindmate/core/network/patient_context_store.dart';
 import 'package:mindmate/core/utils/responsive.dart';
 import 'package:mindmate/features/auth/data/services/auth_service.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
@@ -42,6 +43,8 @@ void main() async {
     notificationsPlugin: notificationsPlugin,
   );
 
+  final patientContextStore = PatientContextStore();
+
   runApp(
     MultiBlocProvider(
       providers: [
@@ -53,7 +56,11 @@ void main() async {
 
         BlocProvider(create: (context) => ProfileCubit(ProfileService())),
 
-        BlocProvider(create: (context) => RemindersCubit(RemindersService())),
+        BlocProvider(
+          create: (context) => RemindersCubit(
+            RemindersService(patientContextStore: patientContextStore),
+          ),
+        ),
 
         BlocProvider(
           create: (context) => LocationCubit(

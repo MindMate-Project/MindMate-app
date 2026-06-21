@@ -10,7 +10,6 @@ import 'package:mindmate/core/navigation/app_bottom_nav.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/patient/reminders/data/models/reminder_item.dart';
-import 'package:mindmate/features/patient/reminders/data/services/reminders_service.dart';
 import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_cubit.dart';
 import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_state.dart';
 import 'package:mindmate/features/patient/reminders/presentation/screens/add_appointment_screen.dart';
@@ -34,7 +33,6 @@ class _RemindersScreenState extends State<RemindersScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   DateTime _selectedDate = DateTime.now();
-  late final RemindersCubit _remindersCubit;
 
   @override
   void initState() {
@@ -45,14 +43,18 @@ class _RemindersScreenState extends State<RemindersScreen>
       initialIndex: widget.initialTabIndex.clamp(0, 1),
     );
 
-    _remindersCubit = RemindersCubit(RemindersService());
-    _remindersCubit.loadPatientReminders();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final cubit = context.read<RemindersCubit>();
+      if (cubit.state is RemindersInitial) {
+        cubit.loadPatientReminders();
+      }
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _remindersCubit.close();
     super.dispose();
   }
 
@@ -65,7 +67,7 @@ class _RemindersScreenState extends State<RemindersScreen>
         builder: (_) => ReminderDetailScreen(reminderId: reminderId),
       ),
     );
-    if (mounted) _remindersCubit.loadPatientReminders();
+    if (mounted) context.read<RemindersCubit>().loadPatientReminders();
   }
 
   Future<void> _onCaregiverAddPressed() async {
@@ -76,8 +78,8 @@ class _RemindersScreenState extends State<RemindersScreen>
     final created = await Navigator.of(
       context,
     ).push<bool>(MaterialPageRoute(builder: (_) => page));
-    if (created == true) {
-      _remindersCubit.loadPatientReminders();
+    if (created == true && mounted) {
+      context.read<RemindersCubit>().loadPatientReminders();
     }
   }
 
@@ -87,9 +89,7 @@ class _RemindersScreenState extends State<RemindersScreen>
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _remindersCubit,
-      child: BlocBuilder<AuthCubit, AuthState>(
+    return BlocBuilder<AuthCubit, AuthState>(
         builder: (context, authState) {
           final isCaregiver = _isCaregiver(authState);
           return Scaffold(
@@ -329,7 +329,6 @@ class _RemindersScreenState extends State<RemindersScreen>
             bottomNavigationBar: const AppBottomNav(selectedIndex: 3),
           );
         },
-      ),
-    );
+      );
   }
 }
