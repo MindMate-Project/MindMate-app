@@ -7,11 +7,17 @@ class ApiConfig {
   // Auth endpoints are called as relative paths by AuthService (e.g.
   // '/api/auth/login'), so no per-endpoint constants are kept here.
 
+  // Reminders endpoints
+  static const String createReminderEndpoint = '/api/reminders';
+  static String patientRemindersEndpoint(String patientId) =>
+      '/api/reminders/patient/$patientId';
+  static String reminderByIdEndpoint(String reminderId) =>
+      '/api/reminders/$reminderId';
+
   // Face Recognition endpoints
-  static const String faceBase = '$baseUrl/api/face';
-  static const String identifyFaceEndpoint = '$faceBase/patient/identify-face';
+  static const String identifyFaceEndpoint = '/api/face/patient/identify-face';
   // Register a known person the patient should recognize (caregiver action).
-  static const String registerFaceEndpoint = '$faceBase/patient/register-face';
+  static const String registerFaceEndpoint = '/api/face/patient/register-face';
 
   // Memory endpoints
   static const String memoryBase = '$baseUrl/api/memories';
