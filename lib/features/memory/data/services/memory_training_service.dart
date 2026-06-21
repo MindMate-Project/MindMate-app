@@ -43,24 +43,33 @@ class MemoryTrainingService {
 
   static const String _cacheSubdir = 'memory_training';
 
-  final FlutterLocalNotificationsPlugin _plugin =
-      FlutterLocalNotificationsPlugin();
-  final Dio _imageDio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 15),
-    receiveTimeout: const Duration(seconds: 20),
-    responseType: ResponseType.bytes,
-  ));
+  late final FlutterLocalNotificationsPlugin _plugin;
+  final Dio _imageDio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 20),
+      responseType: ResponseType.bytes,
+    ),
+  );
 
   /// Set during [init] when the app was cold-launched by a reminder alarm's
   /// full-screen intent. `main()` reads it after `runApp` to show the alarm
   /// once the navigator exists. `(notificationId, reminderId)`.
   (int, String)? pendingAlarmLaunch;
 
+  /// Shared plugin initialized in [init]; used by geofence and reminder notifications.
+  FlutterLocalNotificationsPlugin get notificationsPlugin => _plugin;
+
+  /// Requests OS notification permission (Android 13+ / iOS). Safe to call repeatedly.
+  Future<bool> ensureNotificationPermissions() => _requestPermissions();
+
   Future<void> init({
     required void Function(String? memoryId) onTap,
     void Function(String reminderId)? onReminderTap,
     void Function(int notificationId, String reminderId)? onReminderAlarm,
+    FlutterLocalNotificationsPlugin? notificationsPlugin,
   }) async {
+    _plugin = notificationsPlugin ?? FlutterLocalNotificationsPlugin();
     try {
       final tzName = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(tzName));
@@ -68,8 +77,7 @@ class MemoryTrainingService {
       debugPrint('[MemoryTraining] timezone init failed, using UTC: $e');
     }
 
-    const androidInit =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosInit = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -107,8 +115,9 @@ class MemoryTrainingService {
     try {
       final launch = await _plugin.getNotificationAppLaunchDetails();
       if (launch?.didNotificationLaunchApp ?? false) {
-        pendingAlarmLaunch =
-            _parseAlarmPayload(launch!.notificationResponse?.payload);
+        pendingAlarmLaunch = _parseAlarmPayload(
+          launch!.notificationResponse?.payload,
+        );
       }
     } catch (e) {
       debugPrint('[MemoryTraining] launch details failed: $e');
@@ -116,7 +125,8 @@ class MemoryTrainingService {
 
     final androidImpl = _plugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     await androidImpl?.createNotificationChannel(
       const AndroidNotificationChannel(
         _channelId,
@@ -174,7 +184,8 @@ class MemoryTrainingService {
         'times must contain between $minSlots and $maxSlots entries.',
       );
     }
-    final sorted = [...times]..sort((a, b) {
+    final sorted = [...times]
+      ..sort((a, b) {
         final am = a.hour * 60 + a.minute;
         final bm = b.hour * 60 + b.minute;
         return am.compareTo(bm);
@@ -202,9 +213,7 @@ class MemoryTrainingService {
     }
 
     final picks = _pickDistinct(allMemories, times.length);
-    final imagePaths = await Future.wait(
-      picks.map(_ensureLocalImage),
-    );
+    final imagePaths = await Future.wait(picks.map(_ensureLocalImage));
 
     for (var i = 0; i < times.length; i++) {
       final t = times[i];
@@ -213,9 +222,7 @@ class MemoryTrainingService {
       final title = pick?.title.trim().isNotEmpty == true
           ? pick!.title.trim()
           : _genericTitle;
-      final body = pick != null
-          ? 'Remember $title? Tap to see.'
-          : _genericBody;
+      final body = pick != null ? 'Remember $title? Tap to see.' : _genericBody;
       final payload = pick?.id != null && pick!.id!.isNotEmpty
           ? '$_payloadPrefix:${pick.id}'
           : _payloadPrefix;
@@ -248,7 +255,8 @@ class MemoryTrainingService {
   Future<bool> _requestPermissions() async {
     final androidImpl = _plugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (androidImpl != null) {
       final ok = await androidImpl.requestNotificationsPermission();
       if (ok == false) return false;
@@ -256,7 +264,8 @@ class MemoryTrainingService {
 
     final iosImpl = _plugin
         .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>();
+          IOSFlutterLocalNotificationsPlugin
+        >();
     if (iosImpl != null) {
       final ok = await iosImpl.requestPermissions(
         alert: true,
@@ -381,10 +390,12 @@ class MemoryTrainingService {
 
     if (memoriesForPicture != null) {
       final photos = memoriesForPicture
-          .where((m) =>
-              m.type == MemoryType.photo &&
-              m.imageUrl != null &&
-              m.imageUrl!.isNotEmpty)
+          .where(
+            (m) =>
+                m.type == MemoryType.photo &&
+                m.imageUrl != null &&
+                m.imageUrl!.isNotEmpty,
+          )
           .toList();
       if (photos.isNotEmpty) {
         final pick = photos[Random().nextInt(photos.length)];
