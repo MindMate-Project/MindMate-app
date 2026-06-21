@@ -1,8 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
-import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/patient/face_recognition/data/services/face_recognition_service.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'face_identified_page.dart';
@@ -37,25 +34,14 @@ class _FaceScanningPageState extends State<FaceScanningPage> {
       _statusMessage = 'Uploading image...';
     });
 
-    debugPrint('🔍 Starting face recognition...');
-
-    // Get token from AuthCubit
-    String? token;
-    final authState = context.read<AuthCubit>().state;
-    if (authState is AuthSuccess) {
-      token = authState.token;
-    }
-
-    final result = await FaceRecognitionService.identifyFace(
+    final result = await FaceRecognitionService().identifyFace(
       widget.imagePath!,
-      token: token,
     );
 
     if (!mounted) return;
 
     if (result['success'] == true) {
       final data = result['data'];
-      debugPrint('📊 API Response: $data');
 
       bool isRecognized = false;
       Map<String, dynamic>? personData;
@@ -112,7 +98,6 @@ class _FaceScanningPageState extends State<FaceScanningPage> {
           ),
         );
       } else {
-        debugPrint('❌ Person not found');
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -122,7 +107,6 @@ class _FaceScanningPageState extends State<FaceScanningPage> {
         );
       }
     } else {
-      debugPrint('❌ API Error: ${result['error']}');
       _showError(result['error'] ?? 'Unknown error occurred');
     }
   }
