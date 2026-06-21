@@ -39,7 +39,9 @@ class _AddPatientState extends State<AddPatient> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Request sent. Waiting for the patient to respond.')),
+        const SnackBar(
+          content: Text('Request sent. Waiting for the patient to respond.'),
+        ),
       );
       Navigator.pop(context);
     } catch (e) {
@@ -97,10 +99,16 @@ class _AddPatientState extends State<AddPatient> {
                             : (on) {
                                 if (on) setState(() => _relationship = r);
                               },
-                        selectedColor: AppTheme.primaryColor.withValues(alpha: 0.35),
+                        selectedColor: AppTheme.primaryColor.withValues(
+                          alpha: 0.35,
+                        ),
                         labelStyle: TextStyle(
-                          color: selected ? AppTheme.secondaryColor : AppTheme.textSecondary,
-                          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                          color: selected
+                              ? AppTheme.secondaryColor
+                              : AppTheme.textSecondary,
+                          fontWeight: selected
+                              ? FontWeight.w600
+                              : FontWeight.w400,
                         ),
                       );
                     }).toList(),
@@ -110,7 +118,9 @@ class _AddPatientState extends State<AddPatient> {
               const SizedBox(height: 16),
               Text(
                 'The patient will get a request they can accept or decline.',
-                style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary),
+                style: AppTheme.bodySmall.copyWith(
+                  color: AppTheme.textSecondary,
+                ),
               ),
               const Spacer(),
               Row(
@@ -119,14 +129,14 @@ class _AddPatientState extends State<AddPatient> {
                   CustomElevatedButton(
                     text: 'Cancel',
                     onPressed: () => Navigator.pop(context),
-                    size: const Size(150, 45),
+                    size: Size(140, 50),
                     backgroundColor: const Color(0xffEB4335),
                   ),
                   const SizedBox(width: 16),
                   CustomElevatedButton(
                     text: _submitting ? 'Sending…' : 'Send request',
                     onPressed: _submitting ? () {} : _submit,
-                    size: const Size(150, 45),
+                    size: Size(140, 50),
                     backgroundColor: AppTheme.primaryColor,
                   ),
                 ],

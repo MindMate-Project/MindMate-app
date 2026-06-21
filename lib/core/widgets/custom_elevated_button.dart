@@ -30,6 +30,7 @@ class CustomElevatedButton extends StatelessWidget {
       child: Text(
         text,
         style: AppTheme.elevatedButtonText,
+        textAlign: TextAlign.center,
     ));
   }
 }
