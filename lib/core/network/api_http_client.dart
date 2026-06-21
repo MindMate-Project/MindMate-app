@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:mindmate/core/config/api_config.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:mindmate/core/config/api_config.dart';
+import 'package:mindmate/core/navigation/app_router.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 
 /// Shared Dio instance and bearer auth helpers used by API services.
 class ApiHttpClient {
@@ -19,7 +21,20 @@ class ApiHttpClient {
       connectTimeout: const Duration(seconds: 60),
       receiveTimeout: const Duration(seconds: 60),
     ),
-  );
+  )..interceptors.add(
+      InterceptorsWrapper(
+        onError: (error, handler) async {
+          if (error.response?.statusCode == 401) {
+            final path = error.requestOptions.uri.path;
+            if (!path.startsWith('/api/auth/')) {
+              await _secureStorage.delete(key: 'auth_token');
+              AppRouter.router.go(AppRoutes.login);
+            }
+          }
+          handler.next(error);
+        },
+      ),
+    );
 
   /// Wakes a sleeping Render dyno so the first real request doesn't time out.
   /// Fire-and-forget: any reply (even a 404) means the server is awake.
