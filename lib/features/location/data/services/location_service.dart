@@ -6,14 +6,21 @@ import 'package:mindmate/core/config/api_config.dart';
 import 'package:mindmate/core/network/api_http_client.dart';
 import 'package:mindmate/features/location/data/models/location_exception.dart';
 import 'package:mindmate/features/location/data/models/patient_location.dart';
+import 'package:mindmate/features/location/data/models/safe_zone.dart';
+import 'package:mindmate/features/location/data/services/safe_zone_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LocationService {
   static const _useDeviceLocationKey = 'location_use_device_for_testing';
 
   final Dio _dio;
+  final SafeZoneService _safeZoneService;
 
-  LocationService({Dio? dio}) : _dio = dio ?? ApiHttpClient.dio;
+  LocationService({
+    Dio? dio,
+    SafeZoneService? safeZoneService,
+  })  : _dio = dio ?? ApiHttpClient.dio,
+        _safeZoneService = safeZoneService ?? SafeZoneService();
 
   Future<bool> getUseDeviceLocation() async {
     final prefs = await SharedPreferences.getInstance();
@@ -40,20 +47,59 @@ class LocationService {
       return _fetchDeviceLocation(patientName: patientName);
     }
 
+    // Testing mode: always use this device's GPS instead of the IoT API.
+    if (useDeviceLocation) {
+      final location = await _fetchDeviceLocation(patientName: patientName);
+      return _applySafeZone(patientId: patientId, location: location);
+    }
+
     try {
-      return await _fetchPatientLocation(
+      final location = await _fetchPatientLocation(
         patientId: patientId,
         patientName: patientName,
       );
+      return _applySafeZone(patientId: patientId, location: location);
     } catch (e) {
-      if (!useDeviceLocation) {
-        if (e is LocationException) rethrow;
-        throw LocationException(
-          e.toString().replaceFirst('Exception: ', ''),
-        );
-      }
-      return _fetchDeviceLocation(patientName: patientName);
+      if (e is LocationException) rethrow;
+      throw LocationException(
+        e.toString().replaceFirst('Exception: ', ''),
+      );
     }
+  }
+
+  Future<List<SafeZone>> getSafeZones(String patientId) =>
+      _safeZoneService.getSafeZones(patientId);
+
+  Future<SafeZone> addSafeZone(SafeZone zone) =>
+      _safeZoneService.addSafeZone(zone);
+
+  Future<SafeZone> updateSafeZone(SafeZone zone) =>
+      _safeZoneService.updateSafeZone(zone);
+
+  Future<void> removeSafeZone(String patientId, String zoneId) =>
+      _safeZoneService.removeSafeZone(patientId, zoneId);
+
+  Future<void> clearAllSafeZones(String patientId) =>
+      _safeZoneService.clearAllSafeZones(patientId);
+
+  Future<PatientLocation> _applySafeZone({
+    required String patientId,
+    required PatientLocation location,
+  }) async {
+    final zones = await _safeZoneService.getSafeZones(patientId);
+    if (zones.isEmpty) return location;
+
+    final match = SafeZone.locate(
+      zones,
+      location.latitude,
+      location.longitude,
+    );
+    return location.copyWith(
+      inSafeZone: match.inAny,
+      zoneLabel: match.inAny
+          ? match.zone!.displayName
+          : 'Outside safe zones',
+    );
   }
 
   Future<PatientLocation> _fetchPatientLocation({
