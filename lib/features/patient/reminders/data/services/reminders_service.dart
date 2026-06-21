@@ -6,6 +6,7 @@ import 'package:mindmate/features/patient/reminders/data/mappers/reminder_api_ma
 import 'package:mindmate/features/patient/reminders/data/models/notify_before_options.dart';
 import 'package:mindmate/features/patient/reminders/data/models/reminder_item.dart';
 import 'package:mindmate/features/patient/reminders/data/utils/reminder_filters.dart';
+import 'package:mindmate/core/config/api_config.dart';
 
 class RemindersService {
   final Dio _dio;
@@ -40,7 +41,7 @@ class RemindersService {
   Future<List<ReminderItem>> _postReminder(Map<String, dynamic> body) async {
     try {
       final response = await _dio.post(
-        '/api/reminders',
+        ApiConfig.createReminderEndpoint,
         data: body,
         options: await _authOptions(),
       );
@@ -57,7 +58,7 @@ class RemindersService {
   Future<void> _putReminder(String id, Map<String, dynamic> body) async {
     try {
       final response = await _dio.put(
-        '/api/reminders/$id',
+        ApiConfig.reminderByIdEndpoint(id),
         data: body,
         options: await _authOptions(),
       );
@@ -123,8 +124,9 @@ class RemindersService {
       'doctorName': doctorName.trim(),
       'specialty': specialty.trim(),
       'location': location.trim(),
-      'appointmentType':
-          ReminderApiMapper.appointmentTypeFromUi(appointmentTypeUi),
+      'appointmentType': ReminderApiMapper.appointmentTypeFromUi(
+        appointmentTypeUi,
+      ),
       'appointmentDate': ReminderApiMapper.toDateIso(appointmentDate),
       if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
     });
@@ -155,8 +157,9 @@ class RemindersService {
       'doctorName': doctorName.trim(),
       'specialty': specialty.trim(),
       'location': location.trim(),
-      'appointmentType':
-          ReminderApiMapper.appointmentTypeFromUi(appointmentTypeUi),
+      'appointmentType': ReminderApiMapper.appointmentTypeFromUi(
+        appointmentTypeUi,
+      ),
       'appointmentDate': ReminderApiMapper.toDateIso(appointmentDate),
       if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
       'patient': ids.patientId,
@@ -245,7 +248,7 @@ class RemindersService {
 
     try {
       final response = await _dio.get(
-        '/api/reminders/patient/$patientId',
+        ApiConfig.patientRemindersEndpoint(patientId),
         options: await _authOptions(),
       );
 
@@ -253,7 +256,9 @@ class RemindersService {
         final data = response.data;
         if (data is List) {
           return data
-              .map((json) => ReminderItem.fromJson(json as Map<String, dynamic>))
+              .map(
+                (json) => ReminderItem.fromJson(json as Map<String, dynamic>),
+              )
               .toList();
         }
         throw Exception('Unexpected reminders response format.');
@@ -283,7 +288,7 @@ class RemindersService {
   Future<ReminderItem> getReminderById(String id) async {
     try {
       final response = await _dio.get(
-        '/api/reminders/$id',
+        ApiConfig.reminderByIdEndpoint(id),
         options: await _authOptions(),
       );
 
@@ -311,7 +316,7 @@ class RemindersService {
   Future<void> deleteReminder(String id) async {
     try {
       final response = await _dio.delete(
-        '/api/reminders/$id',
+        ApiConfig.reminderByIdEndpoint(id),
         options: await _authOptions(),
       );
 
