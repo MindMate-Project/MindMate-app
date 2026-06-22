@@ -14,7 +14,7 @@ import 'package:mindmate/features/memory/presentation/cubit/memory_cubit.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_state.dart';
 import 'package:mindmate/features/patient/face_recognition/face_recognition.dart';
 import 'package:mindmate/features/patient/reminders/data/services/reminder_notification_service.dart';
-import 'package:mindmate/features/patient/reminders/presentation/screens/reminders_screen.dart';
+import 'package:mindmate/features/patient/home/presentation/widgets/patient_sos_button.dart';
 import 'package:mindmate/features/patient/reminders/presentation/widgets/home_reminders_section.dart';
 
 class PatientHomePage extends StatefulWidget {
@@ -62,6 +62,9 @@ class _PatientHomePageState extends State<PatientHomePage> {
               children: [
                 // top greeting section
                 _buildGreetingSection(),
+                const SizedBox(height: 24),
+
+                const PatientSosButton(),
                 const SizedBox(height: 30),
 
                 // upcoming appointment + today's medicine, from the patient's
@@ -85,8 +88,9 @@ class _PatientHomePageState extends State<PatientHomePage> {
       builder: (context, state) {
         final user = state is AuthSuccess ? state.user : null;
         final fullName = user?.name.trim() ?? '';
-        final firstName =
-            fullName.isEmpty ? 'there' : fullName.split(RegExp(r'\s+')).first;
+        final firstName = fullName.isEmpty
+            ? 'there'
+            : fullName.split(RegExp(r'\s+')).first;
         final today = DateFormat('EEEE, d MMM').format(DateTime.now());
 
         return Row(
@@ -171,12 +175,7 @@ class _PatientHomePageState extends State<PatientHomePage> {
               icon: Icons.medication,
               label: 'Medication',
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const RemindersScreen(initialTabIndex: 1),
-                  ),
-                );
+                context.push(AppRoutes.patientMedication);
               },
             ),
           ],
@@ -217,5 +216,4 @@ class _PatientHomePageState extends State<PatientHomePage> {
       ),
     );
   }
-
 }
