@@ -142,6 +142,10 @@ abstract final class AppRouter {
         builder: (context, state) => const RemindersScreen(),
       ),
       GoRoute(
+        path: AppRoutes.patientMedication,
+        builder: (context, state) => const RemindersScreen(initialTabIndex: 1),
+      ),
+      GoRoute(
         path: '/reminder/:reminderId',
         builder: (context, state) {
           final reminderId = state.pathParameters['reminderId']!;

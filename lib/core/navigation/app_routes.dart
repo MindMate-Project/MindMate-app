@@ -15,6 +15,7 @@ abstract final class AppRoutes {
   static const memoryAdd = '/memory/add';
   static const memoryDrill = '/memory/drill';
   static const patientReminders = '/patient_reminders';
+  static const patientMedication = '/patient_medication';
   static const profile = '/profile';
   static const editProfile = '/edit_profile';
   static const notifications = '/notifications';
