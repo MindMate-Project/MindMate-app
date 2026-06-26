@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "437649873447",
+    "project_id": "mindmate-5ab4f",
+    "storage_bucket": "mindmate-5ab4f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:437649873447:android:61a33266579319e3468c02",
+        "android_client_info": {
+          "package_name": "live.mindmate.alzheimers"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBX1MDfIz14lk6sTah0LpHSWbRG-Wn4yjQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

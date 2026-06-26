@@ -1,4 +1,4 @@
-package com.example.mindmate
+package live.mindmate.alzheimers
 
 import android.os.Build
 import android.os.Bundle
