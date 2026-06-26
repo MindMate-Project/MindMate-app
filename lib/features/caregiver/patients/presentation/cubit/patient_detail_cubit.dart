@@ -40,6 +40,20 @@ class PatientDetailCubit extends Cubit<PatientDetailState> {
     }
   }
 
+  Future<void> removeDevice() async {
+    final current = state;
+    if (current is! PatientDetailLoaded) return;
+
+    emit(PatientDetailAssigningDevice(current.patient));
+    try {
+      await _deviceService.removeDevice(patientId);
+      await load();
+    } catch (e) {
+      emit(PatientDetailLoaded(current.patient));
+      rethrow;
+    }
+  }
+
   Future<void> assignDevice(String deviceId) async {
     final current = state;
     if (current is! PatientDetailLoaded) return;

@@ -108,6 +108,47 @@ class _PatientDetailBody extends StatelessWidget {
     }
   }
 
+  Future<void> _confirmRemoveDevice(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Remove device?'),
+        content: Text(
+          'Unlink ${patient.device.deviceId ?? 'this device'} from '
+          '${patient.name}? Location tracking will stop until a new device '
+          'is assigned.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text(
+              'Remove',
+              style: TextStyle(color: AppTheme.errorColor),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await context.read<PatientDetailCubit>().removeDevice();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Device removed')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
   Future<void> _showAssignDeviceDialog(BuildContext context) async {
     final assigned = await showDialog<String>(
       context: context,
@@ -160,6 +201,9 @@ class _PatientDetailBody extends StatelessWidget {
                   onAssign: busy
                       ? null
                       : () => _showAssignDeviceDialog(context),
+                  onRemove: busy || !patient.device.hasDevice
+                      ? null
+                      : () => _confirmRemoveDevice(context),
                 ),
                 const SizedBox(height: 8),
                 _MedicalNotesCard(patient: patient),
@@ -310,12 +354,14 @@ class _DeviceCard extends StatelessWidget {
   final String Function(String?) orDash;
   final bool assigning;
   final VoidCallback? onAssign;
+  final VoidCallback? onRemove;
 
   const _DeviceCard({
     required this.patient,
     required this.orDash,
     required this.assigning,
     this.onAssign,
+    this.onRemove,
   });
 
   @override
@@ -382,6 +428,25 @@ class _DeviceCard extends StatelessWidget {
             ),
           ),
         ),
+        if (patient.device.hasDevice) ...[
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: assigning ? null : onRemove,
+              icon: const Icon(Icons.link_off_outlined),
+              label: const Text('Remove Device'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.errorColor,
+                side: const BorderSide(color: AppTheme.errorColor),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }

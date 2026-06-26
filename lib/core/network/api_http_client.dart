@@ -28,7 +28,8 @@ class ApiHttpClient {
             final path = error.requestOptions.uri.path;
             if (!path.startsWith('/api/auth/')) {
               await _secureStorage.delete(key: 'auth_token');
-              AppRouter.router.go(AppRoutes.login);
+              await _secureStorage.delete(key: 'auth_user');
+              AppRouter.router.go('${AppRoutes.login}?reason=session_expired');
             }
           }
           handler.next(error);

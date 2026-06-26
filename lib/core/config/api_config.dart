@@ -31,9 +31,14 @@ class ApiConfig {
   static String updateMemoryEndpoint(String id) => '/api/memories/$id';
   static String deleteMemoryEndpoint(String id) => '/api/memories/$id';
 
-  // Location endpoints
+  // Device endpoints
+  static const String assignDeviceEndpoint = '/api/device/assign-device';
   static String deviceLocationEndpoint(String patientId) =>
       '/api/device/location/$patientId';
+  static String deviceSafeZoneEndpoint(String patientId) =>
+      '/api/device/safe-zone/$patientId';
+  static String removeDeviceEndpoint(String patientId) =>
+      '/api/device/remove/$patientId';
 
   // Alert endpoints
   static const String createAlertEndpoint = '/api/alerts';
