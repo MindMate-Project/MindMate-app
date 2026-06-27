@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/navigation/app_bottom_nav.dart';
+import 'package:mindmate/core/widgets/profile_app_bar.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/memory/data/models/memory_item.dart';
@@ -65,21 +66,8 @@ class _MemoryScreenState extends State<MemoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: AppTheme.primaryColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          _headerTitle,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+      appBar: ProfileAppBar(
+        title: _headerTitle,
         centerTitle: true,
         actions: [_buildTrainingGearButton()],
       ),
@@ -158,8 +146,10 @@ class _MemoryScreenState extends State<MemoryScreen> {
             hintText: 'Search',
             hintStyle: TextStyle(color: Colors.grey[400], fontSize: 15),
             border: InputBorder.none,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 12,
+            ),
             suffixIcon: Icon(Icons.search, color: Colors.grey[500]),
           ),
         ),
@@ -179,8 +169,11 @@ class _MemoryScreenState extends State<MemoryScreen> {
               onTap: () => setState(() => _selectedTab = i),
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
+                margin: EdgeInsets.symmetric(horizontal: 2),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppTheme.primaryColor : Colors.transparent,
+                  color: isSelected
+                      ? AppTheme.primaryColor
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(30),
                   border: Border.all(
                     color: isSelected
@@ -231,13 +224,14 @@ class _MemoryScreenState extends State<MemoryScreen> {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () =>
-                        context.read<MemoryCubit>().loadMemories(),
+                    onPressed: () => context.read<MemoryCubit>().loadMemories(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
                     ),
-                    child: const Text('Retry',
-                        style: TextStyle(color: Colors.white)),
+                    child: const Text(
+                      'Retry',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ],
               ),
@@ -393,14 +387,14 @@ class _MemoryTrainingSheetState extends State<_MemoryTrainingSheet> {
       }
       if (!mounted) return;
       setState(() => _times = times);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Schedule updated')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Schedule updated')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not save schedule: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not save schedule: $e')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -440,9 +434,9 @@ class _MemoryTrainingSheetState extends State<_MemoryTrainingSheet> {
                 _loading
                     ? 'Loading…'
                     : 'Sends ${_times.length} daily notification${_times.length == 1 ? '' : 's'} at '
-                        '${_summary(context)} with a random memory to the '
-                        "patient. Notifications appear on the patient's "
-                        'device when they sign in.',
+                          '${_summary(context)} with a random memory to the '
+                          "patient. Notifications appear on the patient's "
+                          'device when they sign in.',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey[700],
@@ -534,12 +528,11 @@ class _MemoryTrainingSheetState extends State<_MemoryTrainingSheet> {
             ),
             child: ListTile(
               dense: true,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-              leading: const Icon(
-                Icons.schedule,
-                color: AppTheme.primaryColor,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 0,
               ),
+              leading: const Icon(Icons.schedule, color: AppTheme.primaryColor),
               title: Text(
                 t.format(context),
                 style: const TextStyle(
@@ -605,9 +598,9 @@ class _MemoryTrainingSheetState extends State<_MemoryTrainingSheet> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Test notification failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Test notification failed: $e')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
