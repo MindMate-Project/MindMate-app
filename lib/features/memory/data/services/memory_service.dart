@@ -36,22 +36,7 @@ class MemoryService {
       if (response.statusCode == 200) {
         final data = response.data;
 
-        // Handle various response shapes
-        List<dynamic> memoriesList;
-        if (data is List) {
-          memoriesList = data;
-        } else if (data is Map) {
-          memoriesList = data['memories'] ??
-              data['data'] ??
-              data['results'] ??
-              [];
-        } else {
-          memoriesList = [];
-        }
-
-        return memoriesList
-            .map((json) => MemoryItem.fromJson(json as Map<String, dynamic>))
-            .toList();
+        return _parseMemoryList(data);
       } else {
         throw Exception('Failed to fetch memories (${response.statusCode})');
       }
@@ -243,6 +228,80 @@ class MemoryService {
       final msg = ApiHttpClient.messageFromResponseData(e.response?.data);
       throw Exception(msg ?? e.message ?? 'Failed to update memory');
     }
+  }
+
+  /// Fetch a single memory by id.
+  /// Endpoint: GET /api/memories/:id
+  Future<MemoryItem> getMemoryById(String id) async {
+    if (id.isEmpty) throw Exception('Missing memory id.');
+    try {
+      final response = await _dio.get(
+        ApiConfig.memoryByIdEndpoint(id),
+        options: await _authOptions(),
+      );
+      if (response.statusCode == 200) {
+        return _parseMemoryItem(response.data);
+      }
+      throw Exception('Failed to fetch memory (${response.statusCode})');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw Exception('Session expired. Please log in again.');
+      }
+      if (e.response?.statusCode == 404) {
+        throw Exception('Memory not found.');
+      }
+      final msg = ApiHttpClient.messageFromResponseData(e.response?.data);
+      throw Exception(msg ?? 'Failed to fetch memory');
+    }
+  }
+
+  /// Search memories by tags.
+  /// Endpoint: GET /api/memories/search?tags=...
+  Future<List<MemoryItem>> searchMemoriesByTags(String tags) async {
+    final query = tags.trim();
+    if (query.isEmpty) return const [];
+    try {
+      final response = await _dio.get(
+        ApiConfig.searchMemoriesEndpoint,
+        queryParameters: {'tags': query},
+        options: await _authOptions(),
+      );
+      if (response.statusCode == 200) {
+        return _parseMemoryList(response.data);
+      }
+      throw Exception('Failed to search memories (${response.statusCode})');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw Exception('Session expired. Please log in again.');
+      }
+      final msg = ApiHttpClient.messageFromResponseData(e.response?.data);
+      throw Exception(msg ?? 'Failed to search memories');
+    }
+  }
+
+  MemoryItem _parseMemoryItem(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      final inner = data['data'] ?? data['memory'] ?? data['result'];
+      if (inner is Map<String, dynamic>) {
+        return MemoryItem.fromJson(inner);
+      }
+      return MemoryItem.fromJson(data);
+    }
+    throw Exception('Unexpected memory response shape');
+  }
+
+  List<MemoryItem> _parseMemoryList(dynamic data) {
+    List<dynamic> memoriesList;
+    if (data is List) {
+      memoriesList = data;
+    } else if (data is Map) {
+      memoriesList = data['memories'] ?? data['data'] ?? data['results'] ?? [];
+    } else {
+      memoriesList = [];
+    }
+    return memoriesList
+        .map((json) => MemoryItem.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
 
   /// Delete a memory. Backend also destroys the Cloudinary asset.

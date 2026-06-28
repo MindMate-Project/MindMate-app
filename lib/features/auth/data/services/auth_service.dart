@@ -128,6 +128,34 @@ class AuthService {
     }
   }
 
+  /// Verify email account from the link token.
+  /// GET /api/auth/verify/:token
+  Future<Map<String, dynamic>> verifyAccount(String token) async {
+    try {
+      final response = await _dio.get('/api/auth/verify/$token');
+      final responseBody = _handleResponse(response);
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': responseBody['message'] ?? 'Account verified.',
+        };
+      }
+      final errorMessage =
+          responseBody['message'] ??
+          responseBody['error'] ??
+          'Verification failed';
+      return {'success': false, 'message': errorMessage};
+    } on DioException catch (e) {
+      return {
+        'success': false,
+        'message': _extractErrorMessage(e, 'Verification failed'),
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Error: ${e.toString()}'};
+    }
+  }
+
   /// Send password reset code to email
   /// Returns success message
   Future<Map<String, dynamic>> forgotPassword(String email) async {

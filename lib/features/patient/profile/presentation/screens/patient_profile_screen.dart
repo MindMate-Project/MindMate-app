@@ -71,7 +71,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                                 ),
                               ),
                               ProfileMenuOption(
-                                title: 'Notifications',
+                                title: 'Notifications Settings',
                                 onTap: () =>
                                     context.push(AppRoutes.notifications),
                               ),

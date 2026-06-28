@@ -53,3 +53,9 @@ class ResetPasswordSuccess extends AuthState {
   @override
   List<Object?> get props => [user, token];
 }
+
+/// Registration succeeded on the server but the verification email failed to send.
+/// The account EXISTS — do NOT tell the user to register again.
+class AuthRegisteredEmailFailed extends AuthState {
+  const AuthRegisteredEmailFailed();
+}

@@ -74,6 +74,34 @@ class RemindersService {
     }
   }
 
+  List<ReminderItem> _parseReminderList(dynamic data) {
+    if (data is List) {
+      return data
+          .map((json) => ReminderItem.fromJson(json as Map<String, dynamic>))
+          .toList();
+    }
+    if (data is Map<String, dynamic>) {
+      final inner = data['data'];
+      if (inner is List) {
+        return inner
+            .map((json) => ReminderItem.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+    }
+    return [];
+  }
+
+  ReminderItem _parseReminderItem(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      final inner = data['data'];
+      if (inner is Map<String, dynamic>) {
+        return ReminderItem.fromJson(inner);
+      }
+      return ReminderItem.fromJson(data);
+    }
+    throw Exception('Unexpected reminder response format.');
+  }
+
   Future<({String patientId, String caregiverId})> _actorIds(
     String caregiverId,
   ) async {
@@ -199,8 +227,7 @@ class RemindersService {
       'frequency': frequency,
       'timesPerDay': timesPerDay,
       'startDate': ReminderApiMapper.toDateIso(startDate),
-      if (frequency == 'daily' || frequency == 'weekly')
-        'endDate': ReminderApiMapper.toDateIso(endDate),
+      'endDate': ReminderApiMapper.toDateIso(endDate),
     });
 
     // Medication dose rows are generated server-side and scheduled on-device by
@@ -234,8 +261,7 @@ class RemindersService {
       'frequency': frequency,
       'timesPerDay': timesPerDay,
       'startDate': ReminderApiMapper.toDateIso(startDate),
-      if (frequency == 'daily' || frequency == 'weekly')
-        'endDate': ReminderApiMapper.toDateIso(endDate),
+      'endDate': ReminderApiMapper.toDateIso(endDate),
       'patient': ids.patientId,
       'caregiver': ids.caregiverId,
     });
@@ -257,15 +283,7 @@ class RemindersService {
       );
 
       if (response.statusCode == 200) {
-        final data = response.data;
-        if (data is List) {
-          return data
-              .map(
-                (json) => ReminderItem.fromJson(json as Map<String, dynamic>),
-              )
-              .toList();
-        }
-        throw Exception('Unexpected reminders response format.');
+        return _parseReminderList(response.data);
       }
       throw Exception('Failed to load reminders (${response.statusCode})');
     } on DioException catch (e) {
@@ -297,11 +315,7 @@ class RemindersService {
       );
 
       if (response.statusCode == 200) {
-        final data = response.data;
-        if (data is Map<String, dynamic>) {
-          return ReminderItem.fromJson(data);
-        }
-        throw Exception('Unexpected reminder response format.');
+        return _parseReminderItem(response.data);
       }
       throw Exception('Failed to load reminder (${response.statusCode})');
     } on DioException catch (e) {
@@ -310,6 +324,28 @@ class RemindersService {
       }
       final msg = ApiHttpClient.messageFromResponseData(e.response?.data);
       throw Exception(msg ?? e.message ?? 'Failed to load reminder');
+    }
+  }
+
+  /// PATCH /api/reminders/:id/acknowledge — patient dismissed the alarm.
+  Future<void> acknowledgeReminder(String reminderId) async {
+    try {
+      final response = await _dio.patch(
+        ApiConfig.acknowledgeReminderEndpoint(reminderId),
+        options: await _authOptions(),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) return;
+      throw Exception(
+        'Failed to acknowledge reminder (${response.statusCode})',
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        ApiHttpClient.friendlyError(
+          e,
+          fallback: 'Failed to acknowledge reminder',
+        ),
+      );
     }
   }
 
@@ -337,15 +373,28 @@ class RemindersService {
     }
   }
 
-  /// Deletes [item] **and every sibling row of the same schedule**.
-  ///
-  /// The deployed backend stores one document per medication dose and per
-  /// appointment lead-time notification, so a single `DELETE /:id` would leave
-  /// the rest of the series behind (and it would reappear on the next refresh).
-  /// This resolves the siblings client-side and deletes them all. Siblings are
-  /// removed first and the tapped [item] last, so a mid-loop failure leaves the
-  /// detail screen's own row intact and the operation retryable.
+  /// DELETE /api/reminders/series?groupId= when available, otherwise
+  /// deletes sibling rows one-by-one.
   Future<void> deleteReminderSeries(ReminderItem item) async {
+    final groupId = item.groupId?.trim();
+    if (groupId != null && groupId.isNotEmpty) {
+      try {
+        final response = await _dio.delete(
+          ApiConfig.deleteReminderSeriesEndpoint(groupId),
+          options: await _authOptions(),
+        );
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          return;
+        }
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 404) return;
+        if (e.response?.statusCode != 400) {
+          final msg = ApiHttpClient.messageFromResponseData(e.response?.data);
+          throw Exception(msg ?? e.message ?? 'Failed to delete reminder series');
+        }
+      }
+    }
+
     final all = await _fetchPatientReminders();
     final siblings = ReminderFilters.isMedication(item)
         ? ReminderFilters.medicationSiblings(all, item)

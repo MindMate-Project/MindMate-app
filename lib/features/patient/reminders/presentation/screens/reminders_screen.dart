@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +12,7 @@ import 'package:mindmate/core/navigation/app_bottom_nav.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/patient/reminders/data/models/reminder_item.dart';
+import 'package:mindmate/features/patient/reminders/data/services/reminder_notification_service.dart';
 import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_cubit.dart';
 import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_state.dart';
 import 'package:mindmate/features/patient/reminders/presentation/screens/add_appointment_screen.dart';
@@ -22,7 +25,6 @@ import 'package:mindmate/features/patient/reminders/presentation/widgets/week_ca
 class RemindersScreen extends StatefulWidget {
   const RemindersScreen({super.key, this.initialTabIndex = 0});
 
-  /// Which tab to open first: 0 = Appointments, 1 = Medication.
   final int initialTabIndex;
 
   @override
@@ -67,7 +69,10 @@ class _RemindersScreenState extends State<RemindersScreen>
         builder: (_) => ReminderDetailScreen(reminderId: reminderId),
       ),
     );
-    if (mounted) context.read<RemindersCubit>().loadPatientReminders();
+    if (mounted) {
+      context.read<RemindersCubit>().loadPatientReminders();
+      unawaited(ReminderNotificationService.instance.syncFromServer());
+    }
   }
 
   Future<void> _onCaregiverAddPressed() async {
@@ -80,6 +85,7 @@ class _RemindersScreenState extends State<RemindersScreen>
     ).push<bool>(MaterialPageRoute(builder: (_) => page));
     if (created == true && mounted) {
       context.read<RemindersCubit>().loadPatientReminders();
+      unawaited(ReminderNotificationService.instance.syncFromServer());
     }
   }
 
@@ -224,11 +230,6 @@ class _RemindersScreenState extends State<RemindersScreen>
                                 ).compareTo(ReminderFilters.displayDateTime(b)),
                               );
 
-                        // Show every medication active on the selected day
-                        // (start <= day <= end), matching the home "Today's
-                        // Medicine" card. Previously this matched only the med's
-                        // single scheduledTime day, so ongoing daily meds were
-                        // missing from the calendar on later days.
                         final medications = ReminderFilters.medicationsForDay(
                           reminders,
                           _selectedDate,

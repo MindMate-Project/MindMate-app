@@ -26,6 +26,16 @@ class _LoginState extends State<Login> {
   void initState() {
     super.initState();
     _loadRememberMe();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final reason = GoRouterState.of(context).uri.queryParameters['reason'];
+      if (reason == 'session_expired' && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Your session has expired. Please log in again.'),
+          ),
+        );
+      }
+    });
   }
 
   Future<void> _loadRememberMe() async {

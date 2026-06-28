@@ -17,6 +17,7 @@ import 'package:mindmate/features/caregiver/home/presentation/widgets/active_pat
 import 'package:mindmate/features/caregiver/home/presentation/widgets/patient_card.dart';
 import 'package:mindmate/features/caregiver/patients/presentation/screens/patient_detail_screen.dart';
 import 'package:mindmate/features/memory/data/services/memory_training_service.dart';
+import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_cubit.dart';
 
 class CaregiverHomePage extends StatefulWidget {
   const CaregiverHomePage({super.key});
@@ -61,6 +62,7 @@ class _CaregiverHomePageState extends State<CaregiverHomePage> {
         nextActive = ActivePatient.fromRow(row);
         relation = row.relationship;
         await _patientContextStore.setActivePatientId(nextActive.id);
+        if (mounted) context.read<RemindersCubit>().loadPatientReminders();
       }
 
       if (!mounted) return;

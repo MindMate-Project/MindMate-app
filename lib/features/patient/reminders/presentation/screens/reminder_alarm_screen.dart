@@ -111,6 +111,11 @@ class _ReminderAlarmScreenState extends State<ReminderAlarmScreen> {
     try {
       await _notifications.cancel(widget.notificationId);
     } catch (_) {}
+    // Tell the backend the patient acknowledged this reminder.
+    // Fire-and-forget: a network error must never block the patient from dismissing.
+    unawaited(_service.acknowledgeReminder(widget.reminderId).catchError(
+      (e) => debugPrint('[ReminderAlarm] acknowledge failed (non-critical): $e'),
+    ));
     if (mounted) Navigator.of(context).pop();
   }
 

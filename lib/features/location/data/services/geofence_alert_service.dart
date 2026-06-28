@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:mindmate/core/services/caregiver_notification_preferences.dart';
 import 'package:mindmate/features/alerts/data/services/alert_service.dart';
 import 'package:mindmate/features/location/data/models/geofence_alert_event.dart';
 import 'package:mindmate/features/location/data/models/patient_location.dart';
@@ -40,6 +41,10 @@ class GeofenceAlertService {
     required PatientLocation location,
     required List<SafeZone> safeZones,
   }) async {
+    if (!CaregiverNotificationPreferences.instance.flutterSideAlertsEnabled) {
+      return null;
+    }
+
     if (patientId.isEmpty || safeZones.isEmpty) {
       resetPatient(patientId);
       return null;

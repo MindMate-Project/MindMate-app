@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/network/patient_context_store.dart';
+import 'package:mindmate/core/services/fcm_service.dart';
+import 'package:mindmate/features/patient/reminders/data/services/reminder_notification_service.dart';
 import 'package:mindmate/features/profile/data/services/profile_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/register_request.dart';
@@ -35,7 +36,14 @@ class AuthCubit extends Cubit<AuthState> {
         emit(AuthFailure('Registration failed: User data not received'));
       }
     } catch (e) {
-      emit(AuthFailure(e.toString()));
+      final msg = e.toString();
+      if (msg.contains('User created but failed to send verification email')) {
+        // Account was created successfully — do NOT say "try again" or the user
+        // will hit 400 "User already exists" on the next attempt.
+        emit(const AuthRegisteredEmailFailed());
+      } else {
+        emit(AuthFailure(msg.replaceFirst('Exception: ', '')));
+      }
     }
   }
 
@@ -53,6 +61,9 @@ class AuthCubit extends Cubit<AuthState> {
         final user = response.user!;
         await _persistSession(user, response.token!, rememberMe: rememberMe);
         emit(AuthSuccess(user, response.token));
+        unawaited(FcmService.instance.registerToken());
+        FcmService.instance.startTokenRefreshListener();
+        _syncPatientRemindersIfNeeded(user);
         // Login only returns {_id,name,email,role}; pull the full profile
         // (photo, phone, gender, …) in the background.
         unawaited(_hydrateProfile(user.role));
@@ -94,6 +105,9 @@ class AuthCubit extends Cubit<AuthState> {
           );
           await _applyPatientContext(user);
           emit(AuthSuccess(user, token));
+          unawaited(FcmService.instance.registerToken());
+          FcmService.instance.startTokenRefreshListener();
+          _syncPatientRemindersIfNeeded(user);
           unawaited(_hydrateProfile(user.role));
           return _homeRouteFor(user);
         } catch (_) {
@@ -140,6 +154,9 @@ class AuthCubit extends Cubit<AuthState> {
           rememberMe: true,
         );
         emit(ResetPasswordSuccess(response.user!, response.token!));
+        unawaited(FcmService.instance.registerToken());
+        FcmService.instance.startTokenRefreshListener();
+        _syncPatientRemindersIfNeeded(response.user!);
       } else {
         emit(AuthFailure('Password reset failed: Invalid response from server'));
       }
@@ -204,6 +221,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   /// Logout and clear stored data
   Future<void> logout() async {
+    await FcmService.instance.deleteToken(); // Must run before credentials are cleared
     await _clearCredentials();
     await _patientContextStore.clearActivePatientId();
     emit(AuthInitial());
@@ -223,6 +241,11 @@ class AuthCubit extends Cubit<AuthState> {
   /// full profile (photo, phone, gender, dateOfBirth) and merge it into the
   /// in-memory session user so avatars/profile show real data. Best-effort:
   /// failures keep the existing user untouched.
+  void _syncPatientRemindersIfNeeded(User user) {
+    if (!user.isPatient) return;
+    unawaited(ReminderNotificationService.instance.syncFromServer());
+  }
+
   Future<void> _hydrateProfile(String role) async {
     try {
       final full = await _profileService.getMyProfile(role: role);

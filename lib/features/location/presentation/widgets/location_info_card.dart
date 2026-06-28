@@ -17,8 +17,9 @@ class LocationInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = _tagColor;
-    final tag = _tag;
+    final offline = location.isStaleDeviceData;
+    final statusColor = _tagColor(offline);
+    final tag = _tag(offline);
 
     return InfoCard(
       tag: tag,
@@ -28,8 +29,10 @@ class LocationInfoCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             CircleAvatar(
-              radius: 26,
-              backgroundColor: AppTheme.secondaryColor,
+              radius: 25,
+              backgroundColor: offline
+                  ? AppTheme.neutralMedium
+                  : AppTheme.secondaryColor,
               child: Text(
                 location.displayInitial,
                 style: const TextStyle(
@@ -39,7 +42,7 @@ class LocationInfoCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 10),
             Flexible(
               child: Text(
                 location.patientName,
@@ -52,19 +55,39 @@ class LocationInfoCard extends StatelessWidget {
             ),
           ],
         ),
+        if (offline) ...[
+          const SizedBox(height: 12),
+          const _InfoRow(
+            icon: Icons.sensors_off_outlined,
+            iconColor: AppTheme.warningColor,
+            text: 'Tracking device is offline',
+          ),
+        ],
         const SizedBox(height: 12),
         _InfoRow(
           icon: Icons.location_on,
-          iconColor: AppTheme.errorColor,
-          text: location.address.isNotEmpty
-              ? location.address
-              : 'Address unavailable',
+          iconColor: offline ? AppTheme.neutralMedium : AppTheme.errorColor,
+          text: offline
+              ? (location.address.isNotEmpty
+                    ? 'Last known location: ${location.address}'
+                    : 'Last known location unavailable')
+              : (location.address.isNotEmpty
+                    ? location.address
+                    : 'Address unavailable'),
+        ),
+        const SizedBox(height: 8),
+        _InfoRow(
+          icon: Icons.gps_fixed,
+          iconColor: AppTheme.infoColor,
+          text: location.coordinatesLabel,
         ),
         const SizedBox(height: 8),
         _InfoRow(
           icon: Icons.access_time,
           iconColor: AppTheme.neutralMedium,
-          text: _formatTime(location.updatedAt),
+          text: offline
+              ? location.lastSeenLine(hasSafeZones: hasSafeZones)
+              : _formatLiveTime(location.updatedAt),
         ),
         if (location.isFallback) ...[
           const SizedBox(height: 8),
@@ -81,7 +104,8 @@ class LocationInfoCard extends StatelessWidget {
     );
   }
 
-  String get _tag {
+  String _tag(bool offline) {
+    if (offline) return 'Device Offline';
     if (!hasSafeZones) return 'Live Location';
     if (location.inSafeZone) {
       return location.zoneLabel ?? 'In Safe Zone';
@@ -89,12 +113,13 @@ class LocationInfoCard extends StatelessWidget {
     return 'Outside Zone';
   }
 
-  Color get _tagColor {
+  Color _tagColor(bool offline) {
+    if (offline) return AppTheme.warningColor;
     if (!hasSafeZones) return AppTheme.infoColor;
     return location.inSafeZone ? AppTheme.successColor : AppTheme.warningColor;
   }
 
-  static String _formatTime(DateTime? time) {
+  static String _formatLiveTime(DateTime? time) {
     if (time == null) return '—';
     final now = DateTime.now();
     final diff = now.difference(time);

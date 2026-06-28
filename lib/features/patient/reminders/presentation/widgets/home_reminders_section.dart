@@ -27,10 +27,7 @@ class _HomeRemindersSectionState extends State<HomeRemindersSection> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final cubit = context.read<RemindersCubit>();
-      if (cubit.state is RemindersInitial) {
-        cubit.loadPatientReminders();
-      }
+      context.read<RemindersCubit>().loadPatientReminders();
     });
   }
 

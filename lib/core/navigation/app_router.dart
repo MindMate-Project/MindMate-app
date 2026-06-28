@@ -19,6 +19,8 @@ import 'package:mindmate/features/caregiver/home/presentation/screens/caregiver_
 import 'package:mindmate/features/caregiver/patients/presentation/screens/caregiver_patients_screen.dart';
 import 'package:mindmate/features/caregiver/profile/presentation/screens/caregiver_notifications_screen.dart';
 import 'package:mindmate/features/caregiver/profile/presentation/screens/caregiver_profile_screen.dart';
+import 'package:mindmate/features/known_people/data/models/known_person.dart';
+import 'package:mindmate/features/known_people/presentation/screens/register_known_person_screen.dart';
 import 'package:mindmate/features/location/presentation/screens/location_tracking_screen.dart';
 import 'package:mindmate/features/location/presentation/screens/safe_zones_screen.dart';
 import 'package:mindmate/features/memory/presentation/screens/add_memory_screen.dart';
@@ -213,6 +215,34 @@ abstract final class AppRouter {
       GoRoute(
         path: AppRoutes.privacyPolicy,
         builder: (context, state) => const PrivacyPolicyScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.registerKnownPerson,
+        builder: (context, state) {
+          final extra = state.extra;
+          String? patientId;
+          String? patientName;
+          String? prefillFirstName;
+          String? prefillLastName;
+          var initialMode = KnownPersonFormMode.register;
+          if (extra is Map) {
+            patientId = extra['patientId'] as String?;
+            patientName = extra['patientName'] as String?;
+            prefillFirstName = extra['prefillFirstName'] as String?;
+            prefillLastName = extra['prefillLastName'] as String?;
+            final mode = extra['initialMode'];
+            if (mode is KnownPersonFormMode) {
+              initialMode = mode;
+            }
+          }
+          return RegisterKnownPersonScreen(
+            patientId: patientId,
+            patientName: patientName,
+            initialMode: initialMode,
+            prefillFirstName: prefillFirstName,
+            prefillLastName: prefillLastName,
+          );
+        },
       ),
     ],
   );

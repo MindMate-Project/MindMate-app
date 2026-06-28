@@ -54,14 +54,26 @@ class AlertService {
     }
   }
 
-  Future<PatientAlert> acknowledgeAlert(
-    String alertId, {
-    required String caregiverId,
-  }) async {
+  Future<void> deleteAlert(String alertId) async {
+    try {
+      final response = await _dio.delete(
+        ApiConfig.deleteAlertEndpoint(alertId),
+        options: await ApiHttpClient.authorizedOptions(),
+      );
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception('Failed to delete alert (${response.statusCode})');
+      }
+    } on DioException catch (e) {
+      throw Exception(
+        ApiHttpClient.friendlyError(e, fallback: 'Failed to delete alert'),
+      );
+    }
+  }
+
+  Future<PatientAlert> acknowledgeAlert(String alertId) async {
     try {
       final response = await _dio.put(
         ApiConfig.alertByIdEndpoint(alertId),
-        data: {'caregiver_id': caregiverId},
         options: await ApiHttpClient.authorizedOptions(),
       );
       if (response.statusCode == 200 && response.data != null) {

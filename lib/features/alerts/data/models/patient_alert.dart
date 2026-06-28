@@ -1,14 +1,16 @@
 import 'package:equatable/equatable.dart';
 
-enum AlertType { geofence, sos, unknown }
+enum AlertType {sos, deviceOffline, locationOutOfBounds, unknown }
 
 AlertType parseAlertType(String raw) {
   final normalized = raw.trim().toLowerCase();
   switch (normalized) {
-    case 'geofence':
-      return AlertType.geofence;
     case 'sos':
       return AlertType.sos;
+    case 'device_offline':
+      return AlertType.deviceOffline;
+    case 'location_out_of_bounds':
+      return AlertType.locationOutOfBounds;
     default:
       return AlertType.unknown;
   }
@@ -17,10 +19,12 @@ AlertType parseAlertType(String raw) {
 extension AlertTypeX on AlertType {
   String get apiValue {
     switch (this) {
-      case AlertType.geofence:
-        return 'geofence';
       case AlertType.sos:
         return 'sos';
+      case AlertType.deviceOffline:
+        return 'device_offline';
+      case AlertType.locationOutOfBounds:
+        return 'location_out_of_bounds';
       case AlertType.unknown:
         return 'unknown';
     }
@@ -28,10 +32,12 @@ extension AlertTypeX on AlertType {
 
   String get displayTitle {
     switch (this) {
-      case AlertType.geofence:
-        return 'Left safe zone';
       case AlertType.sos:
         return 'SOS alert';
+      case AlertType.deviceOffline:
+        return 'Device offline';
+      case AlertType.locationOutOfBounds:
+        return 'Left safe zone';
       case AlertType.unknown:
         return 'Unknown alert';
     }

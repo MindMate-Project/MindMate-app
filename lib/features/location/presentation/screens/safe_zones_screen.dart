@@ -195,7 +195,8 @@ class _SafeZoneListTab extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Add zones for places the patient should stay near. '
-                'You\'ll be alerted when they leave all of them.',
+                'The backend stores one safe zone per patient; saving a new '
+                'zone replaces the previous one.',
                 textAlign: TextAlign.center,
                 style: AppTheme.bodyMedium,
               ),
@@ -287,8 +288,12 @@ class _SafeZoneEditorTab extends StatefulWidget {
 }
 
 class _SafeZoneEditorTabState extends State<_SafeZoneEditorTab> {
+  static const _minRadiusMeters = 0.0;
+  static const _defaultMaxRadiusMeters = 300.0;
+
   LatLng? _selectedCenter;
   late double _radiusMeters;
+  late double _sliderMaxMeters;
   late final TextEditingController _nameController;
   bool _saving = false;
 
@@ -298,7 +303,11 @@ class _SafeZoneEditorTabState extends State<_SafeZoneEditorTab> {
   void initState() {
     super.initState();
     final zone = widget.editingZone;
-    _radiusMeters = zone?.radiusMeters ?? 200;
+    final rawRadius = zone?.radiusMeters ?? 200;
+    _sliderMaxMeters = rawRadius > _defaultMaxRadiusMeters
+        ? rawRadius
+        : _defaultMaxRadiusMeters;
+    _radiusMeters = rawRadius.clamp(_minRadiusMeters, _sliderMaxMeters);
     _nameController = TextEditingController(text: zone?.name ?? 'Home');
     if (zone != null) {
       _selectedCenter = LatLng(zone.latitude, zone.longitude);
@@ -356,9 +365,7 @@ class _SafeZoneEditorTabState extends State<_SafeZoneEditorTab> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_isEditing ? 'Zone updated' : 'Zone added'),
-          ),
+          SnackBar(content: Text(_isEditing ? 'Zone updated' : 'Zone added')),
         );
         widget.onSaved();
       }
@@ -443,13 +450,15 @@ class _SafeZoneEditorTabState extends State<_SafeZoneEditorTab> {
                 ),
                 Slider(
                   value: _radiusMeters,
-                  min: 50,
-                  max: 1000,
-                  divisions: 19,
+                  min: _minRadiusMeters,
+                  max: _sliderMaxMeters,
+                  divisions: ((_sliderMaxMeters - _minRadiusMeters) / 1)
+                      .round(),
                   activeColor: AppTheme.primaryColor,
                   label: '${_radiusMeters.round()} m',
-                  onChanged:
-                      _saving ? null : (v) => setState(() => _radiusMeters = v),
+                  onChanged: _saving
+                      ? null
+                      : (v) => setState(() => _radiusMeters = v),
                 ),
                 FilledButton(
                   onPressed: _saving ? null : _save,

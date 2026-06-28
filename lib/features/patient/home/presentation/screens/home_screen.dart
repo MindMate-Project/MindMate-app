@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -14,6 +16,8 @@ import 'package:mindmate/features/memory/presentation/cubit/memory_cubit.dart';
 import 'package:mindmate/features/memory/presentation/cubit/memory_state.dart';
 import 'package:mindmate/features/patient/face_recognition/face_recognition.dart';
 import 'package:mindmate/features/patient/reminders/data/services/reminder_notification_service.dart';
+import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_cubit.dart';
+import 'package:mindmate/features/patient/reminders/presentation/cubit/reminders_state.dart';
 import 'package:mindmate/features/patient/home/presentation/widgets/patient_sos_button.dart';
 import 'package:mindmate/features/patient/reminders/presentation/widgets/home_reminders_section.dart';
 
@@ -24,16 +28,36 @@ class PatientHomePage extends StatefulWidget {
   State<PatientHomePage> createState() => _PatientHomePageState();
 }
 
-class _PatientHomePageState extends State<PatientHomePage> {
+class _PatientHomePageState extends State<PatientHomePage>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _applyTrainingSchedule();
       // Patient device only: schedule local notifications for the patient's
       // reminders (delivery used to rely on a push path that never fired).
-      ReminderNotificationService.instance.syncFromServer();
+      unawaited(ReminderNotificationService.instance.syncFromServer());
+      final cubit = context.read<RemindersCubit>();
+      if (cubit.state is! RemindersLoading) {
+        cubit.loadPatientReminders();
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<RemindersCubit>().loadPatientReminders();
+      unawaited(ReminderNotificationService.instance.syncFromServer());
+    }
   }
 
   Future<void> _applyTrainingSchedule() async {

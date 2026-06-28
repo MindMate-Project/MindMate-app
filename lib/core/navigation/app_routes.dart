@@ -26,6 +26,7 @@ abstract final class AppRoutes {
   static const location = '/location';
   static const safeZones = '/location/safe-zones';
   static const privacyPolicy = '/privacy_policy';
+  static const registerKnownPerson = '/register-known-person';
 
   static String reminderDetail(String reminderId) => '/reminder/$reminderId';
 }

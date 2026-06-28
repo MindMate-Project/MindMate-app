@@ -24,7 +24,7 @@ class ActivePatientSections extends StatelessWidget {
         const SizedBox(height: _sectionGap),
         KnownPeopleEntry(patient: patient),
         const SizedBox(height: _sectionGap),
-        const HomeRemindersSection(),
+        HomeRemindersSection(key: ValueKey(patient.id)),
       ],
     );
   }

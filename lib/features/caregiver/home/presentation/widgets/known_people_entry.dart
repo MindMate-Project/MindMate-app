@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mindmate/core/navigation/app_routes.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/utils/name_utils.dart';
 import 'package:mindmate/features/caregiver/home/presentation/models/active_patient.dart';
-import 'package:mindmate/features/caregiver/known_people/presentation/screens/register_known_person_screen.dart';
 
-/// Entry point to register faces the active patient should recognize.
+/// Entry point for caregivers to register faces for the active patient.
 class KnownPeopleEntry extends StatelessWidget {
   final ActivePatient patient;
 
@@ -15,14 +16,12 @@ class KnownPeopleEntry extends StatelessWidget {
     final shortName = firstNameOf(patient.name) ?? patient.name;
 
     return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute<bool>(
-          builder: (_) => RegisterKnownPersonScreen(
-            patientId: patient.id,
-            patientName: shortName,
-          ),
-        ),
+      onTap: () => context.push(
+        AppRoutes.registerKnownPerson,
+        extra: {
+          'patientId': patient.id,
+          'patientName': shortName,
+        },
       ),
       child: Container(
         padding: const EdgeInsets.all(16),

@@ -1,7 +1,11 @@
 import 'package:equatable/equatable.dart';
+import 'package:intl/intl.dart';
 
 /// Patient location snapshot from device API or local fallback.
 class PatientLocation extends Equatable {
+  /// Device is treated as offline when its last report is older than this.
+  static const deviceOnlineThreshold = Duration(minutes: 5);
+
   final double latitude;
   final double longitude;
   final String address;
@@ -10,6 +14,7 @@ class PatientLocation extends Equatable {
   final String? zoneLabel;
   final String patientName;
   final bool isFallback;
+  final bool isDeviceOnline;
 
   const PatientLocation({
     required this.latitude,
@@ -20,10 +25,29 @@ class PatientLocation extends Equatable {
     this.zoneLabel,
     required this.patientName,
     this.isFallback = false,
+    this.isDeviceOnline = true,
   });
 
   String get statusLabel =>
       zoneLabel ?? (inSafeZone ? 'Safe Zone' : 'Outside Zone');
+
+  bool get isStaleDeviceData =>
+      !isFallback && !isDeviceOnline && hasValidCoordinates;
+
+  String get safeZoneStatusLabel {
+    if (!inSafeZone) return 'outside safe zone';
+    return zoneLabel?.trim().isNotEmpty == true
+        ? zoneLabel!.trim().toLowerCase()
+        : 'in safe zone';
+  }
+
+  String lastSeenLine({required bool hasSafeZones}) {
+    final when = _formatLastSeen(updatedAt);
+    if (hasSafeZones) {
+      return 'Last seen at $when — $safeZoneStatusLabel';
+    }
+    return 'Last seen at $when';
+  }
 
   String get displayInitial {
     final trimmed = patientName.trim();
@@ -59,6 +83,7 @@ class PatientLocation extends Equatable {
       'zone',
       'statusLabel',
     ]);
+    final isDeviceOnline = _readDeviceOnline(map, updatedAt);
 
     return PatientLocation(
       latitude: lat ?? 0,
@@ -69,6 +94,7 @@ class PatientLocation extends Equatable {
       zoneLabel: zoneLabel?.isNotEmpty == true ? zoneLabel : null,
       patientName:
           _readString(map, const ['name', 'patientName']) ?? patientName,
+      isDeviceOnline: isDeviceOnline,
     );
   }
 
@@ -81,6 +107,7 @@ class PatientLocation extends Equatable {
     String? zoneLabel,
     String? patientName,
     bool? isFallback,
+    bool? isDeviceOnline,
   }) {
     return PatientLocation(
       latitude: latitude ?? this.latitude,
@@ -91,10 +118,15 @@ class PatientLocation extends Equatable {
       zoneLabel: zoneLabel ?? this.zoneLabel,
       patientName: patientName ?? this.patientName,
       isFallback: isFallback ?? this.isFallback,
+      isDeviceOnline: isDeviceOnline ?? this.isDeviceOnline,
     );
   }
 
+  String get coordinatesLabel =>
+      '${latitude.toStringAsFixed(5)}, ${longitude.toStringAsFixed(5)}';
+
   bool get hasValidCoordinates {
+    if (!latitude.isFinite || !longitude.isFinite) return false;
     if (latitude == 0 && longitude == 0) return false;
     return latitude >= -90 &&
         latitude <= 90 &&
@@ -126,9 +158,13 @@ class PatientLocation extends Equatable {
     for (final key in keys) {
       final value = map[key];
       if (value == null) continue;
-      if (value is num) return value.toDouble();
+      if (value is num) {
+        final parsed = value.toDouble();
+        if (parsed.isFinite) return parsed;
+        continue;
+      }
       final parsed = double.tryParse(value.toString());
-      if (parsed != null) return parsed;
+      if (parsed != null && parsed.isFinite) return parsed;
     }
     return null;
   }
@@ -154,7 +190,14 @@ class PatientLocation extends Equatable {
   }
 
   static bool _readSafeZone(Map<String, dynamic> map) {
-    for (final key in ['inSafeZone', 'isInSafeZone', 'safeZone', 'isSafe']) {
+    if (map['isOutsideSafeZone'] == true ||
+        map['outsideSafeZone'] == true ||
+        map['isOutsideHome'] == true) {
+      return false;
+    }
+    if (map['insideHome'] == false) return false;
+
+    for (final key in ['inSafeZone', 'isInSafeZone', 'isSafe', 'insideZone']) {
       final value = map[key];
       if (value is bool) return value;
       if (value is String) {
@@ -165,14 +208,66 @@ class PatientLocation extends Equatable {
         }
       }
     }
+
     final status = map['status']?.toString().toLowerCase();
     if (status != null) {
-      if (status.contains('safe') && !status.contains('unsafe')) return true;
-      if (status.contains('outside') || status.contains('alert')) {
+      if (status.contains('outside') ||
+          status.contains('alert') ||
+          status.contains('unsafe')) {
         return false;
       }
+      if (status.contains('safe') && !status.contains('unsafe')) return true;
     }
-    return true;
+
+    // Unknown until client-side geofence check runs.
+    return false;
+  }
+
+  static bool _readDeviceOnline(Map<String, dynamic> map, DateTime? updatedAt) {
+    for (final key in const [
+      'isOnline',
+      'isDeviceOnline',
+      'online',
+      'deviceOnline',
+    ]) {
+      final value = map[key];
+      if (value is bool) return value;
+      if (value is String) {
+        final lower = value.trim().toLowerCase();
+        if (lower == 'online' || lower == 'connected' || lower == 'true') {
+          return true;
+        }
+        if (lower == 'offline' ||
+            lower == 'disconnected' ||
+            lower == 'false') {
+          return false;
+        }
+      }
+    }
+
+    final status = map['status']?.toString().toLowerCase();
+    if (status != null) {
+      if (status.contains('offline') || status.contains('disconnected')) {
+        return false;
+      }
+      if (status.contains('online') || status.contains('connected')) {
+        return true;
+      }
+    }
+
+    if (updatedAt == null) return false;
+    return DateTime.now().difference(updatedAt) <= deviceOnlineThreshold;
+  }
+
+  static String _formatLastSeen(DateTime? time) {
+    if (time == null) return 'unknown time';
+    final now = DateTime.now();
+    final diff = now.difference(time);
+    final absolute = DateFormat.jm().format(time);
+    if (diff.inSeconds < 60) return '$absolute (just now)';
+    if (diff.inMinutes < 60) return '$absolute (${diff.inMinutes}m ago)';
+    if (diff.inHours < 24) return '$absolute (${diff.inHours}h ago)';
+    return absolute;
   }
 
   @override
@@ -185,5 +280,6 @@ class PatientLocation extends Equatable {
         zoneLabel,
         patientName,
         isFallback,
+        isDeviceOnline,
       ];
 }

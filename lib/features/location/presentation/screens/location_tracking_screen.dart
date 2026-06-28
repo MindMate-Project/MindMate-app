@@ -3,15 +3,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mindmate/core/navigation/app_bottom_nav.dart';
 import 'package:mindmate/core/navigation/app_routes.dart';
+import 'package:mindmate/core/services/caregiver_notification_preferences.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/widgets/error_retry_view.dart';
-// import 'package:mindmate/core/widgets/info_message_box.dart';
+import 'package:mindmate/core/widgets/info_message_box.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/caregiver/home/data/active_patient_resolver.dart';
 import 'package:mindmate/features/location/presentation/cubit/location_cubit.dart';
 import 'package:mindmate/features/location/presentation/cubit/location_state.dart';
-// import 'package:mindmate/features/location/presentation/widgets/geofence_alert_banner.dart';
+import 'package:mindmate/features/location/presentation/widgets/geofence_alert_banner.dart';
 import 'package:mindmate/features/location/presentation/widgets/location_info_card.dart';
 import 'package:mindmate/features/location/presentation/widgets/location_map_view.dart';
 
@@ -79,10 +80,6 @@ class _LocationTrackingScreenState extends State<LocationTrackingScreen> {
                         color: AppTheme.secondaryColor,
                       ),
                     ),
-                    // subtitle: Text(
-                    //   'Falls back to this phone\'s GPS when patient data is unavailable',
-                    //   style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-                    // ),
                     value: state.useDeviceLocation,
                     activeThumbColor: AppTheme.primaryColor,
                     onChanged: (value) => context
@@ -145,23 +142,30 @@ class _LocationTrackingScreenState extends State<LocationTrackingScreen> {
       return BlocBuilder<AuthCubit, AuthState>(
         builder: (context, authState) {
           final caregiver = _isCaregiver(authState);
-          // final outside = state.hasSafeZones && !loc.inSafeZone;
+          final offline = loc.isStaleDeviceData;
+          final outside = !offline && state.hasSafeZones && !loc.inSafeZone;
+          final flutterAlerts = CaregiverNotificationPreferences
+              .instance
+              .flutterSideAlertsEnabled;
           return Column(
             children: [
-              // if (outside && state.geofenceAlert != null)
-              //   GeofenceAlertBanner(
-              //     alert: state.geofenceAlert!,
-              //     onDismiss: () =>
-              //         context.read<LocationCubit>().dismissGeofenceAlert(),
-              //   )
-              // else if (outside)
-              //   const InfoMessageBox(
-              //     message:
-              //         'Patient is outside all safe zones. Monitoring active.',
-              //   ),
+              if (flutterAlerts && outside && state.geofenceAlert != null)
+                GeofenceAlertBanner(
+                  alert: state.geofenceAlert!,
+                  onDismiss: () =>
+                      context.read<LocationCubit>().dismissGeofenceAlert(),
+                )
+              else if (flutterAlerts && outside)
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: InfoMessageBox(
+                    message:
+                        'Patient is outside the safe zone. Monitoring active.',
+                  ),
+                ),
               if (caregiver)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
                   child: Row(
                     children: [
                       Expanded(
@@ -191,19 +195,25 @@ class _LocationTrackingScreenState extends State<LocationTrackingScreen> {
                   ),
                 ),
               Expanded(
-                flex: 3,
+                flex: 4,
                 child: LocationMapView(
                   latitude: loc.latitude,
                   longitude: loc.longitude,
                   isFallback: loc.isFallback,
+                  isDeviceOnline: loc.isDeviceOnline,
                   safeZones: state.safeZones,
+                  patientInSafeZone: loc.inSafeZone,
                 ),
               ),
-              Flexible(
-                flex: 3,
-                child: LocationInfoCard(
-                  location: loc,
-                  hasSafeZones: state.hasSafeZones,
+              Expanded(
+                flex: 2,
+                // height: 170,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(vertical: 0, horizontal: 8),
+                  child: LocationInfoCard(
+                    location: loc,
+                    hasSafeZones: state.hasSafeZones,
+                  ),
                 ),
               ),
             ],

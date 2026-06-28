@@ -1,6 +1,11 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/widgets/profile_app_bar.dart';
+import 'package:mindmate/features/patient/reminders/data/services/reminder_notification_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class PatientNotificationsScreen extends StatefulWidget {
   const PatientNotificationsScreen({super.key});
@@ -10,15 +15,56 @@ class PatientNotificationsScreen extends StatefulWidget {
       _PatientNotificationsScreenState();
 }
 
-class _PatientNotificationsScreenState extends State<PatientNotificationsScreen> {
-  bool _pushNotifications = true;
-  bool _emailNotifications = false;
-  bool _sound = true;
-  bool _vibration = true;
-  bool _reminder1HourBefore = true;
-  bool _reminder1DayBefore = true;
-  bool _missedDoseAlerts = true;
-  bool _dailyMedicineReminders = true;
+class _PatientNotificationsScreenState extends State<PatientNotificationsScreen>
+    with WidgetsBindingObserver {
+  bool _showAlarmLimitBanner = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _refreshAlarmBanner();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshAlarmBanner();
+    }
+  }
+
+  Future<void> _refreshAlarmBanner() async {
+    if (!mounted) return;
+    if (kIsWeb || !Platform.isAndroid) {
+      setState(() => _showAlarmLimitBanner = false);
+      return;
+    }
+
+    final version = Platform.operatingSystemVersion;
+    final match = RegExp(r'(\d+)').firstMatch(version);
+    final major = match != null ? int.tryParse(match.group(1)!) : null;
+    if (major == null || major < 14) {
+      setState(() => _showAlarmLimitBanner = false);
+      return;
+    }
+
+    final granted =
+        await ReminderNotificationService.instance.hasFullScreenIntentPermission();
+    if (!mounted) return;
+    setState(() => _showAlarmLimitBanner = !granted);
+  }
+
+  Future<void> _fixAlarmPermissions() async {
+    await ReminderNotificationService.instance.requestFullScreenIntentAccess();
+    await openAppSettings();
+    await _refreshAlarmBanner();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,62 +77,69 @@ class _PatientNotificationsScreenState extends State<PatientNotificationsScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: AppTheme.spacingXL),
-            _buildSection(
-              title: 'Common',
-              tiles: [
-                _NotificationTile(
-                  title: 'Push Notifications',
-                  value: _pushNotifications,
-                  onChanged: (v) => setState(() => _pushNotifications = v),
+            if (_showAlarmLimitBanner) ...[
+              Material(
+                color: AppTheme.secondaryColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                child: InkWell(
+                  onTap: _fixAlarmPermissions,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppTheme.spacingL),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.warning_amber_rounded,
+                          color: AppTheme.secondaryColor,
+                        ),
+                        const SizedBox(width: AppTheme.spacingM),
+                        Expanded(
+                          child: Text(
+                            'Alarm notifications are limited — tap to fix in settings.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.4,
+                              color: AppTheme.neutralBlack.withValues(alpha: 0.85),
+                            ),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.chevron_right,
+                          color: AppTheme.secondaryColor,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                _NotificationTile(
-                  title: 'Email Notifications',
-                  value: _emailNotifications,
-                  onChanged: (v) => setState(() => _emailNotifications = v),
-                ),
-                _NotificationTile(
-                  title: 'Sound',
-                  value: _sound,
-                  onChanged: (v) => setState(() => _sound = v),
-                ),
-                _NotificationTile(
-                  title: 'Vibration',
-                  value: _vibration,
-                  onChanged: (v) => setState(() => _vibration = v),
-                ),
-              ],
+              ),
+              const SizedBox(height: AppTheme.spacingL),
+            ],
+            Text(
+              'Reminder and alert notifications are managed automatically by MindMate.',
+              style: TextStyle(
+                fontSize: 15,
+                height: 1.5,
+                color: AppTheme.neutralBlack.withValues(alpha: 0.75),
+              ),
             ),
             const SizedBox(height: AppTheme.spacingXXL),
-            _buildSection(
-              title: 'Appointment Notifications',
-              tiles: [
-                _NotificationTile(
-                  title: '1 Hour Before Reminder',
-                  value: _reminder1HourBefore,
-                  onChanged: (v) => setState(() => _reminder1HourBefore = v),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text(
+                'Manage Notification Permissions',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.neutralBlack,
                 ),
-                _NotificationTile(
-                  title: '1 Day Before Reminder',
-                  value: _reminder1DayBefore,
-                  onChanged: (v) => setState(() => _reminder1DayBefore = v),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppTheme.spacingXXL),
-            _buildSection(
-              title: 'Medication Notifications',
-              tiles: [
-                _NotificationTile(
-                  title: 'Missed Dose Alerts',
-                  value: _missedDoseAlerts,
-                  onChanged: (v) => setState(() => _missedDoseAlerts = v),
-                ),
-                _NotificationTile(
-                  title: 'Daily Medicine Reminders',
-                  value: _dailyMedicineReminders,
-                  onChanged: (v) => setState(() => _dailyMedicineReminders = v),
-                ),
-              ],
+              ),
+              subtitle: const Text(
+                'Open your device settings to allow or adjust push notifications.',
+                style: TextStyle(fontSize: 13),
+              ),
+              trailing:
+                  const Icon(Icons.open_in_new, color: AppTheme.primaryColor),
+              onTap: () => openAppSettings(),
             ),
             const SizedBox(height: AppTheme.spacingXXL),
           ],
@@ -94,61 +147,4 @@ class _PatientNotificationsScreenState extends State<PatientNotificationsScreen>
       ),
     );
   }
-
-  Widget _buildSection({
-    required String title,
-    required List<_NotificationTile> tiles,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.neutralBlack,
-          ),
-        ),
-        const SizedBox(height: AppTheme.spacingM),
-        Column(
-          children: tiles.asMap().entries.map((entry) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SwitchListTile(
-                  title: Text(
-                    entry.value.title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w300,
-                      color: AppTheme.neutralBlack,
-                    ),
-                  ),
-                  value: entry.value.value,
-                  onChanged: entry.value.onChanged,
-                  activeTrackColor: AppTheme.primaryColor.withValues(
-                    alpha: 0.5,
-                  ),
-                  activeThumbColor: AppTheme.primaryColor,
-                ),
-              ],
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-}
-
-class _NotificationTile {
-  final String title;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const _NotificationTile({
-    required this.title,
-    required this.value,
-    required this.onChanged,
-  });
 }

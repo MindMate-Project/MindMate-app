@@ -16,7 +16,10 @@ class SosAlertFlow {
   static Future<void> start(BuildContext context) async {
     final patientId = _patientId(context);
     if (patientId == null) {
-      _showSnack(context, 'Could not identify your account. Please log in again.');
+      _showSnack(
+        context,
+        'Could not identify your account. Please log in again.',
+      );
       return;
     }
 
@@ -36,9 +39,7 @@ class SosAlertFlow {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppTheme.errorColor,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.errorColor),
             child: const Text('Send SOS'),
           ),
         ],
@@ -47,8 +48,6 @@ class SosAlertFlow {
 
     if (confirmed != true || !context.mounted) return;
 
-    // Show loading without awaiting — awaiting would block until the dialog
-    // is popped, which only happens after the API call below.
     showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -110,10 +109,13 @@ class SosAlertFlow {
     return null;
   }
 
-  static Future<ConnectedCaregiver?> _loadPrimaryCaregiver(String patientId) async {
+  static Future<ConnectedCaregiver?> _loadPrimaryCaregiver(
+    String patientId,
+  ) async {
     try {
-      final caregivers =
-          await AssignmentService().fetchMyCaregivers(patientId: patientId);
+      final caregivers = await AssignmentService().fetchMyCaregivers(
+        patientId: patientId,
+      );
       if (caregivers.isEmpty) return null;
       return caregivers.firstWhere(
         (c) => c.hasPhone,
@@ -125,9 +127,9 @@ class SosAlertFlow {
   }
 
   static void _showSnack(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
@@ -149,8 +151,7 @@ class _SosResultSheet extends StatefulWidget {
 class _SosResultSheetState extends State<_SosResultSheet> {
   bool _calling = false;
 
-  bool get _canCall =>
-      !_calling && (widget.caregiver?.hasPhone ?? false);
+  bool get _canCall => !_calling && (widget.caregiver?.hasPhone ?? false);
 
   String get _callLabel {
     final c = widget.caregiver;
@@ -168,10 +169,7 @@ class _SosResultSheetState extends State<_SosResultSheet> {
         mode: LaunchMode.externalApplication,
       );
       if (!ok && mounted) {
-        SosAlertFlow._showSnack(
-          context,
-          'Could not open the phone dialer.',
-        );
+        SosAlertFlow._showSnack(context, 'Could not open the phone dialer.');
       }
     } catch (_) {
       if (mounted) {
@@ -241,18 +239,19 @@ class _SosResultSheetState extends State<_SosResultSheet> {
                     success
                         ? Icons.notifications_active
                         : Icons.warning_amber_rounded,
-                    color:
-                        success ? AppTheme.errorColor : AppTheme.warningColor,
+                    color: success
+                        ? AppTheme.errorColor
+                        : AppTheme.warningColor,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       success
                           ? 'Your caregiver has been notified. If you need '
-                              'immediate help, call them now.'
+                                'immediate help, call them now.'
                           : widget.errorMessage ??
-                              'Something went wrong. Try again or call your '
-                                  'caregiver directly.',
+                                'Something went wrong. Try again or call your '
+                                    'caregiver directly.',
                       style: TextStyle(
                         fontSize: 15,
                         color: Colors.grey[800],
@@ -303,7 +302,10 @@ class _SosResultSheetState extends State<_SosResultSheet> {
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppTheme.primaryColor, width: 2),
+                  side: const BorderSide(
+                    color: AppTheme.primaryColor,
+                    width: 2,
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

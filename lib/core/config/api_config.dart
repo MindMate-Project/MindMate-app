@@ -13,23 +13,26 @@ class ApiConfig {
       '/api/reminders/patient/$patientId';
   static String reminderByIdEndpoint(String reminderId) =>
       '/api/reminders/$reminderId';
+  static String acknowledgeReminderEndpoint(String reminderId) =>
+      '/api/reminders/$reminderId/acknowledge';
+  static String deleteReminderSeriesEndpoint(String groupId) =>
+      '/api/reminders/series?groupId=$groupId';
 
-  // Face Recognition endpoints
+  // Face — patientId omitted for patient self-registration; required for caregiver.
   static const String identifyFaceEndpoint = '/api/face/patient/identify-face';
-  // Register a known person the patient should recognize (caregiver action).
-  static const String registerFaceEndpoint = '/api/face/patient/register-face';
+  static const String registerKnownPersonEndpoint =
+      '/api/face/patient/register-face';
+  static const String addFacePhotosEndpoint = '/api/face/patient/add-photos';
 
   // Memory endpoints
   static const String memoryBase = '$baseUrl/api/memories';
-  // GET    /api/memories/patient/:patientId  — list a patient's memories
-  // POST   /api/memories                     — create a new memory (multipart for media)
-  // PUT    /api/memories/:id                 — update text fields only (caregiver/admin)
-  // DELETE /api/memories/:id                 — delete memory + Cloudinary asset (caregiver/admin)
   static const String createMemoryEndpoint = '/api/memories';
   static String memoriesForPatientEndpoint(String patientId) =>
       '/api/memories/patient/$patientId';
+  static String memoryByIdEndpoint(String id) => '/api/memories/$id';
   static String updateMemoryEndpoint(String id) => '/api/memories/$id';
   static String deleteMemoryEndpoint(String id) => '/api/memories/$id';
+  static const String searchMemoriesEndpoint = '/api/memories/search';
 
   // Device endpoints
   static const String assignDeviceEndpoint = '/api/device/assign-device';
@@ -45,4 +48,5 @@ class ApiConfig {
   static String patientAlertsEndpoint(String patientId) =>
       '/api/alerts/patient/$patientId';
   static String alertByIdEndpoint(String alertId) => '/api/alerts/$alertId';
+  static String deleteAlertEndpoint(String alertId) => '/api/alerts/$alertId';
 }

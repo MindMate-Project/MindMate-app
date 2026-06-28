@@ -5,8 +5,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mindmate/core/navigation/app_navigation.dart';
 import 'package:mindmate/core/network/api_http_client.dart';
+import 'package:mindmate/core/services/fcm_service.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/memory/data/services/memory_training_service.dart';
 
 class Splash extends StatefulWidget {
@@ -35,15 +37,33 @@ class _SplashState extends State<Splash> {
 
     context.go(route);
 
-    // If a reminder alarm cold-launched the app, ring it now — but let the
-    // splash->home replacement transition fully settle first, otherwise
-    // pushReplacement's route removal disposes an alarm pushed right after it.
+    // If a reminder alarm cold-launched the app, ring it now — but only on
+    // the patient's device. Caregivers get tray push only, no full-screen alarm.
     final pendingAlarm = MemoryTrainingService.instance.pendingAlarmLaunch;
     if (pendingAlarm != null) {
       MemoryTrainingService.instance.pendingAlarmLaunch = null;
+      final authState = context.read<AuthCubit>().state;
+      if (authState is AuthSuccess && authState.user.isPatient) {
+        Future.delayed(
+          const Duration(milliseconds: 800),
+          () => showReminderAlarm(pendingAlarm.$1, pendingAlarm.$2),
+        );
+      }
+    }
+
+    // Cold-start FCM tap: navigate once auth and the home route have settled.
+    final pendingFcm = FcmService.instance.pendingOpenedMessage;
+    if (pendingFcm != null) {
+      FcmService.instance.pendingOpenedMessage = null;
       Future.delayed(
         const Duration(milliseconds: 800),
-        () => showReminderAlarm(pendingAlarm.$1, pendingAlarm.$2),
+        () {
+          if (!mounted) return;
+          FcmService.instance.handleReminderMessageOpened(
+            pendingFcm,
+            context.read<AuthCubit>().state,
+          );
+        },
       );
     }
   }

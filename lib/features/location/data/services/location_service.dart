@@ -37,6 +37,21 @@ class LocationService {
     required String patientName,
     required bool useDeviceLocation,
   }) async {
+    final result = await resolveLocationWithZones(
+      patientId: patientId,
+      patientName: patientName,
+      useDeviceLocation: useDeviceLocation,
+    );
+    return result.location;
+  }
+
+  /// Fetches patient location and safe zones together so zone status stays in sync.
+  Future<({PatientLocation location, List<SafeZone> safeZones})>
+      resolveLocationWithZones({
+    required String? patientId,
+    required String patientName,
+    required bool useDeviceLocation,
+  }) async {
     final hasPatient = patientId != null && patientId.isNotEmpty;
 
     if (!hasPatient && !useDeviceLocation) {
@@ -44,21 +59,35 @@ class LocationService {
     }
 
     if (!hasPatient) {
-      return _fetchDeviceLocation(patientName: patientName);
+      final location = await _fetchDeviceLocation(patientName: patientName);
+      return (location: location, safeZones: const <SafeZone>[]);
     }
 
-    // Testing mode: always use this device's GPS instead of the IoT API.
     if (useDeviceLocation) {
       final location = await _fetchDeviceLocation(patientName: patientName);
-      return _applySafeZone(patientId: patientId, location: location);
+      final zones = await _safeZoneService.getSafeZones(patientId);
+      return (
+        location: SafeZone.applyZoneStatus(location: location, zones: zones),
+        safeZones: zones,
+      );
     }
 
     try {
-      final location = await _fetchPatientLocation(
+      final bundle = await _fetchPatientLocationBundle(
         patientId: patientId,
         patientName: patientName,
       );
-      return _applySafeZone(patientId: patientId, location: location);
+      var zones = bundle.safeZones;
+      if (zones.isEmpty) {
+        zones = await _safeZoneService.getSafeZones(patientId);
+      }
+      return (
+        location: SafeZone.applyZoneStatus(
+          location: bundle.location,
+          zones: zones,
+        ),
+        safeZones: zones,
+      );
     } catch (e) {
       if (e is LocationException) rethrow;
       throw LocationException(
@@ -82,41 +111,52 @@ class LocationService {
   Future<void> clearAllSafeZones(String patientId) =>
       _safeZoneService.clearAllSafeZones(patientId);
 
-  Future<PatientLocation> _applySafeZone({
-    required String patientId,
-    required PatientLocation location,
-  }) async {
-    final zones = await _safeZoneService.getSafeZones(patientId);
-    if (zones.isEmpty) return location;
-
-    final match = SafeZone.locate(
-      zones,
-      location.latitude,
-      location.longitude,
-    );
-    return location.copyWith(
-      inSafeZone: match.inAny,
-      zoneLabel: match.inAny
-          ? match.zone!.displayName
-          : 'Outside safe zones',
-    );
-  }
-
-  Future<PatientLocation> _fetchPatientLocation({
+  Future<({PatientLocation location, List<SafeZone> safeZones})>
+      _fetchPatientLocationBundle({
     required String patientId,
     required String patientName,
   }) async {
     try {
-      final location = await _fetchFromApi(
-        patientId: patientId,
+      final response = await _dio.get(
+        ApiConfig.deviceLocationEndpoint(patientId),
+        options: await ApiHttpClient.authorizedOptions(),
+      );
+
+      if (response.statusCode != 200 || response.data == null) {
+        throw const LocationException(
+          "The patient's tracking device hasn't reported a location yet.",
+        );
+      }
+
+      final raw = response.data;
+      var location = PatientLocation.fromApiJson(
+        raw,
         patientName: patientName,
       );
-      if (location != null && location.hasValidCoordinates) {
-        return location;
+      if (!location.hasValidCoordinates) {
+        throw const LocationException(
+          "The patient's tracking device hasn't reported a location yet.",
+        );
       }
-      throw const LocationException(
-        "The patient's tracking device hasn't reported a location yet.",
-      );
+
+      if (location.address.isEmpty) {
+        final resolved = await _reverseGeocode(
+          location.latitude,
+          location.longitude,
+        );
+        location = location.copyWith(
+          address: resolved ??
+              _coordinateAddress(location.latitude, location.longitude),
+        );
+      }
+
+      final parsedZone =
+          _safeZoneService.parseFromLocationPayload(patientId, raw);
+      final zones = parsedZone != null && parsedZone.isRenderable
+          ? [parsedZone]
+          : <SafeZone>[];
+
+      return (location: location, safeZones: zones);
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) {
         throw const LocationException(
@@ -158,34 +198,40 @@ class LocationService {
     );
   }
 
-  Future<PatientLocation?> _fetchFromApi({
-    required String patientId,
+  static String _coordinateAddress(double lat, double lng) =>
+      '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}';
+
+  /// Live GPS updates for device-location (testing) mode.
+  Stream<Position> watchDevicePosition() {
+    return Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5,
+      ),
+    );
+  }
+
+  Future<PatientLocation> buildDeviceLocationFromPosition(
+    Position position, {
     required String patientName,
   }) async {
-    final response = await _dio.get(
-      ApiConfig.deviceLocationEndpoint(patientId),
-      options: await ApiHttpClient.authorizedOptions(),
+    final address = await _reverseGeocode(
+      position.latitude,
+      position.longitude,
     );
 
-    if (response.statusCode != 200 || response.data == null) return null;
-
-    final location = PatientLocation.fromApiJson(
-      response.data,
+    return PatientLocation(
+      latitude: position.latitude,
+      longitude: position.longitude,
+      address: address ??
+          _coordinateAddress(position.latitude, position.longitude),
+      updatedAt: position.timestamp,
+      inSafeZone: true,
+      zoneLabel: 'Current Location',
       patientName: patientName,
+      isFallback: true,
+      isDeviceOnline: true,
     );
-    if (!location.hasValidCoordinates) return null;
-
-    if (location.address.isEmpty) {
-      final resolved = await _reverseGeocode(
-        location.latitude,
-        location.longitude,
-      );
-      return location.copyWith(
-        address: resolved ??
-            _coordinateAddress(location.latitude, location.longitude),
-      );
-    }
-    return location;
   }
 
   Future<Position> _currentPosition() async {
@@ -229,7 +275,4 @@ class LocationService {
       return null;
     }
   }
-
-  static String _coordinateAddress(double lat, double lng) =>
-      '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}';
 }

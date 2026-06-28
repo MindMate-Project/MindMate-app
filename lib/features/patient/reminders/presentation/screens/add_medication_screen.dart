@@ -65,7 +65,13 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     }
     final start = r.startDate ?? ReminderApiMapper.dateOnly(r.scheduledTime);
     _fromDate = start;
-    _toDate = r.endDate ?? start;
+    if (r.endDate != null) {
+      _toDate = r.endDate;
+    } else if (r.frequency?.toLowerCase() == 'once') {
+      _toDate = start;
+    } else {
+      _toDate = null;
+    }
     _time = TimeOfDay.fromDateTime(r.scheduledTime);
     _type = ReminderApiMapper.medicationFormToUi(r.form);
     _frequency = ReminderApiMapper.frequencyToUi(r.frequency);
@@ -243,7 +249,12 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               label: 'Frequency *',
               options: _frequencies,
               groupValue: _frequency,
-              onChanged: (v) => setState(() => _frequency = v),
+              onChanged: (v) => setState(() {
+                _frequency = v;
+                if (v == 'Once') {
+                  _toDate = _fromDate;
+                }
+              }),
             ),
             const SizedBox(height: AppTheme.spacingL),
             LabeledFormField(
@@ -274,7 +285,9 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                       selectedDate: _fromDate,
                       onDateSelected: (d) => setState(() {
                         _fromDate = d;
-                        if (_toDate != null && _toDate!.isBefore(d)) {
+                        if (_frequency == 'Once') {
+                          _toDate = d;
+                        } else if (_toDate != null && _toDate!.isBefore(d)) {
                           _toDate = null;
                         }
                       }),
@@ -289,13 +302,19 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 Expanded(
                   child: LabeledFormField(
                     label: 'To *',
-                    child: DatePickerField(
-                      selectedDate: _toDate,
-                      onDateSelected: (d) => setState(() => _toDate = d),
-                      hintText: 'Select date',
-                      dateFormat: DateFormat('dd-MM-yyyy'),
-                      firstDate: _fromDate ?? _fromDateFirstSelectable,
-                      lastDate: DateTime(2100),
+                    child: IgnorePointer(
+                      ignoring: _frequency == 'Once',
+                      child: Opacity(
+                        opacity: _frequency == 'Once' ? 0.6 : 1.0,
+                        child: DatePickerField(
+                          selectedDate: _toDate,
+                          onDateSelected: (d) => setState(() => _toDate = d),
+                          hintText: 'Select date',
+                          dateFormat: DateFormat('dd-MM-yyyy'),
+                          firstDate: _fromDate ?? _fromDateFirstSelectable,
+                          lastDate: DateTime(2100),
+                        ),
+                      ),
                     ),
                   ),
                 ),

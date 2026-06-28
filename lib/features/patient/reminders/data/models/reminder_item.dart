@@ -3,6 +3,7 @@ class ReminderItem {
   final String type; // 'appointment' | 'medication'
   final DateTime scheduledTime;
   final bool isSent;
+  final String? groupId;
 
   // Appointment-specific
   final String? doctorName;
@@ -26,6 +27,7 @@ class ReminderItem {
     required this.type,
     required this.scheduledTime,
     required this.isSent,
+    this.groupId,
     this.doctorName,
     this.specialty,
     this.location,
@@ -80,6 +82,7 @@ class ReminderItem {
       type: type,
       scheduledTime: scheduledTime,
       isSent: isSent,
+      groupId: json['groupId']?.toString(),
       doctorName: json['doctorName']?.toString(),
       specialty: json['specialty']?.toString(),
       location: json['location']?.toString(),

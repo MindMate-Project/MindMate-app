@@ -56,10 +56,12 @@ class _SafeZonePickerMapState extends State<SafeZonePickerMap> {
   }
 
   List<SafeZone> get _visibleZones {
-    if (widget.excludeZone == null) return widget.existingZones;
-    return widget.existingZones
-        .where((z) => z.id != widget.excludeZone!.id)
-        .toList();
+    final zones = widget.excludeZone == null
+        ? widget.existingZones
+        : widget.existingZones
+            .where((z) => z.id != widget.excludeZone!.id)
+            .toList();
+    return zones.where((z) => z.isRenderable).toList();
   }
 
   @override

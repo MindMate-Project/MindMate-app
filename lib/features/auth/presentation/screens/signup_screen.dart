@@ -264,6 +264,16 @@ class _SignupState extends State<Signup> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(state.error)),
                       );
+                    } else if (state is AuthRegisteredEmailFailed) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Account created, but we couldn\'t send a verification email. '
+                            'Please contact support to activate your account.',
+                          ),
+                          duration: Duration(seconds: 6),
+                        ),
+                      );
                     }
                   },
                   builder: (context, state) {

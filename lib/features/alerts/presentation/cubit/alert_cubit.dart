@@ -42,13 +42,69 @@ class AlertCubit extends Cubit<AlertState> {
     }
   }
 
-  Future<void> acknowledgeAlert(String alertId, String caregiverId) async {
+  Future<void> acknowledgeAlert(String alertId) async {
     if (state is! AlertLoaded) return;
     try {
-      await _alertService.acknowledgeAlert(alertId, caregiverId: caregiverId);
+      await _alertService.acknowledgeAlert(alertId);
       await loadAlerts();
     } catch (e) {
       emit(AlertError(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
+  Future<void> deleteAlert(String alertId) async {
+    if (state is! AlertLoaded) return;
+    try {
+      await _alertService.deleteAlert(alertId);
+      await loadAlerts();
+    } catch (e) {
+      emit(AlertError(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
+  Future<void> acknowledgeAllAlerts() async {
+    if (state is! AlertLoaded) return;
+    final pendingIds = (state as AlertLoaded).alerts
+        .where((entry) => !entry.alert.isAcknowledged)
+        .map((entry) => entry.alert.id)
+        .toList();
+    if (pendingIds.isEmpty) return;
+
+    Object? lastError;
+    for (final id in pendingIds) {
+      try {
+        await _alertService.acknowledgeAlert(id);
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    await loadAlerts();
+    if (lastError != null) {
+      final message = lastError.toString().replaceFirst('Exception: ', '');
+      throw Exception(message);
+    }
+  }
+
+  Future<void> deleteAllAcknowledgedAlerts() async {
+    if (state is! AlertLoaded) return;
+    final acknowledgedIds = (state as AlertLoaded).alerts
+        .where((entry) => entry.alert.isAcknowledged)
+        .map((entry) => entry.alert.id)
+        .toList();
+    if (acknowledgedIds.isEmpty) return;
+
+    Object? lastError;
+    for (final id in acknowledgedIds) {
+      try {
+        await _alertService.deleteAlert(id);
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    await loadAlerts();
+    if (lastError != null) {
+      final message = lastError.toString().replaceFirst('Exception: ', '');
+      throw Exception(message);
     }
   }
 }
