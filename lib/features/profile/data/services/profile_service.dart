@@ -37,6 +37,7 @@ class ProfileService {
     String? phone,
     String? gender,
     DateTime? dateOfBirth,
+    String? address,
   }) async {
     final endpoint =
         role == 'caregiver' ? '/api/caregiver/update' : '/api/patient/update';
@@ -47,6 +48,9 @@ class ProfileService {
     if (role == 'caregiver') {
       if (phone != null && phone.trim().isNotEmpty) {
         body['phone'] = phone.trim();
+      }
+      if (address != null && address.trim().isNotEmpty) {
+        body['address'] = address.trim();
       }
     } else {
       if (phone != null && phone.trim().isNotEmpty) {
@@ -86,8 +90,6 @@ class ProfileService {
   }
 
   /// Upload (or replace) the current user's profile picture.
-  /// POST /api/users/profile-picture — multipart, field name `profilePicture`
-  /// (image, max 5MB). Returns the new Cloudinary image URL.
   Future<String> uploadProfilePicture(File image) async {
     final fileName = image.path.split(RegExp(r'[\\/]')).last;
     final formData = FormData.fromMap({

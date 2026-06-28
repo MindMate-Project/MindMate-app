@@ -10,6 +10,7 @@ import 'package:mindmate/features/auth/presentation/cubit/auth_state.dart';
 import 'package:mindmate/features/profile/data/services/profile_service.dart';
 import 'package:mindmate/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:mindmate/features/profile/presentation/cubit/profile_state.dart';
+import 'package:mindmate/core/models/patient_medical_notes.dart';
 import 'package:mindmate/core/themes/app_theme.dart';
 import 'package:mindmate/core/widgets/custom_text_form_field.dart';
 import 'package:mindmate/core/widgets/date_picker_field.dart';
@@ -17,6 +18,7 @@ import 'package:mindmate/core/widgets/labeled_form_field.dart';
 import 'package:mindmate/core/widgets/profile_app_bar.dart';
 import 'package:mindmate/core/widgets/user_avatar.dart';
 import 'package:mindmate/core/utils/validation.utils.dart';
+import 'package:mindmate/features/profile/presentation/widgets/profile_medical_notes_section.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -32,7 +34,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
   late TextEditingController _genderController;
+  late TextEditingController _addressController;
   DateTime? _selectedDate;
+  PatientMedicalNotes _medicalNotes = const PatientMedicalNotes();
   bool _didPrefill = false;
   final ProfileService _profileService = ProfileService();
   bool _uploadingPhoto = false;
@@ -46,7 +50,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _lastNameController = TextEditingController(text: nameParts.$2);
     _emailController = TextEditingController(text: user?.email ?? '');
     _phoneController = TextEditingController(text: user?.phoneNumber ?? '');
-    _genderController = TextEditingController(text: _normalizeGender(user?.gender) ?? 'Male');
+    _genderController = TextEditingController(
+      text: _normalizeGender(user?.gender) ?? 'Male',
+    );
+    _addressController = TextEditingController(text: user?.address ?? '');
+    _medicalNotes = user?.medicalNotes ?? const PatientMedicalNotes();
     _selectedDate = user?.dateOfBirth;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -81,8 +89,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
             if (hasPhoto)
               ListTile(
-                leading:
-                    const Icon(Icons.delete_outline, color: AppTheme.errorColor),
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: AppTheme.errorColor,
+                ),
                 title: const Text('Remove photo'),
                 onTap: () => Navigator.pop(ctx, 'remove'),
               ),
@@ -113,9 +123,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (user != null) {
         context.read<AuthCubit>().updateUser(user.copyWith(photoUrl: url));
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile picture updated')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Profile picture updated')));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -133,11 +143,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (!mounted) return;
       final user = _getLoggedInUser();
       if (user != null) {
-        context.read<AuthCubit>().updateUser(user.copyWith(clearPhotoUrl: true));
+        context.read<AuthCubit>().updateUser(
+          user.copyWith(clearPhotoUrl: true),
+        );
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile picture removed')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Profile picture removed')));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -171,6 +183,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _emailController.dispose();
     _phoneController.dispose();
     _genderController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -183,15 +196,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'
               .trim();
 
-      context.read<ProfileCubit>().updateMyProfile(
-            role: authState.user.role,
-            name: fullName,
-            phone: _phoneController.text.trim(),
-            gender: _genderController.text.trim(),
-            dateOfBirth: _selectedDate,
-          );
+      if (authState.user.isCaregiver) {
+        context.read<ProfileCubit>().updateMyProfile(
+          role: authState.user.role,
+          name: fullName,
+          phone: _phoneController.text.trim(),
+          address: _addressController.text.trim(),
+        );
+      } else {
+        context.read<ProfileCubit>().updateMyProfile(
+          role: authState.user.role,
+          name: fullName,
+          phone: _phoneController.text.trim(),
+          gender: _genderController.text.trim(),
+          dateOfBirth: _selectedDate,
+        );
+      }
     }
   }
+
   void _openGenderPicker() {
     showModalBottomSheet<void>(
       context: context,
@@ -225,7 +248,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _lastNameController.text = nameParts.$2;
           _emailController.text = state.user.email;
           _phoneController.text = state.user.phoneNumber.toString();
-          _genderController.text = _normalizeGender(state.user.gender) ?? _genderController.text;
+          _genderController.text =
+              _normalizeGender(state.user.gender) ?? _genderController.text;
+          _addressController.text = state.user.address ?? '';
+          _medicalNotes = state.user.medicalNotes;
           _selectedDate = state.user.dateOfBirth;
           setState(() {});
         }
@@ -239,13 +265,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
 
         if (state is ProfileError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
         }
       },
       builder: (context, state) {
         final isBusy = state is ProfileLoading || state is ProfileUpdating;
+        final authState = context.watch<AuthCubit>().state;
+        final isPatient = authState is AuthSuccess && authState.user.isPatient;
+        final isCaregiver =
+            authState is AuthSuccess && authState.user.isCaregiver;
 
         return Scaffold(
           backgroundColor: AppTheme.backgroundWhite,
@@ -255,8 +285,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: Stack(
               children: [
                 SingleChildScrollView(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppTheme.spacingXL),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppTheme.spacingXL,
+                  ),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -298,7 +329,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             hintText: 'Email',
                             keyboardType: TextInputType.emailAddress,
                             validator: ValidationUtils.validateEmail,
-                            enabled: false,
+                            // enabled: false,
+                            readOnly: true,
                           ),
                         ),
                         const SizedBox(height: AppTheme.spacingL),
@@ -311,58 +343,97 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                         ),
                         const SizedBox(height: AppTheme.spacingL),
-                        LabeledFormField(
-                          label: 'Birth Date',
-                          child: DatePickerField(
-                            selectedDate: _selectedDate,
-                            onDateSelected: (d) =>
-                                setState(() => _selectedDate = d),
-                            hintText: 'Birth Date',
-                            dateFormat: DateFormat('d/M/yyyy'),
+                        if (isPatient) ...[
+                          LabeledFormField(
+                            label: 'Birth Date',
+                            child: DatePickerField(
+                              selectedDate: _selectedDate,
+                              onDateSelected: (d) =>
+                                  setState(() => _selectedDate = d),
+                              hintText: 'Birth Date',
+                              dateFormat: DateFormat('d/M/yyyy'),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: AppTheme.spacingL),
-                        LabeledFormField(
-                          label: 'Gender',
-                          child: InkWell(
-                            onTap: _openGenderPicker,
-                            child: InputDecorator(
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: AppTheme.backgroundWhite,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      AppTheme.radiusMedium),
-                                  borderSide: BorderSide.none,
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      AppTheme.radiusMedium),
-                                  borderSide: const BorderSide(
-                                      color: AppTheme.neutralMedium),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      AppTheme.radiusMedium),
-                                  borderSide: const BorderSide(
-                                      color: AppTheme.primaryColor, width: 1),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    _genderController.text,
-                                    style: AppTheme.bodyLarge,
+                          const SizedBox(height: AppTheme.spacingL),
+                          LabeledFormField(
+                            label: 'Gender',
+                            child: InkWell(
+                              onTap: _openGenderPicker,
+                              child: InputDecorator(
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: AppTheme.backgroundWhite,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppTheme.radiusMedium,
+                                    ),
+                                    borderSide: BorderSide.none,
                                   ),
-                                  const Icon(Icons.arrow_drop_down,
-                                      color: AppTheme.neutralMedium),
-                                ],
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppTheme.radiusMedium,
+                                    ),
+                                    borderSide: const BorderSide(
+                                      color: AppTheme.neutralMedium,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppTheme.radiusMedium,
+                                    ),
+                                    borderSide: const BorderSide(
+                                      color: AppTheme.primaryColor,
+                                      width: 1,
+                                    ),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      _genderController.text,
+                                      style: AppTheme.bodyLarge,
+                                    ),
+                                    const Icon(
+                                      Icons.arrow_drop_down,
+                                      color: AppTheme.neutralMedium,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                          const SizedBox(height: AppTheme.spacingL),
+                          LabeledFormField(
+                            label: 'Address',
+                            child: CustomTextFormField(
+                              controller: _addressController,
+                              hintText: 'Address',
+                              readOnly: true,
+                            ),
+                          ),
+                          const SizedBox(height: AppTheme.spacingL),
+                          ProfileMedicalNotesSection(notes: _medicalNotes),
+                        ],
+                        if (isCaregiver) ...[
+                          LabeledFormField(
+                            label: 'Address',
+                            child: CustomTextFormField(
+                              controller: _addressController,
+                              hintText: 'Address',
+                            ),
+                          ),
+                          const SizedBox(height: AppTheme.spacingL),
+                          LabeledFormField(
+                            label: 'Gender',
+                            child: CustomTextFormField(
+                              controller: _genderController,
+                              hintText: 'Gender',
+                              readOnly: true,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: AppTheme.spacingXXXL),
                         SizedBox(
                           height: 52,
@@ -373,11 +444,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               foregroundColor: AppTheme.textWhite,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
-                                    AppTheme.radiusMedium),
+                                  AppTheme.radiusMedium,
+                                ),
                               ),
                             ),
-                            child: const Text('Submit',
-                                style: AppTheme.elevatedButtonText),
+                            child: const Text(
+                              'Submit',
+                              style: AppTheme.elevatedButtonText,
+                            ),
                           ),
                         ),
                         const SizedBox(height: AppTheme.spacingXXL),

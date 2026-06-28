@@ -26,6 +26,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     String? phone,
     String? gender,
     DateTime? dateOfBirth,
+    String? address,
   }) async {
     final current = state is ProfileLoaded
         ? (state as ProfileLoaded).user
@@ -40,6 +41,7 @@ class ProfileCubit extends Cubit<ProfileState> {
         phone: phone,
         gender: gender,
         dateOfBirth: dateOfBirth,
+        address: address,
       );
       emit(ProfileUpdateSuccess(user));
       return user;

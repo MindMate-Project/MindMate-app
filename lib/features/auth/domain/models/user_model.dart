@@ -1,3 +1,5 @@
+import 'package:mindmate/core/models/patient_medical_notes.dart';
+
 class User {
   final String? id;
   final String name;
@@ -11,6 +13,7 @@ class User {
   final String? address;
   final DateTime? dateOfBirth;
   final String? photoUrl;
+  final PatientMedicalNotes medicalNotes;
 
   User({
     this.id,
@@ -23,6 +26,7 @@ class User {
     this.address,
     this.dateOfBirth,
     this.photoUrl,
+    this.medicalNotes = const PatientMedicalNotes(),
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -39,14 +43,15 @@ class User {
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       role: json['role'] ?? '',
-      // relation: json['relation'],
-      phoneNumber: (json['phoneNumber']),
+      phoneNumber:
+          json['phoneNumber']?.toString() ?? json['phone']?.toString(),
       patients: json['patients'] != null
           ? List<String>.from(json['patients'].map((p) => p.toString()))
           : null,
-      gender: json['gender'],
+      gender: json['gender']?.toString(),
       address: json['address']?.toString(),
       dateOfBirth: _parseDate(json['dateOfBirth']),
+      medicalNotes: PatientMedicalNotes.fromJson(json['medicalNotes']),
       photoUrl: _firstNonEmpty(json, const [
         'photoUrl',
         'photo',
@@ -93,6 +98,7 @@ class User {
       if (address != null) 'address': address,
       if (dateOfBirth != null) 'dateOfBirth': dateOfBirth!.toIso8601String(),
       if (photoUrl != null) 'photoUrl': photoUrl,
+      if (!medicalNotes.isEmpty) 'medicalNotes': medicalNotes.toJson(),
     };
   }
 
@@ -110,6 +116,7 @@ class User {
     String? address,
     DateTime? dateOfBirth,
     String? photoUrl,
+    PatientMedicalNotes? medicalNotes,
     bool clearPhotoUrl = false,
   }) {
     return User(
@@ -123,6 +130,7 @@ class User {
       address: address ?? this.address,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       photoUrl: clearPhotoUrl ? null : (photoUrl ?? this.photoUrl),
+      medicalNotes: medicalNotes ?? this.medicalNotes,
     );
   }
 }
