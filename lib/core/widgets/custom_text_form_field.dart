@@ -6,6 +6,8 @@ class CustomTextFormField extends StatefulWidget {
   final String? Function(String?)? validator;
   final TextInputType? keyboardType;
   final String hintText;
+  final bool readOnly;
+  final bool enabled;
 
   const CustomTextFormField({
     super.key,
@@ -13,7 +15,8 @@ class CustomTextFormField extends StatefulWidget {
     this.validator,
     this.keyboardType,
     this.hintText = '',
-    bool? enabled,
+    this.readOnly = false,
+    this.enabled = true,
   });
 
   @override
@@ -25,7 +28,8 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: widget.controller,
-
+      readOnly: widget.readOnly,
+      enabled: widget.enabled,
       decoration: InputDecoration(
         hintText: widget.hintText,
         hintStyle: AppTheme.hintText,

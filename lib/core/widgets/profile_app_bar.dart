@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../themes/app_theme.dart';
-
-/// App bar used for profile section screens (Edit Profile, Notifications, etc.).
 class ProfileAppBar extends StatelessWidget implements PreferredSizeWidget {
   const ProfileAppBar({
     super.key,

@@ -25,7 +25,7 @@ class InfoCard extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(26),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: children,
