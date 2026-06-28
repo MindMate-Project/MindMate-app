@@ -28,18 +28,25 @@ class FaceIdentifiedPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: AppTheme.neutralSkyBlue,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(
+                Icons.arrow_back_ios,
+                size: 30,
+                color: AppTheme.neutralWhite,
+              ),
           onPressed: () {
-            // Pop back to the patient home screen (past FaceScanStartPage)
             context.go(AppRoutes.patientHome);
           },
         ),
         title: const Text(
           'Face Recognition',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+          fontSize: 20,
+          color: AppTheme.neutralWhite,
+          fontWeight: FontWeight.w500,
+        ),
         ),
       ),
       body: SafeArea(
@@ -83,24 +90,39 @@ class FaceIdentifiedPage extends StatelessWidget {
                               width: 200,
                               height: 200,
                               errorBuilder: (context, error, stackTrace) {
-                                return const Icon(Icons.person, size: 100, color: Colors.grey);
+                                return const Icon(
+                                  Icons.person,
+                                  size: 100,
+                                  color: Colors.grey,
+                                );
                               },
                             )
                           : imageUrl != null
-                              ? Image.network(
-                                  imageUrl!,
-                                  fit: BoxFit.cover,
-                                  width: 200,
-                                  height: 200,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(Icons.person, size: 100, color: Colors.grey);
-                                  },
-                                  loadingBuilder: (context, child, loadingProgress) {
+                          ? Image.network(
+                              imageUrl!,
+                              fit: BoxFit.cover,
+                              width: 200,
+                              height: 200,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(
+                                  Icons.person,
+                                  size: 100,
+                                  color: Colors.grey,
+                                );
+                              },
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
                                     if (loadingProgress == null) return child;
-                                    return const Center(child: CircularProgressIndicator());
+                                    return const Center(
+                                      child: CircularProgressIndicator(),
+                                    );
                                   },
-                                )
-                              : const Icon(Icons.person, size: 100, color: Colors.grey),
+                            )
+                          : const Icon(
+                              Icons.person,
+                              size: 100,
+                              color: Colors.grey,
+                            ),
                     ),
                   ),
                   Positioned(
@@ -187,35 +209,35 @@ class FaceIdentifiedPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Opening patient profile...'),
-                            backgroundColor: AppTheme.primaryColor,
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'View Profile',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
+                  // const SizedBox(width: 15),
+                  // Expanded(
+                  //   child: ElevatedButton(
+                  //     onPressed: () {
+                  //       ScaffoldMessenger.of(context).showSnackBar(
+                  //         const SnackBar(
+                  //           content: Text('Opening patient profile...'),
+                  //           backgroundColor: AppTheme.primaryColor,
+                  //         ),
+                  //       );
+                  //     },
+                  //     style: ElevatedButton.styleFrom(
+                  //       backgroundColor: AppTheme.primaryColor,
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(12),
+                  //       ),
+                  //       padding: const EdgeInsets.symmetric(vertical: 16),
+                  //       elevation: 0,
+                  //     ),
+                  //     child: const Text(
+                  //       'View Profile',
+                  //       style: TextStyle(
+                  //         color: Colors.white,
+                  //         fontSize: 16,
+                  //         fontWeight: FontWeight.w600,
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
 

@@ -92,16 +92,25 @@ class _FaceStrangerPageState extends State<FaceStrangerPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: AppTheme.neutralSkyBlue,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () =>
-              context.go(AppRoutes.patientHome),
+          icon: const Icon(
+                Icons.arrow_back_ios,
+                size: 30,
+                color: AppTheme.neutralWhite,
+              ),
+          onPressed: () {
+            context.go(AppRoutes.patientHome);
+          },
         ),
         title: const Text(
           'Face Recognition',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+          fontSize: 20,
+          color: AppTheme.neutralWhite,
+          fontWeight: FontWeight.w500,
+        ),
         ),
       ),
       body: SafeArea(

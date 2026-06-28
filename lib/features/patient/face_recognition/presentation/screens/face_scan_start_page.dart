@@ -10,15 +10,23 @@ class FaceScanStartPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: AppTheme.neutralSkyBlue,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(
+                Icons.arrow_back_ios,
+                size: 30,
+                color: AppTheme.neutralWhite,
+              ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Face Recognition',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+          fontSize: 20,
+          color: AppTheme.neutralWhite,
+          fontWeight: FontWeight.w500,
+        ),
         ),
       ),
       body: SafeArea(
@@ -28,9 +36,9 @@ class FaceScanStartPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(),
-              
+
               const Text(
-                'Point your camera at the person you\nwant to scan',
+                'Feeling confused and need help recognizing someone? \nPoint your camera at the person you want to scan.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
@@ -38,19 +46,16 @@ class FaceScanStartPage extends StatelessWidget {
                   height: 1.5,
                 ),
               ),
-              
+
               const SizedBox(height: 40),
-              
+
               Container(
                 width: 200,
                 height: 200,
                 decoration: BoxDecoration(
                   color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: AppTheme.primaryColor,
-                    width: 3,
-                  ),
+                  border: Border.all(color: AppTheme.primaryColor, width: 3),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(17),
@@ -69,9 +74,9 @@ class FaceScanStartPage extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 40),
-              
+
               SizedBox(
                 width: double.infinity,
                 height: 56,
@@ -101,11 +106,11 @@ class FaceScanStartPage extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               Text(
-                'Please make sure the person\'s face is clearly visible',
+                'Please make sure the person\'s face is clearly visible.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -113,7 +118,7 @@ class FaceScanStartPage extends StatelessWidget {
                   height: 1.4,
                 ),
               ),
-              
+
               const Spacer(),
             ],
           ),

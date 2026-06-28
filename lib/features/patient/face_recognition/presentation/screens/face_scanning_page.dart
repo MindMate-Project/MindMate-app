@@ -40,75 +40,33 @@ class _FaceScanningPageState extends State<FaceScanningPage> {
 
     if (!mounted) return;
 
-    if (result['success'] == true) {
-      final data = result['data'];
-
-      bool isRecognized = false;
-      Map<String, dynamic>? personData;
-
-      if (data['identified'] == true || data['recognized'] == true) {
-        isRecognized = true;
-
-        if (data['person'] != null) {
-          personData = data['person'];
-        } else if (data['patient'] != null) {
-          personData = data['patient'];
-        } else if (data['user'] != null) {
-          personData = data['user'];
-        } else if (data['data'] != null) {
-          personData = data['data'];
-        } else {
-          personData = data;
-        }
-      }
-
-      if (isRecognized && personData != null) {
-        final pd = personData;
-        // Prepare the name by combining firstName and lastName from the JSON
-        String firstName =
-            pd['firstName'] ?? pd['name'] ?? 'Unknown';
-        String lastName = pd['lastName'] ?? '';
-        String fullName = lastName.isNotEmpty
-            ? '$firstName $lastName'
-            : firstName;
-
-        // Use relationship for the "Nickname/Relation" field
-        String relation =
-            pd['relationship'] ?? pd['relation'] ?? 'Patient';
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => FaceIdentifiedPage(
-              name: fullName,
-              nickname: relation,
-              confidence:
-                  (pd['confidence'] ??
-                          pd['similarity'] ??
-                          pd['score'] ??
-                          0.0)
-                      .toDouble(),
-              imageUrl:
-                  pd['image_url'] ??
-                  pd['photo'] ??
-                  pd['avatar'],
-              patientId: pd['id'] ?? pd['patient_id'],
-              capturedImagePath: widget.imagePath,
-            ),
+    if (result.success && result.identified) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FaceIdentifiedPage(
+            name: result.fullName,
+            nickname: result.relationship ?? 'Known person',
+            confidence: result.confidence,
+            capturedImagePath: widget.imagePath,
           ),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                FaceStrangerPage(capturedImagePath: widget.imagePath),
-          ),
-        );
-      }
-    } else {
-      _showError(result['error'] ?? 'Unknown error occurred');
+        ),
+      );
+      return;
     }
+
+    if (result.success && !result.identified) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              FaceStrangerPage(capturedImagePath: widget.imagePath),
+        ),
+      );
+      return;
+    }
+
+    _showError(result.error ?? 'Unknown error occurred');
   }
 
   void _showError(String error) {
