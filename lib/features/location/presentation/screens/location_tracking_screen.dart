@@ -64,31 +64,6 @@ class _LocationTrackingScreenState extends State<LocationTrackingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            BlocBuilder<AuthCubit, AuthState>(
-              builder: (context, authState) {
-                if (!_isCaregiver(authState)) {
-                  return const SizedBox.shrink();
-                }
-                return BlocBuilder<LocationCubit, LocationState>(
-                  builder: (context, state) => SwitchListTile(
-                    secondary: Icon(Icons.my_location, color: Colors.grey[600]),
-                    title: const Text(
-                      'Use device location (testing)',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.secondaryColor,
-                      ),
-                    ),
-                    value: state.useDeviceLocation,
-                    activeThumbColor: AppTheme.primaryColor,
-                    onChanged: (value) => context
-                        .read<LocationCubit>()
-                        .setUseDeviceLocation(value),
-                  ),
-                );
-              },
-            ),
             Expanded(
               child: BlocBuilder<LocationCubit, LocationState>(
                 builder: (context, state) => RefreshIndicator(

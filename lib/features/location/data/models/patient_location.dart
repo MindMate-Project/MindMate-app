@@ -106,7 +106,7 @@ class PatientLocation extends Equatable {
     bool? inSafeZone,
     String? zoneLabel,
     String? patientName,
-    bool? isFallback,
+    // bool? isFallback,
     bool? isDeviceOnline,
   }) {
     return PatientLocation(
@@ -117,7 +117,7 @@ class PatientLocation extends Equatable {
       inSafeZone: inSafeZone ?? this.inSafeZone,
       zoneLabel: zoneLabel ?? this.zoneLabel,
       patientName: patientName ?? this.patientName,
-      isFallback: isFallback ?? this.isFallback,
+      // isFallback: isFallback ?? this.isFallback,
       isDeviceOnline: isDeviceOnline ?? this.isDeviceOnline,
     );
   }
@@ -279,7 +279,7 @@ class PatientLocation extends Equatable {
         inSafeZone,
         zoneLabel,
         patientName,
-        isFallback,
+        // isFallback,
         isDeviceOnline,
       ];
 }

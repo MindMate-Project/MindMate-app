@@ -56,40 +56,6 @@ class _CaregiverNotificationsViewState
     if (mounted) setState(() {});
   }
 
-  Widget _buildFlutterSideAlertsToggle() {
-    final enabled = _prefs.flutterSideAlertsEnabled;
-
-    return InfoCard(
-      tag: 'Testing',
-      tagColor: AppTheme.primaryColor,
-      children: [
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text(
-            'Flutter-side alerts',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.secondaryColor,
-            ),
-          ),
-          subtitle: Text(
-            enabled
-                ? 'On: safe-zone exits are detected in the app and shown as '
-                    'local notifications and banners.'
-                : 'Off: Flutter workarounds are disabled. Alerts should arrive '
-                    'only via Firebase push from the server.',
-            style: AppTheme.bodySmall,
-          ),
-          value: enabled,
-          activeThumbColor: AppTheme.primaryColor,
-          onChanged: (value) =>
-              _prefs.setFlutterSideAlertsEnabled(value),
-        ),
-      ],
-    );
-  }
-
   Future<void> _acknowledge(String alertId) async {
     setState(() => _acknowledgingId = alertId);
     try {
@@ -224,9 +190,9 @@ class _CaregiverNotificationsViewState
       body: BlocConsumer<AlertCubit, AlertState>(
         listener: (context, state) {
           if (state is AlertError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         builder: (context, state) {
@@ -238,11 +204,12 @@ class _CaregiverNotificationsViewState
                 vertical: AppTheme.spacingM,
               ),
               children: [
-                _buildFlutterSideAlertsToggle(),
                 const SizedBox(height: AppTheme.spacingL),
                 const SizedBox(height: 120),
                 const Center(
-                  child: CircularProgressIndicator(color: AppTheme.primaryColor),
+                  child: CircularProgressIndicator(
+                    color: AppTheme.primaryColor,
+                  ),
                 ),
               ],
             );
@@ -259,7 +226,6 @@ class _CaregiverNotificationsViewState
                   vertical: AppTheme.spacingM,
                 ),
                 children: [
-                  _buildFlutterSideAlertsToggle(),
                   const SizedBox(height: AppTheme.spacingL),
                   const SizedBox(height: 120),
                   Text(
@@ -292,20 +258,6 @@ class _CaregiverNotificationsViewState
                   vertical: AppTheme.spacingM,
                 ),
                 children: [
-                  _buildFlutterSideAlertsToggle(),
-                  const SizedBox(height: AppTheme.spacingL),
-                  InfoCard(
-                    tag: 'Info',
-                    tagColor: AppTheme.infoColor,
-                    children: [
-                      Text(
-                        'Safe zone and SOS alerts appear here. Set safe zones on '
-                        'the Location tab to get notified when a patient leaves.',
-                        style: AppTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppTheme.spacingL),
                   if (pendingAlerts.isNotEmpty) ...[
                     _SectionHeader(
                       title: 'Active alerts',
@@ -337,8 +289,8 @@ class _CaregiverNotificationsViewState
                       onAction: _bulkBusy
                           ? null
                           : () => _confirmDeleteAllAcknowledged(
-                                acknowledgedAlerts.length,
-                              ),
+                              acknowledgedAlerts.length,
+                            ),
                     ),
                     const SizedBox(height: AppTheme.spacingS),
                     ...acknowledgedAlerts.map(
@@ -396,10 +348,7 @@ class _SectionHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
-          child: Text(
-            title,
-            style: AppTheme.heading3.copyWith(fontSize: 18),
-          ),
+          child: Text(title, style: AppTheme.heading3.copyWith(fontSize: 18)),
         ),
         if (onAction != null)
           TextButton(
